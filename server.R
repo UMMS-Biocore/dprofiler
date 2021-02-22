@@ -157,13 +157,10 @@ dconnectServer <- function(input, output, session) {
           if(!is.null(batch()$BatchEffect()$count)){
             togglePanels(0, c(0), session)
             res <- prepDataContainer(batch()$BatchEffect()$count, sel()$cc(), input)
-            if(is.null(res)) return(NULL)
-            dc(res)
+            if(is.null(res$de)) return(NULL)
+            dc(res$de)
             updateTabItems(session, "MenuItems", "DEAnalysis")
             buttonValues$startDE <- TRUE
-            buttonValues$goQCplots <- FALSE
-            # hideObj(c("load-uploadFile","load-demo",
-            #           "load-demo2", "goQCplots", "goQCplotsFromFilter"))
           }
         })
 
