@@ -6,11 +6,12 @@
 #' @param output, output objects
 #' @param session, session 
 #' @param nextpagebutton, the name of the next page button after loading the data
+#' @param parent_session a parameter to pass the session
 #' @return main plot
 #'
 #' @return panel
 #'
-dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpagebutton = NULL) {
+dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpagebutton = NULL, parent_session = NULL) {
   if (is.null(input)) return(NULL)
   ldata <- reactiveValues(count=NULL, meta=NULL)
   loadeddata <- reactive({
@@ -24,12 +25,11 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   output$dataloaded <- reactive({
     return(!is.null(loadeddata()))
   })
-  outputOptions(output, "dataloaded", 
-                suspendWhenHidden = FALSE)
+  
   observe({
     query <- parseQueryString(session$clientData$url_search)
     jsonobj<-query$jsonobject
-    
+
     if (!is.null(jsonobj))
     {
       raw <- RCurl::getURL(jsonobj, .opts = list(ssl.verifypeer = FALSE),
@@ -60,12 +60,15 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     }
   })
   
+  # Event for uploading the demo file
   observeEvent(input$demo3, {
     load("demo/demodata3.Rda")
     ldata$count <- demodata
     ldata$meta <- metadatatable
+    updateTabsetPanel(session = parent_session, "UploadBox", "uploadsummary")
   })
   
+  # Event for uploading any file
   observeEvent(input$uploadFile, {
     if (is.null(input$countdata)) return (NULL)
     checkRes <- checkCountData(input)
@@ -102,9 +105,12 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     ldata$count <- counttable
     ldata$meta <- metadatatable
   })
+  
+  # generate the button the next page
   output$nextButton <- renderUI({
     actionButtonDE(nextpagebutton, label = nextpagebutton, styleclass = "primary")
   })
+  
   observe({
     getSampleDetails(output, "uploadSummary", "sampleDetails", loadeddata())
   })
@@ -130,14 +136,26 @@ dataLoadUI<- function (id) {
   ),
   fluidRow(column(12,
                   actionButtonDE(ns("uploadFile"), label = "Upload", styleclass = "primary"), 
-                  actionButtonDE(ns("demo3"),  label = "Load Demo PRJNA554241", styleclass = "primary")))),
-  fluidRow(column(12,
-                  conditionalPanel(condition = paste0("output['", ns("dataloaded"),"']"),
-                                   uiOutput(ns("nextButton"))
-                  ))
-  ), br(),
+                  actionButtonDE(ns("demo3"),  label = "Load Demo PRJNA554241", styleclass = "primary"))))
+  )
+}
+
+#' dataSummaryUI
+#' 
+#' Creates a panel to view the summary of uploaded data
+#'
+#' @param id, namespace id
+#' @return panel
+#' @examples
+#'     x <- dataLoadUI("load")
+#'
+#' @export
+#'
+dataSummaryUI<- function(id) {
+  ns <- NS(id)
+  list(
   fluidRow(
-    shinydashboard::box(title = "Upload Summary",
+    shinydashboard::box(title = "Upload Summary", solidHeader = TRUE, status = "info",
                         width = 12, 
                         fluidRow(
                           column(12, 
@@ -147,148 +165,10 @@ dataLoadUI<- function (id) {
                           column(12,div(style = 'overflow: scroll', 
                                         DT::dataTableOutput(ns("sampleDetails")))
                           )
+                        ),
+                        fluidRow(
+                          column(12,uiOutput(ns("nextButton"))) 
                         )
     )
   ))
-}
-
-#' fileUploadBox
-#'
-#' File upload module
-#' @param id, namespace id
-#' @param inputId, input file ID
-#' @param label, label
-#' @note \code{fileUploadBox}
-#' @return radio control
-#'
-#' @examples
-#'    
-#'     x <- fileUploadBox("meta", "metadata", "Metadata")
-#'
-#' @export
-#'
-fileUploadBox <- function(id = NULL, inputId = NULL, label = NULL) {
-  ns <- NS(id)
-  shinydashboard::box(title = paste0(label, " File"),
-                      solidHeader = TRUE, status = "info",
-                      width = 6,
-                      helpText(paste0("Upload your '", label," File'")),
-                      fileInput(inputId=ns(inputId), 
-                                label=NULL, 
-                                accept=fileTypes()
-                      ),
-                      sepRadio(id, paste0(inputId, "Sep")))
-}
-
-#' sepRadio
-#'
-#' Radio button for separators
-#'
-#' @param id, module id
-#' @param name, name
-#' @note \code{sepRadio}
-#' @return radio control
-#'
-#' @examples
-#'    
-#'     x <- sepRadio("meta", "metadata")
-#'
-#' @export
-#'
-sepRadio <- function(id, name) {
-  ns <- NS(id)
-  radioButtons(inputId=ns(name), 
-               label="Separator",
-               choices=c(Comma=',',
-                         Semicolon=';',
-                         Tab='\t'
-               ),
-               selected='\t'
-  )
-}
-
-#' fileTypes
-#'
-#' Returns fileTypes that are going to be used in creating fileUpload UI
-#'
-#' @note \code{fileTypes}
-#' @return file types
-#'
-#' @examples
-#'     x <- fileTypes()
-#'
-#' @export
-#'
-fileTypes <- function() {
-  c('text/tab-separated-values',
-    'text/csv',
-    'text/comma-separated-values',
-    'text/tab-separated-values',
-    '.txt',
-    '.csv',
-    '.tsv')
-}
-
-#' checkCountData
-#'
-#' Returns if there is a problem in the count data.
-#'
-#' @note \code{checkCountData}
-#' @param input, inputs
-#' @return error if there is a problem about the loaded data
-#
-#' @examples
-#'     x <- checkCountData()
-#'
-#' @export
-#'
-checkCountData <- function(input = NULL){
-  if (is.null(input$countdata$datapath)) return(NULL)
-  tryCatch({
-    data <- read.table(input$countdata$datapath, sep=input$countdataSep)
-    if (ncol(data) < 3) return ("Error: Please check if you chose the right separator!")
-    dups <- data[duplicated(data[,1], fromLast = TRUE),1]
-    if (length(dups)>1) return (paste0("Error: There are duplicate entried in  the rownames. (", 
-                                       paste0(dups, collapse=","),")"))
-    
-    return("success")
-  }, error = function(err) {
-    return (paste0("Error(Count file):",toString(err)))
-  }, warning = function(war) {
-    return(paste0("Warning(Count file):",toString(err)))
-  })
-}
-
-
-#' checkMetaData
-#'
-#' Returns if there is a problem in the count data.
-#'
-#' @note \code{checkMetaData}
-#' @param input, input
-#' @param counttable, counttable
-#' @return error if there is a problem about the loaded data
-#
-#' @examples
-#'     x <- checkMetaData()
-#'
-#' @export
-#'
-checkMetaData <- function(input = NULL, counttable = NULL){
-  if (is.null(counttable) || is.null(input$metadata$datapath)) return(NULL)
-  tryCatch({
-    metadatatable <- read.table(input$metadata$datapath, sep=input$metadataSep, header=T)
-    if (ncol(metadatatable) < 2) return ("Error: Please check if you chose the right separator!")
-    met <- as.vector(metadatatable[order(as.vector(metadatatable[,1])), 1])
-    count <- as.vector(colnames(counttable)[order(as.vector(colnames(counttable)))])
-    difference <- base::setdiff(met, count)
-    if (length(difference)>0){
-      return(paste0("Colnames doesn't match with the metada table(", paste0(difference,sep=","), ")"))
-    }
-    return("success")
-  }, error = function(err) {
-    return (paste0("Error(Matadata file):",toString(err)))
-  }, warning = function(war) {
-    return (paste0("Warning(Matadata file):",toString(war)))
-  })
 }

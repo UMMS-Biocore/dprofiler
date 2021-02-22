@@ -19,87 +19,97 @@ dconnectUI <- function() {
   library("debrowser")
   dconnect <- (fluidPage(
     shinyjs::useShinyjs(),
-    shinyjs::inlineCSS("
-        #loading-dconnect {
-        position: absolute;
-        background: #000000;
-        opacity: 0.9;
-        z-index: 100;
-        left: 0;
-        right: 0;
-        height: 100%;
-        text-align: center;
-        color: #EFEFEF;
-    }"),
-    # Loading message
-    tags$div(h4("Loading Dconnect"), id = "loading-dconnect",
-             tags$img(src = "www/images/initial_loading.gif")),
     tags$head(tags$title("Dconnect"),
               tags$link(rel = "stylesheet", type = "text/css",
                         href = "www/shinydashboard_additional.css")
     ),
     dashboardPage(
       dbHeader,
+      
+      # Shiny dashboard Side
       dashboardSidebar(
         width = 250,
-        # debrowser::getJSLine(),
         uiOutput("loading"),
         tabsetPanel(id = "menutabs", type = "tabs",
                     tabPanel(title = "Data Prep", value = "dataprep", id="dataprep",
-                             sidebarMenu(id="DataPrep",
+                             sidebarMenu(id="MenuItems",
                                          menuItem("Upload", icon = icon("upload"), tabName = "Upload"),
                                          menuItem("Filter", icon = icon("filter"), tabName = "Filter"),
                                          menuItem("BatchEffect",  icon = icon("align-left"), tabName = "BatchEffect"),
-                                         menuItem("CondSelect",  icon = icon("bars"), tabName = "CondSelect"),
+                                         menuItem("Cond. Select", icon = icon("adjust"), tabName = "CondSelect"),
                                          menuItem("DEAnalysis", icon = icon("adjust"), tabName = "DEAnalysis"),
-                                         menuItem("DEFilter",  icon = icon("code"), tabName = "DEAnalysis",  startExpanded = TRUE,
+                                         menuItem("Iter. DEAnalysis", icon = icon("adjust"), tabName = "IterDEAnalysis"),
+                                         menuItem("DEFilter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
                                                   uiOutput("cutOffUI"),
                                                   uiOutput("compselectUI"))
-                             ),helpText("Developed by ", a("UMMS Biocore.", 
-                                                           href="https://www.umassmed.edu/biocore/", target = "_blank"))),
-                    tabPanel(title = "Discover", value = "discover", id="discover",
-                             conditionalPanel(condition = "(output.dataready)",
-                                              conditionalPanel( (condition <- "input.methodtabs=='panel1'"),
-                                                                debrowser::mainPlotControlsUI("main")),
-                                              uiOutput("downloadSection"),
-                                              uiOutput('cutoffSelection'),
-                                              uiOutput("leftMenu"))
-                    ))
+                             ),
+                             helpText("Developed by ", a("UMMS Biocore.", href="https://www.umassmed.edu/biocore/", target = "_blank")))
+        )
       ),
+      
+      # Shiny dashboard Body
       dashboardBody(
-        mainPanel(
-          width = 12,
-          tags$head(
-            tags$style(type = "text/css",
-                       "#methodtabs.nav-tabs {font-size: 14px} ")),
-          tabsetPanel(id = "methodtabs", type = "tabs",
-                      tabPanel(title = "Data Prep", value = "panel0", id="panel0",
-                               tabItems(
-                                 tabItem(tabName="Upload", dataLoadUI("load")),
-                                 tabItem(tabName="Filter",
-                                         conditionalPanel(
-                                           (condition <- "input.Filter"),
-                                           dataLCFUI("lcf"))),
-                                 tabItem(tabName="BatchEffect", 
-                                         conditionalPanel(
-                                           (condition <- "input.Batch"),
-                                           batchEffectUI("batcheffect"))),
-                                 tabItem(tabName="CondSelect", 
-                                         conditionalPanel(
-                                           (condition <- "input.goDE || input.goDEFromFilter"),
-                                           debrowser::condSelectUI())),
-                                 tabItem(tabName="DEAnalysis", 
-                                         conditionalPanel(
-                                           (condition <- "input.goDE || input.goDEFromFilter"),
-                                           uiOutput("deresUI")))
-                               )),
-                      tabPanel(title = "Main Plots", value = "panel1", id="panel1",
-                               uiOutput("mainmsgs"),
-                               uiOutput("mainpanel")))
-        ),
+          
+          tabItems(#id = "methodtabs", type = "tabs",
+
+                   # Upload Tab
+                   tabItem(tabName="Upload",
+                           tabBox(id = "UploadBox", 
+                                  width = NULL,
+                                  tabPanel(title = "Upload Data",
+                                           dataLoadUI("load")
+                                  ),
+                                  tabPanel(title = "Upload Summary",
+                                           dataSummaryUI("load"), 
+                                           value = "uploadsummary"
+                                  )
+                           )
+                   ),
+
+                   # Filter Tab
+                   tabItem(tabName="Filter",
+                           conditionalPanel((condition <- "input.Filter"),
+                                            dataLCFUI("lcf"))
+                   ),
+
+                   # Batch Effect Tab
+                   tabItem(tabName="BatchEffect",
+                           conditionalPanel((condition <- "input.Batch"),
+                                            batchEffectUI("batcheffect"))
+                   ), 
+                   
+                   # Condition Selection Tab
+                   tabItem(tabName="CondSelect", 
+                           condSelectUI()
+                   ),
+                   
+                   # Upload Tab
+                   tabItem(tabName="DEAnalysis", 
+                           tabBox(id = "DEAnalysisBox", 
+                                  width = NULL,
+                                  tabPanel(title = "DE Analysis",
+                                           uiOutput("deresUI"), 
+                                           value = "deresults"
+                                  )
+                           )
+                   ),
+                   
+                   # Upload Tab
+                   tabItem(tabName="IterDEAnalysis", 
+                           tabBox(id = "IterDEAnalysisBox", 
+                                  width = NULL,
+                                  tabPanel(title = "Iterative DE Analysis",
+                                           uiOutput("iterderesUI"), 
+                                           value = "membershipscore"
+                                  )
+                           )
+                   )
+          )
+          
+        
         # hide and show tabs as analysis progresses
         # change 'hide' part to manage order of popping up sidebar menus
-        getTabUpdateJS() 
+        # getTabUpdateJS() 
       ))
   )
   )

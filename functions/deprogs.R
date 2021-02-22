@@ -46,7 +46,7 @@ getDEResultsUI<- function (id) {
     list(
         fluidRow(
             shinydashboard::box(title = "DE Results",
-            solidHeader = T, status = "info",  width = 12, 
+            solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
             fluidRow(
                 column(12,
                     uiOutput(ns("DEResults"))
