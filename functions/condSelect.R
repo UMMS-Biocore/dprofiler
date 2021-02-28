@@ -1,4 +1,5 @@
-#' debrowsercondselect
+
+#' dprofilercondselect
 #'
 #' Condition selection
 #' This is not a module. Module construction didn't used here, just use it 
@@ -15,9 +16,9 @@
 #' @export
 #'
 #' @examples
-#'     x <- debrowsercondselect()
+#'     x <- dprofilercondselect()
 #'
-debrowsercondselect <- function(input = NULL, output = NULL, session = NULL, data = NULL, metadata = NULL) {
+dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, data = NULL, metadata = NULL) {
   if (is.null(data)) return(NULL)
   choicecounter <- reactiveVal(0)
   output$conditionSelector <- renderUI({
@@ -108,16 +109,15 @@ selectConditions<-function(Dataset = NULL,
                                                             (2 * i), allsamples, selected2)
       ),
       column(12, 
-             column(1, helpText(" ")),
+             # column(1, helpText(" ")),
              getSelectInputBox("demethod", "DE Method", i, 
                                c("DESeq2", "EdgeR", "Limma"),
                                selectedInput("demethod", i, "DESeq2", input)),
              getMethodDetails(i, input)),
       column(12, 
-             column(1, helpText(" ")),
-             getSelectInputBox("scoremethod", "Score Method", i, 
-                               c("Silhouette", "NNLS-based"),
-                               selectedInput("scoremethod", i, "Silhouette", input)))
+             # column(1, helpText(" ")),
+             getIterMethodDetails(i, input),
+             )
       )
       if (!is.null(selectedInput("conditions_from_meta", 
                                  i, NULL, input)) && selectedInput("conditions_from_meta", 
@@ -135,6 +135,43 @@ selectConditions<-function(Dataset = NULL,
       return(to_return)
     })
   }
+}
+
+#' getIterMethodDetails
+#'
+#' get the detail boxes after DE method selected 
+#'
+#' @param num, panel that is going to be shown
+#' @param input, user input
+#' @examples
+#'     x <- getIterMethodDetails()
+#'
+#' @export
+#'
+#'
+getIterMethodDetails <- function(num = 0, input = NULL) {
+  if (num > 0)
+    list(
+      fluidRow(
+        getSelectInputBox("scoremethod", "Score Method", num, 
+                          c("Silhouette", "NNLS-based"),
+                          selectedInput("scoremethod", num, "Silhouette", input)),
+        column(2,textInput(paste0("logfoldchange", num), "LogFoldChange", 
+                           value = isolate(selectedInput("logfoldchange", 
+                                                         num, "1", input) ))),
+        column(2,textInput(paste0("padj", num), "P-adj Value", 
+                           value = isolate(selectedInput("padj", 
+                                                         num, "0.01", input) ))),
+        column(2,textInput(paste0("minscore", num), "Min. Score", 
+                           value = isolate(selectedInput("minscore", 
+                                                         num, "0.5", input) ))),
+        column(2,textInput(paste0("topstat", num), "Top Stat", 
+                           value = isolate(selectedInput("topstat", 
+                                                         num, "100", input) ))),
+        getSelectInputBox("iterde_norm", "Normalization", num, 
+                          c("TMM","RLE","upperquartile","none"), 
+                          selectedInput("iterde_norm", num, "TMM", input), 2)),
+      br())
 }
 
 #' prepDataContainer
@@ -155,12 +192,12 @@ prepDataContainer <- function(data = NULL, counter=NULL,
   if (is.null(data)) return(NULL)
   
   inputconds <- reactiveValues(demethod_params = list(), conds = list(), dclist = list())
-  iterinputconds <- reactiveValues(demethod_params = list(), conds = list(), dclist = list())
-  
+
   inputconds$conds <- list()
   for (cnt in seq(1:(2*counter))){
     inputconds$conds[cnt] <- list(isolate(input[[paste0("condition",cnt)]]))
   }
+  
   #Get parameters for each method
   inputconds$demethod_params <- NULL
   for (cnt in seq(1:counter)){
@@ -170,8 +207,7 @@ prepDataContainer <- function(data = NULL, counter=NULL,
         isolate(input[[paste0("fitType",cnt)]]),
         isolate(input[[paste0("betaPrior",cnt)]]),
         isolate(input[[paste0("testType",cnt)]]),
-        isolate(input[[paste0("shrinkage",cnt)]]), 
-        isolate(input[[paste0("scoremethod",cnt)]]), sep=",")
+        isolate(input[[paste0("shrinkage",cnt)]]), sep=",")
     }
     else if (isolate(input[[paste0("demethod",cnt)]]) == "EdgeR"){
       inputconds$demethod_params[cnt]<- paste(
@@ -179,7 +215,7 @@ prepDataContainer <- function(data = NULL, counter=NULL,
         isolate(input[[paste0("edgeR_normfact",cnt)]]),
         isolate(input[[paste0("dispersion",cnt)]]),
         isolate(input[[paste0("edgeR_testType",cnt)]]), 
-        isolate(input[[paste0("scoremethod",cnt)]]), sep=",")
+        "", sep=",")
     }
     else if (isolate(input[[paste0("demethod",cnt)]]) == "Limma"){
       inputconds$demethod_params[cnt] <- paste(
@@ -187,8 +223,18 @@ prepDataContainer <- function(data = NULL, counter=NULL,
         isolate(input[[paste0("limma_normfact",cnt)]]),
         isolate(input[[paste0("limma_fitType",cnt)]]),
         isolate(input[[paste0("normBetween",cnt)]]), 
-        isolate(input[[paste0("scoremethod",cnt)]]), sep=",")
+        "", sep=",")
     }
+    
+    # condition inputs for iterative de analysis
+    inputconds$demethod_params[cnt] <- paste(inputconds$demethod_params[cnt],
+                                             isolate(input[[paste0("scoremethod",cnt)]]),
+                                             isolate(input[[paste0("logfoldchange",cnt)]]),
+                                             isolate(input[[paste0("padj",cnt)]]),
+                                             isolate(input[[paste0("minscore",cnt)]]),
+                                             isolate(input[[paste0("topstat",cnt)]]), 
+                                             isolate(input[[paste0("iterde_norm",cnt)]]), sep = ","
+                                             )
   }
   
   for (i in seq(1:counter))
@@ -200,18 +246,10 @@ prepDataContainer <- function(data = NULL, counter=NULL,
               paste(inputconds$conds[[2*i]]))
     params <- unlist(strsplit(inputconds$demethod_params[i], ","))
     withProgress(message = 'Running DE Algorithms', detail = inputconds$demethod_params[i], value = 0, {
-      initd <- callModule(debrowserdeanalysis, paste0("DEResults",i), data = data, 
+      initd <- callModule(dprofilerdeanalysis, paste0("DEResults",i), data = data, 
                           columns = cols, conds = conds, params = params)
       if (!is.null(initd$dat()) && nrow(initd$dat()) > 1){
         inputconds$dclist[[i]] <- list(conds = conds, cols = cols, init_data=initd$dat(), 
-                                       demethod_params = inputconds$demethod_params[i])
-      }else{
-        return(NULL)
-      }
-      iterinitd <- callModule(debrowseriterdeanalysis, paste0("DEResults",i), data = data, 
-                          columns = cols, conds = conds, params = params)
-      if (!is.null(iterinitd$dat()) && nrow(iterinitd$dat()) > 1){
-        iterinputconds$dclist[[i]] <- list(conds = conds, cols = cols, init_data=iterinitd$dat(), 
                                        demethod_params = inputconds$demethod_params[i])
       }else{
         return(NULL)
@@ -222,5 +260,6 @@ prepDataContainer <- function(data = NULL, counter=NULL,
   
   if(length(inputconds$dclist) <1) return(NULL)
   
-  return(list(de = inputconds$dclist, iterde = iterinputconds$dclist))
+  #return(list(de = inputconds$dclist, iterde = iterinputconds$dclist))
+  return(inputconds$dclist)
 }

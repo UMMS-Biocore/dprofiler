@@ -1,8 +1,8 @@
-#' dconnectServer
+#' dprofilerServer
 #'
 #' Sets up shinyServer to be able to run DEBrowser interactively.
 #'
-#' @note \code{dconnectServer}
+#' @note \code{dprofilerServer}
 #' @param input, input params from UI
 #' @param output, output params to UI
 #' @param session, session variable
@@ -86,7 +86,7 @@
 #' @import apeglm
 #' @import ashr
 
-dconnectServer <- function(input, output, session) {
+dprofilerServer <- function(input, output, session) {
   options(warn = -1)
   tryCatch(
     {
@@ -124,7 +124,7 @@ dconnectServer <- function(input, output, session) {
         # Data Filtering Event
         observeEvent (input$Filter, {
           if(!is.null(uploadeddata()$load())){
-            updateTabItems(session, "MenuItems", "Filter")
+            updateTabItems(session, "MenuItems", "DataProcessing")
             filtd(callModule(debrowserlowcountfilter, "lcf", uploadeddata()$load()))
           }
         })
@@ -132,7 +132,8 @@ dconnectServer <- function(input, output, session) {
         # Batch Correction Event
         observeEvent (input$Batch, {
           if(!is.null(filtd()$filter())){
-            updateTabItems(session, "MenuItems", "BatchEffect")
+            updateTabsetPanel(session, "DataProcessingBox","batcheffect")
+            #updateTabItems(session, "MenuItems", "BatchEffect")
             batch(callModule(debrowserbatcheffect, "batcheffect", filtd()$filter()))
           }
         })
@@ -149,7 +150,7 @@ dconnectServer <- function(input, output, session) {
         observeEvent (input$goDEFromFilter, {
           if(is.null(batch())) batch(setBatch(filtd()))
           updateTabItems(session, "MenuItems", "CondSelect")
-          sel(debrowsercondselect(input, output, session,
+          sel(dprofilercondselect(input, output, session,
                                   batch()$BatchEffect()$count, batch()$BatchEffect()$meta))
           choicecounter$nc <- sel()$cc()
         })
@@ -158,7 +159,7 @@ dconnectServer <- function(input, output, session) {
             togglePanels(0, c(0), session)
             res <- prepDataContainer(batch()$BatchEffect()$count, sel()$cc(), input)
             if(is.null(res$de)) return(NULL)
-            dc(res$de)
+            dc(res)
             updateTabItems(session, "MenuItems", "DEAnalysis")
             buttonValues$startDE <- TRUE
           }
@@ -175,9 +176,7 @@ dconnectServer <- function(input, output, session) {
         output$deresUI <- renderUI({
           getDEResultsUI(paste0("DEResults",compsel()))
         })
-        output$iterderesUI <- renderUI({
-          getIterDEResultsUI(paste0("DEResults",compsel()))
-        })
+        
       })
       
       # check if conditions are ready for DE Analysis 

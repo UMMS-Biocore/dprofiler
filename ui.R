@@ -11,15 +11,15 @@
 #' @export
 #'
 
-dconnectUI <- function() {
+dprofilerUI <- function() {
   dbHeader <- shinydashboard::dashboardHeader(titleWidth = 250)
   dbHeader$children[[2]]$children <- tags$a(style='color: white;',
-                                            id="top_logo" , "Dconnect")
+                                            id="top_logo" , "Dprofiler")
   addResourcePath(prefix = "www", directoryPath = "www/")
   library("debrowser")
-  dconnect <- (fluidPage(
+  dprofiler <- (fluidPage(
     shinyjs::useShinyjs(),
-    tags$head(tags$title("Dconnect"),
+    tags$head(tags$title("Dprofiler"),
               tags$link(rel = "stylesheet", type = "text/css",
                         href = "www/shinydashboard_additional.css")
     ),
@@ -34,11 +34,12 @@ dconnectUI <- function() {
                     tabPanel(title = "Data Prep", value = "dataprep", id="dataprep",
                              sidebarMenu(id="MenuItems",
                                          menuItem("Upload", icon = icon("upload"), tabName = "Upload"),
-                                         menuItem("Filter", icon = icon("filter"), tabName = "Filter"),
-                                         menuItem("BatchEffect",  icon = icon("align-left"), tabName = "BatchEffect"),
+                                         menuItem("Data Processing", icon = icon("filter"), tabName = "DataProcessing"),
+                                         # menuItem("Filter", icon = icon("filter"), tabName = "Filter"),
+                                         # menuItem("BatchEffect",  icon = icon("align-left"), tabName = "BatchEffect"),
                                          menuItem("Cond. Select", icon = icon("adjust"), tabName = "CondSelect"),
-                                         menuItem("DEAnalysis", icon = icon("adjust"), tabName = "DEAnalysis"),
-                                         menuItem("Iter. DEAnalysis", icon = icon("adjust"), tabName = "IterDEAnalysis"),
+                                         menuItem("DE Analysis", icon = icon("adjust"), tabName = "DEAnalysis"),
+                                         # menuItem("Iter. DEAnalysis", icon = icon("adjust"), tabName = "IterDEAnalysis"),
                                          menuItem("DEFilter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
                                                   uiOutput("cutOffUI"),
                                                   uiOutput("compselectUI"))
@@ -66,43 +67,31 @@ dconnectUI <- function() {
                            )
                    ),
 
-                   # Filter Tab
-                   tabItem(tabName="Filter",
-                           conditionalPanel((condition <- "input.Filter"),
-                                            dataLCFUI("lcf"))
+                   # Upload Tab
+                   tabItem(tabName="DataProcessing", 
+                           tabBox(id = "DataProcessingBox", 
+                                  width = NULL,
+                                  tabPanel(title = "Filter",
+                                           conditionalPanel((condition <- "input.Filter"),
+                                                            dataLCFUI("lcf")),
+                                           value = "filter"
+                                  ),
+                                  tabPanel(title = "BatchEffect",
+                                           conditionalPanel((condition <- "input.Batch"),
+                                                            batchEffectUI("batcheffect")),
+                                           value = "batcheffect"
+                                  )
+                           )
                    ),
-
-                   # Batch Effect Tab
-                   tabItem(tabName="BatchEffect",
-                           conditionalPanel((condition <- "input.Batch"),
-                                            batchEffectUI("batcheffect"))
-                   ), 
                    
                    # Condition Selection Tab
                    tabItem(tabName="CondSelect", 
                            condSelectUI()
                    ),
                    
-                   # Upload Tab
+                   # DE Analysis Tab
                    tabItem(tabName="DEAnalysis", 
-                           tabBox(id = "DEAnalysisBox", 
-                                  width = NULL,
-                                  tabPanel(title = "DE Analysis",
-                                           uiOutput("deresUI"), 
-                                           value = "deresults"
-                                  )
-                           )
-                   ),
-                   
-                   # Upload Tab
-                   tabItem(tabName="IterDEAnalysis", 
-                           tabBox(id = "IterDEAnalysisBox", 
-                                  width = NULL,
-                                  tabPanel(title = "Iterative DE Analysis",
-                                           uiOutput("iterderesUI"), 
-                                           value = "membershipscore"
-                                  )
-                           )
+                           uiOutput("deresUI")
                    )
           )
           
@@ -113,5 +102,5 @@ dconnectUI <- function() {
       ))
   )
   )
-  dconnect
+  dprofiler
 }
