@@ -8,6 +8,7 @@ library(debrowser)
 library(cluster)
 library(MuSiC)
 library(VennDiagram)
+library(SignallingSingleCell)
 
 # source
 source("ui.R")
@@ -19,9 +20,10 @@ source("functions/condSelect.R")
 source("functions/iterdeprogs.R")
 # source("functions/funcs.R") 
 source("functions/deprogs.R")
-source("functions/silhouette.R")
+source("functions/scoring.R")
+source("functions/venndiagram.R")
+source("functions/deconvolute.R")
 
 # Run the application 
 shinyApp(ui = shinyUI(DprofilerUI),
          server = shinyServer(DprofilerServer))
-  

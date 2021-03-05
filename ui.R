@@ -35,12 +35,10 @@ dprofilerUI <- function() {
                              sidebarMenu(id="MenuItems",
                                          menuItem("Upload", icon = icon("upload"), tabName = "Upload"),
                                          menuItem("Data Processing", icon = icon("filter"), tabName = "DataProcessing"),
-                                         # menuItem("Filter", icon = icon("filter"), tabName = "Filter"),
-                                         # menuItem("BatchEffect",  icon = icon("align-left"), tabName = "BatchEffect"),
                                          menuItem("Cond. Select", icon = icon("adjust"), tabName = "CondSelect"),
                                          menuItem("DE Analysis", icon = icon("adjust"), tabName = "DEAnalysis"),
-                                         # menuItem("Iter. DEAnalysis", icon = icon("adjust"), tabName = "IterDEAnalysis"),
-                                         menuItem("DEFilter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
+                                         menuItem("Cellular Comp.", icon = icon("adjust"), tabName = "CellComp"),
+                                         menuItem("Filter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
                                                   uiOutput("cutOffUI"),
                                                   uiOutput("compselectUI"))
                              ),
@@ -92,6 +90,11 @@ dprofilerUI <- function() {
                    # DE Analysis Tab
                    tabItem(tabName="DEAnalysis", 
                            uiOutput("deresUI")
+                   ),
+                   
+                   # Deconvolution Tab
+                   tabItem(tabName="CellComp", 
+                           uiOutput("cellcompUI")
                    )
           )
           

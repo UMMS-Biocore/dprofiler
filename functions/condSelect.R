@@ -55,8 +55,8 @@ condSelectUI<- function () {
                                    getHelpButton("method", "http://debrowser.readthedocs.io/en/master/deseq/deseq.html"),
                                    # conditionalPanel(condition = ("output.condReady>0"),
                                    #                  actionButtonDE("startDE", "Start DE", styleclass = "primary"))
-                                   actionButtonDE("startDE", "Start DE", styleclass = "primary")
-                                   )
+                                   ),
+                            actionButtonDE("startDE", "Start DE", styleclass = "primary")
                           ))
   )
 }
@@ -102,18 +102,21 @@ selectConditions<-function(Dataset = NULL,
       
       selected1 <- selectedSamples(2 * i - 1)
       selected2 <- selectedSamples( 2 * i )
-      to_return <- list(column(12, getMetaSelector(metadata = metadata, input=input, n = i),
+      to_return <- list(
+        column(12, getMetaSelector(metadata = metadata, input=input, n = i),
                                getConditionSelectorFromMeta(metadata, input, i,
                                                             (2 * i - 1), allsamples, selected1),
                                getConditionSelectorFromMeta(metadata, input, i,
                                                             (2 * i), allsamples, selected2)
       ),
+      column(12,h5("DE Analysis Parameters:")),
       column(12, 
              # column(1, helpText(" ")),
              getSelectInputBox("demethod", "DE Method", i, 
                                c("DESeq2", "EdgeR", "Limma"),
                                selectedInput("demethod", i, "DESeq2", input)),
              getMethodDetails(i, input)),
+      column(12,h5("Scoring Parameters:")),
       column(12, 
              # column(1, helpText(" ")),
              getIterMethodDetails(i, input),
@@ -152,26 +155,25 @@ selectConditions<-function(Dataset = NULL,
 getIterMethodDetails <- function(num = 0, input = NULL) {
   if (num > 0)
     list(
-      fluidRow(
-        getSelectInputBox("scoremethod", "Score Method", num, 
-                          c("Silhouette", "NNLS-based"),
-                          selectedInput("scoremethod", num, "Silhouette", input)),
-        column(2,textInput(paste0("logfoldchange", num), "LogFoldChange", 
-                           value = isolate(selectedInput("logfoldchange", 
-                                                         num, "1", input) ))),
-        column(2,textInput(paste0("padj", num), "P-adj Value", 
-                           value = isolate(selectedInput("padj", 
-                                                         num, "0.01", input) ))),
-        column(2,textInput(paste0("minscore", num), "Min. Score", 
-                           value = isolate(selectedInput("minscore", 
-                                                         num, "0.5", input) ))),
-        column(2,textInput(paste0("topstat", num), "Top Stat", 
-                           value = isolate(selectedInput("topstat", 
-                                                         num, "100", input) ))),
-        getSelectInputBox("iterde_norm", "Normalization", num, 
-                          c("TMM","RLE","upperquartile","none"), 
-                          selectedInput("iterde_norm", num, "TMM", input), 2)),
-      br())
+      getSelectInputBox("scoremethod", "Score Method", num, 
+                        c("Silhouette", "NNLS-based"),
+                        selectedInput("scoremethod", num, "Silhouette", input)),
+      column(2,textInput(paste0("logfoldchange", num), "LogFoldChange", 
+                         value = isolate(selectedInput("logfoldchange", 
+                                                       num, "1", input) ))),
+      column(2,textInput(paste0("padj", num), "P-adj Value", 
+                         value = isolate(selectedInput("padj", 
+                                                       num, "0.01", input) ))),
+      column(2,textInput(paste0("minscore", num), "Min. Score", 
+                         value = isolate(selectedInput("minscore", 
+                                                       num, "0.5", input) ))),
+      column(2,textInput(paste0("topstat", num), "Top Stat", 
+                         value = isolate(selectedInput("topstat", 
+                                                       num, "100", input) ))),
+      getSelectInputBox("iterde_norm", "Normalization", num, 
+                        c("TMM","RLE","upperquartile","none"), 
+                        selectedInput("iterde_norm", num, "TMM", input), 2)
+      )
 }
 
 #' prepDataContainer
@@ -250,6 +252,7 @@ prepDataContainer <- function(data = NULL, counter=NULL,
                           columns = cols, conds = conds, params = params)
       if (!is.null(initd$dat()) && nrow(initd$dat()) > 1){
         inputconds$dclist[[i]] <- list(conds = conds, cols = cols, init_data=initd$dat(), 
+                                       # scores = initd$scores(),
                                        demethod_params = inputconds$demethod_params[i])
       }else{
         return(NULL)
@@ -260,6 +263,5 @@ prepDataContainer <- function(data = NULL, counter=NULL,
   
   if(length(inputconds$dclist) <1) return(NULL)
   
-  #return(list(de = inputconds$dclist, iterde = iterinputconds$dclist))
   return(inputconds$dclist)
 }

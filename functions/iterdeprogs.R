@@ -112,6 +112,7 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL){
     
     # if there are no impure columns, stop
     if(length(exclude_list) == 0 | i == iter){
+      NumberofIters <- i
       break
     }
     
@@ -119,49 +120,10 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL){
     cleaned_columns <- c(cleaned_columns, cur_columns[exclude_list])
     print(length(cleaned_columns))
   }
-  
-  # # Final Scoring
-  # data_de <- data_tmm[rownames(data) %in% DEgenes_new, ]
-  # if(ScoreMethod == "Silhouette"){
-  #   
-  #   # Spearman correlations
-  #   datax_spear <- (cor(data_de, method = "spearman") + 1)/2
-  #   datax_spear_sim <- 1- datax_spear
-  #   datax_spear_sim_clean <- datax_spear_sim[,columns %in% cur_columns]
-  #   IterDEscore <- custom_silhouette(cur_conds, datax_spear_sim_clean)
-  #   
-  # }
-  # if(ScoreMethod == "NNLS-based"){
-  #   
-  #   # Expression Profiles
-  #   profiles <- data_de[,colnames(data_de) %in% cur_columns]
-  #   profiles <- aggregate(t(profiles),list(cur_conds),mean)
-  #   profiles <- t(profiles[,-1])
-  #   
-  #   # Deconvulate points based on expression profiles of conditions
-  #   IterDEscore <- NULL
-  #   for(j in 1:ncol(data_de)){
-  #     samples_DCV <- nnls(profiles,data_de[,j])
-  #     norm_coef <- samples_DCV$x/sum(samples_DCV$x)
-  #     IterDEscore <- rbind(IterDEscore,norm_coef)
-  #   }
-  #   colnames(IterDEscore) <- unique(conds)
-  #   rownames(IterDEscore) <- columns
-  #   
-  # }
-  # 
-  # # Format and establish score table
-  # IterDEscore <- format(round(IterDEscore, 3), nsmall = 3)
-  # IterDEscore_new <- NULL
-  # for(i in 1:nrow(IterDEscore)){
-  #   IterDEscore_new <- c(IterDEscore_new,
-  #                        IterDEscore[i,conds[i]==unique(conds)])
-  # }
-  # IterDEscore <- data.frame(Samples = colnames(data_tmm), Conds = conds, Scores = IterDEscore_new)
   IterDEgenes <- DEgenes
 
   return(list(IterDEResults = results, DEResults = DEResults, IterDEgenes = IterDEgenes, 
-              DEgenes = NonIterDEgenes, cleaned_columns = cleaned_columns))
+              DEgenes = NonIterDEgenes, cleaned_columns = cleaned_columns, NumberofIters = NumberofIters))
 }
 
 getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NULL, params = NULL, 
@@ -173,9 +135,10 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
   # parameters
   ScoreMethod <- params[6]
   iterde_norm <- params[11]
-
+  TopStat <- as.numeric(TopStat)
+  
   # DE genes
-  if(is.null(TopStat)){
+  if(is.na(TopStat)){
     if(is.null(ManuelDEgenes)){
       DEgenes <- deres$DEgenes
       IterDEgenes <- deres$IterDEgenes
@@ -183,8 +146,14 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
       DEgenes <- IterDEgenes <- read.table(file = ManuelDEgenes$datapath)[,1]
     }
   } else {
-    DEgenes <- rownames(deres$DEResults[order(deres$DEResults$stat, decreasing = TRUE)[1:TopStat],])
-    IterDEgenes <- rownames(deres$IterDEResults[order(deres$IterDEResults$stat, decreasing = TRUE)[1:TopStat],])
+    if(TopStat > 5){
+      TopStat <- as.numeric(TopStat)
+      DEgenes <- rownames(deres$DEResults[order(deres$DEResults$stat, decreasing = TRUE)[1:TopStat],])
+      IterDEgenes <- rownames(deres$IterDEResults[order(deres$IterDEResults$stat, decreasing = TRUE)[1:TopStat],]) 
+    } else {
+      DEgenes <- deres$DEgenes
+      IterDEgenes <- deres$IterDEgenes
+    }
   }
   
   # set variables and cutoff values
@@ -225,7 +194,7 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
     rownames(DEscore) <- columns
     
   }
-  DEscore <- format(round(DEscore, 3), nsmall = 3)
+  # DEscore <- format(round(DEscore, 3), nsmall = 3)
   DEscore_new <- NULL
   for(i in 1:nrow(DEscore)){
     DEscore_new <- c(DEscore_new,
@@ -262,7 +231,7 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
     rownames(IterDEscore) <- columns
     
   }
-  IterDEscore <- format(round(IterDEscore, 3), nsmall = 3)
+  # IterDEscore <- format(round(IterDEscore, 3), nsmall = 3)
   IterDEscore_new <- NULL
   for(i in 1:nrow(IterDEscore)){
     IterDEscore_new <- c(IterDEscore_new,
@@ -272,7 +241,6 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
 
   return(list(IterDEscore = IterDEscore, DEscore = DEscore))
 }
-
 
 custom_silhouette <- function(x,dist){
   

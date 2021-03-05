@@ -108,6 +108,7 @@ dprofilerServer <- function(input, output, session) {
       batch <- reactiveVal()
       sel <- reactiveVal()
       dc <- reactiveVal()
+      dec <- reactiveVal()
       compsel <- reactive({
         cp <- 1
         if (!is.null(input$compselect_dataprep))
@@ -117,10 +118,12 @@ dprofilerServer <- function(input, output, session) {
       
       observe({
         
-        # Data Loading Event
-        uploadeddata(callModule(dataLoadServer, "load", "Filter", session))
+        # Start from the Upload Tab
         updateTabItems(session, "MenuItems", "Upload")
         
+        # Data Loading Event
+        uploadeddata(callModule(dataLoadServer, "load", "Filter", session))
+
         # Data Filtering Event
         observeEvent (input$Filter, {
           if(!is.null(uploadeddata()$load())){
@@ -133,11 +136,9 @@ dprofilerServer <- function(input, output, session) {
         observeEvent (input$Batch, {
           if(!is.null(filtd()$filter())){
             updateTabsetPanel(session, "DataProcessingBox","batcheffect")
-            #updateTabItems(session, "MenuItems", "BatchEffect")
             batch(callModule(debrowserbatcheffect, "batcheffect", filtd()$filter()))
           }
         })
-        
         
         # Regular DE analysis Event
         observeEvent (input$goDE, {
@@ -154,22 +155,19 @@ dprofilerServer <- function(input, output, session) {
                                   batch()$BatchEffect()$count, batch()$BatchEffect()$meta))
           choicecounter$nc <- sel()$cc()
         })
-        observeEvent (input$startDE, {
+        observeEvent(input$startDE, {
           if(!is.null(batch()$BatchEffect()$count)){
-            togglePanels(0, c(0), session)
             res <- prepDataContainer(batch()$BatchEffect()$count, sel()$cc(), input)
-            if(is.null(res$de)) return(NULL)
+            if(is.null(res)) return(NULL)
             dc(res)
             updateTabItems(session, "MenuItems", "DEAnalysis")
             buttonValues$startDE <- TRUE
           }
         })
-
         output$compselectUI <- renderUI({
           if (!is.null(sel()) && !is.null(sel()$cc()))
             getCompSelection("compselect_dataprep",sel()$cc())
         })
-
         output$cutOffUI <- renderUI({
           cutOffSelectionUI(paste0("DEResults", compsel()))
         })
@@ -177,6 +175,19 @@ dprofilerServer <- function(input, output, session) {
           getDEResultsUI(paste0("DEResults",compsel()))
         })
         
+        # Cellular Heterogeneity Event
+        observeEvent(input$deconvolute, {
+          if(!is.null(dc()[[1]]$init_data)){
+            # res <- prepDataContainer(batch()$BatchEffect()$count, sel()$cc(), input)
+            # if(is.null(res)) return(NULL)
+            # dc(res)
+            dec(callModule(dprofilerdeconvolute, "Deconvolute", dc()[[1]]$scores))
+            updateTabItems(session, "MenuItems", "CellComp")
+          }
+        })
+        output$cellcompUI <- renderUI({
+          getDeconvoluteUI("Deconvolute")
+        })
       })
       
       # check if conditions are ready for DE Analysis 

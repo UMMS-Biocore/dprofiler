@@ -24,11 +24,6 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
         runIterDE(data, columns, conds, params)
     })
     
-    # # Final Scores
-    # finalscore <- reactive({
-    #     getFinalScores(deres(),data, columns, conds, params, TopWald = input$TopStat)
-    # })
-    
     # Apply Filters for DE and Iter DE Results
     prepDat <- reactive({
         applyFiltersNew(addDataCols(data, deres()$DEResults, columns, conds), input)
@@ -37,9 +32,15 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
         applyFiltersNew(addDataCols(data, deres()$IterDEResults, columns, conds), input)
     })
     
+    # # get Final Scores
+    # finalScore <- reactive({
+    #     getFinalScores(deres(), data, columns, conds, params, 
+    #                    ManuelDEgenes = input$manuelgenes, TopStat = input$topstat)
+    # })
+    
     # Observe for Tables and Plots
     observe({
-        finalscore <- getFinalScores(deres(), data, columns, conds, params, 
+        finalScore <- getFinalScores(deres(), data, columns, conds, params, 
                                      ManuelDEgenes = input$manuelgenes, TopStat = input$topstat)
         dat <-  prepDat()[prepDat()$Legend == input$legendradio,]
         dat2 <- removeCols(c("ID", "x", "y","Legend", "Size"), dat)
@@ -49,11 +50,13 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
         # DE Results
         getTableDetails(output, session, "DEResults", dat2, modal=FALSE)
         getTableDetails(output, session, "IterDEResults", iterdat2, modal = FALSE)
-        getTableDetails(output, session, "MembershipScoresIterDE", finalscore$IterDEscore, modal = FALSE)
-        
+
         # Membership Scores
-        getVennDiagram(output, session, "HomogeneityVenn", deres()$IterDEgenes, deres()$DEgenes)
-        getSilhouetteDetails(output, session, "HomogeneityScores", finalscore$DEscore, finalscore$IterDEscore)
+        getIterDESummary(output, session, "HomogeneityVenn", "HomogeneitySummary", deres())
+        getScoreDetails(output, session, "HomogeneityScores", finalScore$DEscore, finalScore$IterDEscore)
+        # getScoreTableDetails(output, session, "MembershipScoresIterDE", finalScore$IterDEscore, 
+        #                      modal = FALSE, highlight = TRUE)
+        
     })
     list(dat = prepDat)
 }
@@ -76,29 +79,27 @@ getDEResultsUI<- function (id) {
                width = NULL,
                tabPanel(title = "Homogeneity Detection",
                         fluidRow(
-                            shinydashboard::box(title = "Venn diagram",
-                                                solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
-                                                fluidRow(
-                                                    column(12,
-                                                           plotOutput(ns("HomogeneityVenn"))
-                                                    )
-                                                )
+                            column(12,
+                                shinydashboard::box(title = "Summary",
+                                                solidHeader = T, status = "info",  width = 3, collapsible = TRUE,
+                                                tableOutput(ns("HomogeneitySummary"))
+                                )
                             ),
-                            shinydashboard::box(title = "Membership Scores",
-                                                solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
-                                                fluidRow(
-                                                    column(12,
-                                                           plotlyOutput(ns("HomogeneityScores"))
-                                                    )
-                                                )
-                            ),
-                            shinydashboard::box(title = "Cellular Heterogeneity Analysis",
-                                                solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
-                                                fluidRow(
-                                                    column(12,
-                                                           uiOutput(ns("MembershipScoresIterDE"))
-                                                    )
-                                                )
+                            column(12,
+                                shinydashboard::box(title = "Venn diagram",
+                                                    solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
+                                                    plotOutput(ns("HomogeneityVenn")),
+                                                    actionButtonDE("deconvolute", "Go to Cellular Composition", styleclass = "primary")
+                                ),
+                                shinydashboard::box(title = "Membership Scores",
+                                                    solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
+                                                    plotlyOutput(ns("HomogeneityScores"))
+                                ),
+                                # shinydashboard::box(title = "Cellular Heterogeneity Analysis",
+                                #                     solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
+                                #                     # uiOutput(ns("MembershipScoresIterDE"))
+                                #                     DT::dataTableOutput(ns("MembershipScoresIterDE"))
+                                # )
                             )
                         ),
                         value = "homogeneity"
@@ -108,10 +109,7 @@ getDEResultsUI<- function (id) {
                             shinydashboard::box(title = "Differentially Expressed Genes",
                                                 solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
                                                 fluidRow(
-                                                    column(12,
-                                                           uiOutput(ns("IterDEResults"))
-                                                    ),
-                                                    # actionButtonDE("goMain", "Go to Main Plots", styleclass = "primary")
+                                                    uiOutput(ns("IterDEResults"))
                                                 )
                             )
                         ),
@@ -122,9 +120,7 @@ getDEResultsUI<- function (id) {
                             shinydashboard::box(title = "Differentially Expressed Genes",
                                                 solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
                                                 fluidRow(
-                                                    column(12,
-                                                           uiOutput(ns("DEResults"))
-                                                    ),
+                                                    uiOutput(ns("DEResults")),
                                                     actionButtonDE("goMain", "Go to Main Plots", styleclass = "primary")
                                                 )
                             )
@@ -152,7 +148,7 @@ cutOffSelectionUI <- function(id){
         getLegendRadio(id),
         textInput(ns("padj"), "padj value cut off", value = "0.01" ),
         textInput(ns("foldChange"), "foldChange", value = "2" ),
-        textInput(ns("topstat"), "Top Stat", value = "1000" ), 
+        textInput(ns("topstat"), "Top Stat", value = "" ), 
         fileInput(ns("manuelgenes"), "Manuel DEgenes")
     )
 }
