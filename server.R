@@ -96,8 +96,6 @@ dprofilerServer <- function(input, output, session) {
                  shiny.autoreload=TRUE, warn =-1)
       }
       
-      choicecounter <- reactiveValues(nc = 0)
-      
       output$programtitle <- renderUI({
         # togglePanels(0, c(0), session)
         getProgramTitle(session)
@@ -109,22 +107,16 @@ dprofilerServer <- function(input, output, session) {
       sel <- reactiveVal()
       dc <- reactiveVal()
       dec <- reactiveVal()
-      compsel <- reactive({
-        cp <- 1
-        if (!is.null(input$compselect_dataprep))
-          cp <- input$compselect_dataprep
-        cp
-      })
       
       observe({
         
-        # Start from the Upload Tab
+        ## Start from the Upload Tab ####
         updateTabItems(session, "MenuItems", "Upload")
         
-        # Data Loading Event
+        ## Data Loading Event ####
         uploadeddata(callModule(dataLoadServer, "load", "Filter", session))
 
-        # Data Filtering Event
+        ## Data Filtering Event ####
         observeEvent (input$Filter, {
           if(!is.null(uploadeddata()$load())){
             updateTabItems(session, "MenuItems", "DataProcessing")
@@ -132,7 +124,7 @@ dprofilerServer <- function(input, output, session) {
           }
         })
         
-        # Batch Correction Event
+        ## Batch Correction Event ####
         observeEvent (input$Batch, {
           if(!is.null(filtd()$filter())){
             updateTabsetPanel(session, "DataProcessingBox","batcheffect")
@@ -140,62 +132,103 @@ dprofilerServer <- function(input, output, session) {
           }
         })
         
-        # Regular DE analysis Event
+        ## Regular DE analysis Event ####
         observeEvent (input$goDE, {
           if(is.null(batch())) batch(setBatch(filtd()))
           updateTabItems(session, "MenuItems", "CondSelect")
-          sel(debrowsercondselect(input, output, session,
+          sel(dprofilercondselect(input, output, session,
                                   batch()$BatchEffect()$count, batch()$BatchEffect()$meta))
-          choicecounter$nc <- sel()$cc()
         })
+        
         observeEvent (input$goDEFromFilter, {
           if(is.null(batch())) batch(setBatch(filtd()))
           updateTabItems(session, "MenuItems", "CondSelect")
           sel(dprofilercondselect(input, output, session,
                                   batch()$BatchEffect()$count, batch()$BatchEffect()$meta))
-          choicecounter$nc <- sel()$cc()
         })
+        
         observeEvent(input$startDE, {
           if(!is.null(batch()$BatchEffect()$count)){
-            res <- prepDataContainer(batch()$BatchEffect()$count, sel()$cc(), input)
+            res <- prepDataContainer(batch()$BatchEffect()$count, input, 
+                                     uploadeddata()$load()$sc_count)
             if(is.null(res)) return(NULL)
             dc(res)
             updateTabItems(session, "MenuItems", "DEAnalysis")
             buttonValues$startDE <- TRUE
           }
         })
-        output$compselectUI <- renderUI({
-          if (!is.null(sel()) && !is.null(sel()$cc()))
-            getCompSelection("compselect_dataprep",sel()$cc())
-        })
+        
         output$cutOffUI <- renderUI({
-          cutOffSelectionUI(paste0("DEResults", compsel()))
-        })
-        output$deresUI <- renderUI({
-          getDEResultsUI(paste0("DEResults",compsel()))
+          cutOffSelectionUI("DEResults")
         })
         
-        # Cellular Heterogeneity Event
+        output$deresUI <- renderUI({
+          getDEResultsUI("DEResults")
+        })
+        
+
+        ## Cellular Heterogeneity Event ####
         observeEvent(input$deconvolute, {
-          if(!is.null(dc()[[1]]$init_data)){
-            # res <- prepDataContainer(batch()$BatchEffect()$count, sel()$cc(), input)
-            # if(is.null(res)) return(NULL)
-            # dc(res)
-            dec(callModule(dprofilerdeconvolute, "Deconvolute", dc()[[1]]$scores))
-            updateTabItems(session, "MenuItems", "CellComp")
+          updateTabItems(session, "MenuItems", "CellComp")
+        })
+        
+        output$cellcompUI <- renderUI({
+          getDeconvoluteUI("DEResults")
+        })
+        
+
+        ## Main plots UI ####
+        selectedMain <- reactiveVal()
+        observe({
+          selectedMain(callModule(dprofilermainplot, "DEResults", dc()))
+        })
+        
+        ## Heatmaps UI #### 
+        selectedHeat <- reactiveVal()
+        observe({
+          if (!is.null(selectedMain()) && !is.null(selectedMain()$selGenes())) {
+            withProgress(message = 'Creating plot', style = "notification", value = 0.1, {
+              selectedHeat(callModule(dprofilerheatmap, "DEResults", dc()$init_dedata[selectedMain()$selGenes(), dc()$cols]))
+            })
           }
         })
-        output$cellcompUI <- renderUI({
-          getDeconvoluteUI("Deconvolute")
+        
+        selgenename <- reactiveVal()
+        observe({
+          if (!is.null(selectedMain()) && !is.null(selectedMain()$shgClicked())
+              && selectedMain()$shgClicked()!=""){
+            selgenename(selectedMain()$shgClicked())
+            if (!is.null(selectedHeat()) && !is.null(selectedHeat()$shgClicked()) &&
+                selectedHeat()$shgClicked() != ""){
+              js$resetInputParam("DEResults-hoveredgenenameclick")
+            }
+          }
         })
+        observe({
+          if (!is.null(selectedHeat()) && !is.null(selectedHeat()$shgClicked()) && 
+              selectedHeat()$shgClicked() != ""){
+            selgenename(selectedHeat()$shgClicked())
+          }
+        })
+
+        output$HeatmapMenu  <- renderUI({
+          heatmapControlsUI("DEResults")
+        })
+        
+        ## Bar Main and BoxMain Plots UI
+        observe({
+          if (!is.null(selgenename()) && selgenename()!=""){
+            withProgress(message = 'Creating Bar/Box plots', style = "notification", value = 0.1, {
+              callModule(dprofilerbarmainplot, "DEResults", dc()$init_dedata, 
+                         dc()$cols, dc()$conds, selgenename())
+              callModule(dprofilerboxmainplot, "DEResults", dc()$init_dedata, 
+                         dc()$cols, dc()$conds, selgenename())
+            })
+          }
+        })
+        
       })
       
-      # check if conditions are ready for DE Analysis 
-      output$condReady <- reactive({
-        if (!is.null(sel()))
-          choicecounter$nc <- sel()$cc()
-        choicecounter$nc
-      })
       
       # auxiliary values of buttons and reactive values
       buttonValues <- reactiveValues(goQCplots = FALSE, goDE = FALSE,

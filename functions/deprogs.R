@@ -16,7 +16,8 @@
 #'     x <- dprofilerdeanalysis()
 #'
 dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL, 
-                                data = NULL, columns = NULL, conds = NULL, params = NULL) {
+                                data = NULL, columns = NULL, conds = NULL, params = NULL,
+                                scdata = NULL) {
     if(is.null(data)) return(NULL)
     
     # Iterative DE Algorithm
@@ -24,24 +25,28 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
         runIterDE(data, columns, conds, params)
     })
     
+    # # Deconvolution
+    # mixtures <- reactive({
+    #     deconvolute(data, deres(), columns, conds, scdata)
+    # })
+    
     # Apply Filters for DE and Iter DE Results
     prepDat <- reactive({
         applyFiltersNew(addDataCols(data, deres()$DEResults, columns, conds), input)
     })
     iterprepDat <- reactive({
+        remaining_columns <- (columns != deres()$cleaned_columns)
+        if(length(remaining_columns) > 0){
+            columns <- columns[remaining_columns]
+            conds <- conds[remaining_columns]
+        }
         applyFiltersNew(addDataCols(data, deres()$IterDEResults, columns, conds), input)
     })
-    
-    # # get Final Scores
-    # finalScore <- reactive({
-    #     getFinalScores(deres(), data, columns, conds, params, 
-    #                    ManuelDEgenes = input$manuelgenes, TopStat = input$topstat)
-    # })
     
     # Observe for Tables and Plots
     observe({
         finalScore <- getFinalScores(deres(), data, columns, conds, params, 
-                                     ManuelDEgenes = input$manuelgenes, TopStat = input$topstat)
+                                     ManuelDEgenes = input$manualgenes, TopStat = input$topstat)
         dat <-  prepDat()[prepDat()$Legend == input$legendradio,]
         dat2 <- removeCols(c("ID", "x", "y","Legend", "Size"), dat)
         iterdat <-  iterprepDat()[iterprepDat()$Legend == input$legendradio,]
@@ -52,13 +57,28 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
         getTableDetails(output, session, "IterDEResults", iterdat2, modal = FALSE)
 
         # Membership Scores
-        getIterDESummary(output, session, "HomogeneityVenn", "HomogeneitySummary", deres())
+        getIterDESummary(output, session, "HomogeneityVenn", "HomogeneitySummary", deres(), params)
         getScoreDetails(output, session, "HomogeneityScores", finalScore$DEscore, finalScore$IterDEscore)
-        # getScoreTableDetails(output, session, "MembershipScoresIterDE", finalScore$IterDEscore, 
-        #                      modal = FALSE, highlight = TRUE)
+        getScoreTableDetails(output, session, "MembershipScoresIterDE", 
+                             # cbind(finalScore$IterDEscore, mixtures()), 
+                             cbind(finalScore$IterDEscore), 
+                             modal = FALSE, highlight = TRUE)
         
+        # download handlers
+        output$downloadBeforeGenes <- downloadHandler(
+          filename = function() {paste('initial_degenes.txt')},
+          content = function(con) {write(setdiff(deres()$DEgenes,deres()$IterDEgenes), con)}
+        )
+        output$downloadOverlapGenes <- downloadHandler(
+            filename = function() {paste('overlapping_degenes.txt')},
+            content = function(con) {write(intersect(deres()$DEgenes,deres()$IterDEgenes), con)}
+        )
+        output$downloadAfterGenes <- downloadHandler(
+            filename = function() { paste('final_degenes.txt')},
+            content = function(con) {write(setdiff(deres()$IterDEgenes,deres()$DEgenes), con)}
+        )
     })
-    list(dat = prepDat)
+    list(dat = prepDat, DEgenes = deres()$DEgenes, iterdat = iterprepDat, IterDEgenes = deres()$IterDEgenes)
 }
 
 
@@ -79,53 +99,55 @@ getDEResultsUI<- function (id) {
                width = NULL,
                tabPanel(title = "Homogeneity Detection",
                         fluidRow(
-                            column(12,
-                                shinydashboard::box(title = "Summary",
-                                                solidHeader = T, status = "info",  width = 3, collapsible = TRUE,
-                                                tableOutput(ns("HomogeneitySummary"))
-                                )
+                            shinydashboard::box(title = "Summary", height = 260,
+                                                solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
+                                                column(3,tableOutput(ns("HomogeneitySummary"))),
+                                                column(3,tableOutput(ns("HomogeneitySummaryIter"))),
+                                                column(3,tableOutput(ns("HomogeneitySummaryDE")))
                             ),
-                            column(12,
-                                shinydashboard::box(title = "Venn diagram",
-                                                    solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
-                                                    plotOutput(ns("HomogeneityVenn")),
-                                                    actionButtonDE("deconvolute", "Go to Cellular Composition", styleclass = "primary")
-                                ),
-                                shinydashboard::box(title = "Membership Scores",
-                                                    solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
-                                                    plotlyOutput(ns("HomogeneityScores"))
-                                ),
-                                # shinydashboard::box(title = "Cellular Heterogeneity Analysis",
-                                #                     solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
-                                #                     # uiOutput(ns("MembershipScoresIterDE"))
-                                #                     DT::dataTableOutput(ns("MembershipScoresIterDE"))
-                                # )
-                            )
+                            shinydashboard::box(title = "# of DE Genes",
+                                                solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
+                                                plotOutput(ns("HomogeneityVenn")),
+                                                column(12,
+                                                       downloadButton(ns("downloadBeforeGenes"), label = "Initial DEgenes"),
+                                                       downloadButton(ns("downloadOverlapGenes"), label = "Overlapping DE genes"),
+                                                       downloadButton(ns("downloadAfterGenes"), label = "Final DE genes"),
+                                                )
+                            ),
+                            shinydashboard::box(title = "Membership Scores",
+                                                solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
+                                                plotlyOutput(ns("HomogeneityScores")),
+                                                actionButtonDE("deconvolute", "Go to Cellular Composition", styleclass = "primary")
+                            ),
+                            uiOutput(ns("maininitialplot")),                                  
+                            uiOutput(ns("mainoverlapplot")),
+                            uiOutput(ns("mainfinalplot")),
+                            uiOutput(ns("BarMainUI")),
+                            uiOutput(ns("BoxMainUI")),
+                            uiOutput(ns("heatmapUI"))
                         ),
                         value = "homogeneity"
                ),
-               tabPanel(title = "Heterogeneous Conditions",
+               tabPanel(title = "Impure (Heterogeneous) Conditions",
                         fluidRow(
                             shinydashboard::box(title = "Differentially Expressed Genes",
                                                 solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
-                                                fluidRow(
-                                                    uiOutput(ns("IterDEResults"))
-                                                )
-                            )
-                        ),
-                        value = "iterderesults"
-               ),
-               tabPanel(title = "Homogeneous Conditions",
-                        fluidRow(
-                            shinydashboard::box(title = "Differentially Expressed Genes",
-                                                solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
-                                                fluidRow(
-                                                    uiOutput(ns("DEResults")),
-                                                    actionButtonDE("goMain", "Go to Main Plots", styleclass = "primary")
-                                                )
-                            )
+                                                uiOutput(ns("IterDEResults"))
+                                                
+                            ),
+                            uiOutput(ns("maindeplot"))
                         ),
                         value = "deresults"
+               ),
+               tabPanel(title = "Pure (Homogeneous) Conditions",
+                        fluidRow(
+                            shinydashboard::box(title = "Differentially Expressed Genes",
+                                                solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
+                                                uiOutput(ns("DEResults"))
+                            ),
+                            uiOutput(ns("mainiterdeplot"))
+                        ),
+                        value = "iterderesults"
                )
         )
     )
@@ -149,6 +171,6 @@ cutOffSelectionUI <- function(id){
         textInput(ns("padj"), "padj value cut off", value = "0.01" ),
         textInput(ns("foldChange"), "foldChange", value = "2" ),
         textInput(ns("topstat"), "Top Stat", value = "" ), 
-        fileInput(ns("manuelgenes"), "Manuel DEgenes")
+        fileInput(ns("manualgenes"), "Manual DEgenes")
     )
 }
