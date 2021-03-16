@@ -44,11 +44,12 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   
   # Event for uploading the demo file
   observeEvent(input$demo3, {
-    load("demo/demodata3.Rda")
+    # load("demo/demodata3.Rda")
+    load("demo/demodatatemp.Rda")
     ldata$count <- demodata
     ldata$meta <- metadatatable
-    ldata$sc_count <- demoscdata
-    rm(demoscdata)
+    # ldata$sc_count <- demoscdata
+    # rm(demoscdata)
     ldata$prof_count <- demoprofdata
     ldata$prof_meta <- profmetadatatable
   })
@@ -155,16 +156,20 @@ dataLoadUI<- function (id) {
              actionButtonDE(ns("uploadFile"), label = "Upload", styleclass = "primary"), 
              actionButtonDE(ns("demo3"),  label = "Load Demo PRJNA554241", styleclass = "primary"))
     ),
+    # fluidRow(
+    #   fileUploadBox(id, "countdata", "Bulk Count Data"),
+    #   fileUploadBox(id, "metadata", "Bulk Metadata")
+    # ),
+    # fluidRow(
+    #   fileUploadBox(id, "profilecountdata", "Profiling Count Data"),
+    #   fileUploadBox(id, "profilemetadata", "Profiling Metadata")
+    # ),
     fluidRow(
-      fileUploadBox(id, "countdata", "Bulk Count Data"),
-      fileUploadBox(id, "metadata", "Bulk Metadata")
+      fileUploadBox(id, "countdata", "metadata", "Reference Expression Data Files"),
+      fileUploadBox(id, "profilecountdata", "profilemetadata", "Bulk Expression Data Files (Optional)")
     ),
     fluidRow(
-      fileUploadBox(id, "profilecountdata", "Profiling Count Data"),
-      fileUploadBox(id, "profilemetadata", "Profiling Metadata")
-    ),
-    fluidRow(
-      scfileUploadBox(id, "sccountdata", "scRNA Count Data Object"),
+      scfileUploadBox(id, "sccountdata", "scRNA Expression Data Object (Optional)"),
     )
   )
 }
@@ -185,7 +190,7 @@ dataSummaryUI<- function(id) {
   list(
   fluidRow(
     column(12,uiOutput(ns("nextButton"))),
-    shinydashboard::box(title = "Bulk Upload Summary", solidHeader = TRUE, status = "info",
+    shinydashboard::box(title = "Reference Expression Data Summary", solidHeader = TRUE, status = "info",
                         width = 6, 
                         fluidRow(
                           column(12, 
@@ -197,7 +202,7 @@ dataSummaryUI<- function(id) {
                           )
                         )
     ),
-    shinydashboard::box(title = "Profile Upload Summary", solidHeader = TRUE, status = "info",
+    shinydashboard::box(title = "Bulk Expression Data Summary", solidHeader = TRUE, status = "info",
                         width = 6, 
                         fluidRow(
                           column(12, 
@@ -211,7 +216,7 @@ dataSummaryUI<- function(id) {
     )
   ),
   fluidRow(
-    shinydashboard::box(title = "scRNA Upload Summary", solidHeader = TRUE, status = "info",
+    shinydashboard::box(title = "scRNA Expression Data Summary", solidHeader = TRUE, status = "info",
                         width = 12, 
                         fluidRow(
                           column(12, 
@@ -295,22 +300,37 @@ sepRadio <- function (id, name)
                inline=T)
 }
 
-fileUploadBox <- function (id = NULL, inputId = NULL, label = NULL) 
+fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL, label = NULL) 
 {
   ns <- NS(id)
-  shinydashboard::box(title = paste0(label, " File"), 
+  shinydashboard::box(title = label, 
                       solidHeader = TRUE, status = "info", width = 6, 
-                      helpText(paste0("Upload your '", label, " File'")), 
-                      fileInput(inputId = ns(inputId), label = NULL, accept = fileTypes()), 
-                      sepRadio(id, paste0(inputId, "Sep")))
+                      
+                      helpText(paste0("Upload Data")), 
+                      tags$div(style = "margin-bottom:-30px",
+                        fileInput(inputId = ns(inputId_count), label = NULL, accept = fileTypes())
+                      ),
+                      tags$div(style = "margin-top:-30px;margin-bottom:30px",
+                               sepRadio(id, paste0(inputId_count, "Sep"))
+                      ),
+                      
+                      helpText(paste0("Upload MetaData")), 
+                      tags$div(style = "margin-bottom:-30px",
+                               fileInput(inputId = ns(inputId_meta), label = NULL, accept = fileTypes())
+                      ),
+                      tags$div(style = "margin-top:-30px",
+                               sepRadio(id, paste0(inputId_meta, "Sep"))
+                      )
+                      
+                      )
 }
 
 scfileUploadBox <- function (id = NULL, inputId = NULL, label = NULL) 
 {
   ns <- NS(id)
-  shinydashboard::box(title = paste0(label, " File"), 
+  shinydashboard::box(title = label, 
                       solidHeader = TRUE, status = "info", width = 6, 
-                      helpText(paste0("Upload your '", label, " File'")), 
+                      helpText(paste0("Upload Data")),
                       fileInput(inputId = ns(inputId), label = NULL, accept = fileTypes()),
                       fluidRow(
                         column(6,textInput(inputId = ns(paste0(inputId,"umilabel")), label = "UMI Column Name", value = "UMI_sum_raw")),

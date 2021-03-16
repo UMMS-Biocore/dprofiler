@@ -26,6 +26,22 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, sc
   list(dat = scores)
 }
 
+deconvolute <- function(data, deres, columns, conds, scdata){
+  
+  data <- data[,columns]
+  data_de <- data[deres$IterDEgenes,]
+  Vit_BulkRNAseq <- ExpressionSet(assayData=as.matrix(data_de))
+  pData(Vit_BulkRNAseq) <- data.frame(row.names = columns,
+                                      conds = conds)
+  
+  NLandL.prop = music_prop(bulk.eset = Vit_BulkRNAseq, 
+                           sc.eset = scdata, 
+                           clusters = 'CellType',
+                           samples = 'Patient', verbose = T)
+  
+  return(NLandL.prop$Est.prop.weighted)
+}
+
 
 #' getDeconvoluteUI
 #' Creates a panel to visualize DE results
@@ -42,7 +58,7 @@ getDeconvoluteUI<- function (id) {
   list(
     tabBox(id = "DeconvoluteBox",
            width = NULL,
-           tabPanel(title = "Homogeneity Detection",
+           tabPanel(title = "Cellular Composition",
                     fluidRow(
                       column(12,
                              shinydashboard::box(title = "Cellular Heterogeneity Analysis",
@@ -97,10 +113,14 @@ getScoreTableDetails <- function(output  = NULL, session  = NULL, tablename  = N
                                                                   , c(10, 20, 50, "All") # declare titles
                                                ), # end of lengthMenu customization
                                                pageLength = 10))
+      numeric_names <- colnames(data[,sapply(data, is.numeric), drop = FALSE])
+      dttable <- dttable %>% DT::formatRound(numeric_names, digits=3)
       if(highlight){
-        numeric_names <- colnames(data[,sapply(data, is.numeric), drop = FALSE])
-        dttable <-  dttable %>% DT::formatStyle(numeric_names,
-                                                background = DT::styleColorBar(c(0,1), 'lightblue'))
+        colours <- rainbow(length(numeric_names))
+        for(i in 1:length(numeric_names)){
+          dttable <-  dttable %>% DT::formatStyle(numeric_names[i],
+                                                  background = DT::styleColorBar(c(0,1), colours[i]))
+        }
       } 
       dttable
     }

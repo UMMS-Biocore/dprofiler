@@ -29,9 +29,10 @@ dprofilerUI <- function() {
       # Shiny dashboard Side
       dashboardSidebar(
         width = 250,
+        debrowser::getJSLine(),
         uiOutput("loading"),
         tabsetPanel(id = "menutabs", type = "tabs",
-                    tabPanel(title = "Data Prep", value = "dataprep", id="dataprep",
+                    tabPanel(title = "Menu", value = "dataprep", id="dataprep",
                              sidebarMenu(id="MenuItems",
                                          menuItem("Upload", icon = icon("upload"), tabName = "Upload"),
                                          menuItem("Data Processing", icon = icon("filter"), tabName = "DataProcessing"),
@@ -42,7 +43,13 @@ dprofilerUI <- function() {
                                                   uiOutput("cutOffUI"),
                                                   uiOutput("compselectUI"))
                              ),
-                             helpText("Developed by ", a("UMMS Biocore.", href="https://www.umassmed.edu/biocore/", target = "_blank")))
+                             helpText("Developed by ", a("UMMS Biocore.", href="https://www.umassmed.edu/biocore/", target = "_blank"))
+                             ),
+                    tabPanel(title = "Discover", value = "discover", id="discover",
+                             debrowser::mainPlotControlsUI("DEResults"),
+                             # uiOutput('cutoffSelection'),
+                             uiOutput("HeatmapMenu")
+                             )
         )
       ),
       

@@ -24,12 +24,13 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL){
   
   # parameters 
   ScoreMethod <- params[6]
-  log2FC <- as.numeric(params[7])
-  padj <- as.numeric(params[8])
-  threshold <- as.numeric(params[9])
-  topstat <- as.numeric(params[10])
-  iterde_norm <- params[11]
-  
+  threshold <- as.numeric(params[7])
+  iterde_norm <- params[8]
+  iterde <- params[9]
+  log2FC <- as.numeric(params[10])
+  padj <- as.numeric(params[11])
+  topstat <- as.numeric(params[12])
+
   # set variables and cutoff values
   cleaned_columns <- NULL
   DEgenes_new <- NULL
@@ -48,7 +49,7 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL){
     # DE analysis
     results <- runDE(data = cur_data, columns = cur_columns, conds = cur_conds, params = params)
     results$padj[is.na(results$padj)] <- 1
-    if(!is.na(topstat)){
+    if(iterde == "Stat."){
       Topresults <- results[order(results$stat,decreasing = TRUE)[1:topstat],]
     } else{
       Topresults <- results[abs(results$log2FoldChange) > log2FC & results$padj < padj, ]
@@ -134,7 +135,7 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
   
   # parameters
   ScoreMethod <- params[6]
-  iterde_norm <- params[11]
+  iterde_norm <- params[8]
   TopStat <- as.numeric(TopStat)
   
   # DE genes
