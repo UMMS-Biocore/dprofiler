@@ -1,4 +1,3 @@
-
 #' dprofilercondselect
 #'
 #' Condition selection
@@ -29,6 +28,7 @@ dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, dat
 }
 
 #' condSelectUI
+#' 
 #' Creates a panel to select samples for each condition
 #'
 #' @return panel
@@ -150,7 +150,7 @@ getIterMethodDetails <- function(num = 0, input = NULL) {
                         selectedInput("iterde_norm", num, "TMM", input), 2),
       getSelectInputBox("iterde", "DE Selection Method", num, 
                         c("Stat.", "Log2FC+Padj"),
-                        selectedInput("iterde", num, "Stat.", input)),
+                        selectedInput("iterde", num, "Log2FC+Padj", input)),
       conditionalPanel(
         (condition <- paste0("input.iterde",num," == 'Stat.'")),
         column(2,textInput(paste0("topstat", num), "Top Stat", 
@@ -161,10 +161,10 @@ getIterMethodDetails <- function(num = 0, input = NULL) {
         (condition <- paste0("input.iterde",num," == 'Log2FC+Padj'")),
         column(1,textInput(paste0("logfoldchange", num), "Log2FC",
                            value = isolate(selectedInput("logfoldchange",
-                                                         num, "1", input) ))),
+                                                         num, "0.5", input) ))),
         column(1,textInput(paste0("padj", num), "Padj",
                            value = isolate(selectedInput("padj",
-                                                         num, "0.01", input) )))
+                                                         num, "0.05", input) )))
       )
     )
 }
@@ -181,7 +181,7 @@ getIterMethodDetails <- function(num = 0, input = NULL) {
 #' @examples
 #'     x <- prepDataContainer()
 #'
-prepDataContainer <- function(data = NULL, input = NULL, scdata = NULL) {
+prepDataContainer <- function(data = NULL, input = NULL) {
   if (is.null(data)) return(NULL)
   
   inputconds <- reactiveValues(demethod_params = list(), conds = list(), dclist = list())
@@ -235,14 +235,15 @@ prepDataContainer <- function(data = NULL, input = NULL, scdata = NULL) {
             paste(inputconds$conds[[2]]))
   params <- unlist(strsplit(inputconds$demethod_params[1], ","))
   withProgress(message = 'Running DE Algorithms', detail = inputconds$demethod_params[1], value = 0, {
-    initd <- callModule(dprofilerdeanalysis, "DEResults", data = data, 
-                        columns = cols, conds = conds, params = params, scdata = scdata)
+    initd <- callModule(dprofilerdeanalysis, "deresults", data = data, 
+                        columns = cols, conds = conds, params = params)
     if (!is.null(initd$dat()) && nrow(initd$dat()) > 1){
       inputconds$dclist[[1]] <- list(conds = conds, cols = cols, 
                                      init_dedata=initd$dat(),
                                      DEgenes = initd$DEgenes,
                                      init_iterdedata = initd$iterdat(),
                                      IterDEgenes = initd$IterDEgenes,
+                                     score = initd$score,
                                      demethod_params = inputconds$demethod_params[1])
     } else {
       return(NULL)

@@ -149,8 +149,7 @@ dprofilerServer <- function(input, output, session) {
         
         observeEvent(input$startDE, {
           if(!is.null(batch()$BatchEffect()$count)){
-            res <- prepDataContainer(batch()$BatchEffect()$count, input, 
-                                     uploadeddata()$load()$sc_count)
+            res <- prepDataContainer(batch()$BatchEffect()$count, input)
             if(is.null(res)) return(NULL)
             dc(res)
             updateTabItems(session, "MenuItems", "DEAnalysis")
@@ -159,28 +158,38 @@ dprofilerServer <- function(input, output, session) {
         })
         
         output$cutOffUI <- renderUI({
-          cutOffSelectionUI("DEResults")
+          cutOffSelectionUI("deresults")
+        })
+        
+        output$ScoreCutOffUI <- renderUI({
+          ScoreCutOffSelectionUI("deresults")
         })
         
         output$deresUI <- renderUI({
-          getDEResultsUI("DEResults")
+          getDEResultsUI("deresults")
         })
         
 
         ## Cellular Heterogeneity Event ####
         observeEvent(input$deconvolute, {
-          updateTabItems(session, "MenuItems", "CellComp")
+          if(!is.null(dc())){
+            deconvolute <- prepDeconvolute(dc, uploadeddata()$load()$sc_count)
+            updateTabItems(session, "MenuItems", "CellComp")
+          }
         })
         
         output$cellcompUI <- renderUI({
-          getDeconvoluteUI("DEResults")
+          getDeconvoluteUI("deconvolute")
         })
         
+        output$ConvHeatmapMenu  <- renderUI({
+          heatmapControlsUI("deconvolute")
+        })
 
         ## Main plots UI ####
         selectedMain <- reactiveVal()
         observe({
-          selectedMain(callModule(dprofilermainplot, "DEResults", dc()))
+          selectedMain(callModule(dprofilermainplot, "deresults", dc()))
         })
         
         ## Heatmaps UI #### 
@@ -188,7 +197,7 @@ dprofilerServer <- function(input, output, session) {
         observe({
           if (!is.null(selectedMain()) && !is.null(selectedMain()$selGenes())) {
             withProgress(message = 'Creating plot', style = "notification", value = 0.1, {
-              selectedHeat(callModule(dprofilerheatmap, "DEResults", dc()$init_dedata[selectedMain()$selGenes(), dc()$cols]))
+              selectedHeat(callModule(dprofilerheatmap, "deresults", dc()$init_dedata[selectedMain()$selGenes(), dc()$cols]))
             })
           }
         })
@@ -200,7 +209,7 @@ dprofilerServer <- function(input, output, session) {
             selgenename(selectedMain()$shgClicked())
             if (!is.null(selectedHeat()) && !is.null(selectedHeat()$shgClicked()) &&
                 selectedHeat()$shgClicked() != ""){
-              js$resetInputParam("DEResults-hoveredgenenameclick")
+              js$resetInputParam("deresults-hoveredgenenameclick")
             }
           }
         })
@@ -212,16 +221,16 @@ dprofilerServer <- function(input, output, session) {
         })
 
         output$HeatmapMenu  <- renderUI({
-          heatmapControlsUI("DEResults")
+          heatmapControlsUI("deresults")
         })
         
         ## Bar Main and BoxMain Plots UI
         observe({
           if (!is.null(selgenename()) && selgenename()!=""){
             withProgress(message = 'Creating Bar/Box plots', style = "notification", value = 0.1, {
-              callModule(dprofilerbarmainplot, "DEResults", dc()$init_dedata, 
+              callModule(dprofilerbarmainplot, "deresults", dc()$init_dedata, 
                          dc()$cols, dc()$conds, selgenename())
-              callModule(dprofilerboxmainplot, "DEResults", dc()$init_dedata, 
+              callModule(dprofilerboxmainplot, "deresults", dc()$init_dedata, 
                          dc()$cols, dc()$conds, selgenename())
             })
           }

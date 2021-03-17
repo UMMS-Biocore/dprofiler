@@ -30,3 +30,4 @@ source("functions/Bar.R")
 # Run the application 
 shinyApp(ui = shinyUI(DprofilerUI),
          server = shinyServer(DprofilerServer))
+

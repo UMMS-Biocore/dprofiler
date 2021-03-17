@@ -71,8 +71,6 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL){
       score <- (sil_spear[,3] + 1)/2
       exclude_list <- which(score < threshold) 
       
-      # # custom scores
-      # score <- custom_silhouette(cur_conds, datax_spear_sim)
     }
     
     if(ScoreMethod == "NNLS-based"){
@@ -127,8 +125,25 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL){
               DEgenes = NonIterDEgenes, cleaned_columns = cleaned_columns, NumberofIters = NumberofIters))
 }
 
+
+#' getFinalScores
+#' 
+#' calculate scores given the iterative DE results
+#'
+#' @param deres DE resutlts
+#' @param data data
+#' @param columns samples 
+#' @param conds conditions
+#' @param params DE params
+#' @param ManualDEgenes manually inserted list of DE genes
+#' @param TopStat the number of top statistics
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NULL, params = NULL, 
-                           ManuelDEgenes = NULL, TopStat = NULL){
+                           ManualDEgenes = NULL, TopStat = NULL){
  
   if (is.null(data)) return(NULL)
   data <- data[,columns]
@@ -140,11 +155,11 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
   
   # DE genes
   if(is.na(TopStat)){
-    if(is.null(ManuelDEgenes)){
+    if(is.null(ManualDEgenes)){
       DEgenes <- deres$DEgenes
       IterDEgenes <- deres$IterDEgenes
     } else {
-      DEgenes <- IterDEgenes <- read.table(file = ManuelDEgenes$datapath)[,1]
+      DEgenes <- IterDEgenes <- read.table(file = ManualDEgenes$datapath)[,1]
     }
   } else {
     if(TopStat > 5){
@@ -243,6 +258,18 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
   return(list(IterDEscore = IterDEscore, DEscore = DEscore))
 }
 
+#' custom_silhouette
+#' 
+#' a custom silhouette function for calculating the silhouette measure of each point with respect
+#' to each condition
+#'
+#' @param x 
+#' @param dist 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 custom_silhouette <- function(x,dist){
   
   # Classes and Membership

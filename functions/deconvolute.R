@@ -1,6 +1,29 @@
+#' prepDeconvolute
+#' 
+#' Prepares the container for deconvolution methods
+#'
+#' @param dc reactive object of DE analysis
+#' @param scdata single cell ExpressionSet Object
+#'
+#' @return
+#' @export
+#'
+#' @examples
+prepDeconvolute <- function(dc = NULL, scdata = NULL){
+  if (is.null(dc)) return(NULL)
+  
+  withProgress(message = 'Running RNA Deconvolution', value = 0, {
+    mixtures <- callModule(dprofilerdeconvolute, "deconvolute", dc, scdata)
+    mix <- mixtures()
+  })
+  
+  return(mix)
+}
+
+
 #' dprofilerdeconvolute
 #'
-#' Module to perform and visualize DE results.
+#' Module to perform and visualize deconvolution results.
 #'
 #' @param input, input variables
 #' @param output, output objects
@@ -15,25 +38,70 @@
 #' @examples
 #'     x <- dprofilerdeconvolute()
 #'
-dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, scores = NULL) {
-  if(is.null(scores)) return(NULL)
+dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc = NULL, scdata = NULL) {
+  if(is.null(dc)) return(NULL)
 
+  # Deconvolution
+  mixtures <- reactive({
+      deconvolute(dc()$init_dedata, dc()$IterDEgenes, dc()$cols, scdata)
+  })
+  
+  # Choose Cell Types and top markers
+  output$heatmap_selection <- renderUI({
+    list(
+      column(3,
+             selectInput(session$ns("select_celltype"), label = "Select Celltype", choices = unique(pData(scdata)$CellType))),
+      column(3,
+            textInput(session$ns("select_top_markers"), label = "Top n Markers", value = "10"))
+    )
+  })
+  
+  # heatmap of marker genes
+  output$heatmap <- renderPlot({
+    featuresData <- fData(scdata)[rownames(fData(scdata)) %in% dc()$IterDEgenes,]
+    gene_scores <- featuresData[,paste0(input$select_celltype,"_marker_score_CellType")]
+    top_n_markers <- as.numeric(input$select_top_markers)
+    top_n_markers <- ifelse(is.na(top_n_markers), length(gene_scores),
+                            ifelse(top_n_markers > length(gene_scores), length(gene_scores), top_n_markers))
+    marker_genes <- rownames(featuresData)[order(gene_scores, decreasing = TRUE)[1:top_n_markers]]
+    data_de_tmm <- getNormalizedMatrix(dc()$init_dedata[marker_genes,dc()$cols], method = "TMM")
+    runHeatmap2(input, session, expdata = as.matrix(data_de_tmm))
+  })
+  
   # Observe for Tables and Plots
   observe({
-    getScoreTableDetails(output, session, "MembershipScoresIterDE", scores$DEscore, modal = FALSE,
-                         highlight = TRUE)
+    
+    # Score and deconvolution paper 
+    ScoreTable <- cbind(dc()$score()$IterDEscore, mixtures())
+    getScoreTableDetails(output, session, "MembershipScoresIterDE", ScoreTable, 
+                         modal = FALSE, highlight = TRUE)
+    
   })
-  list(dat = scores)
+  
+  return(mixtures = mixtures)
 }
 
-deconvolute <- function(data, deres, columns, conds, scdata){
+
+#' deconvolute
+#' 
+#' the deconvolution function based on MuSiC algorithm
+#'
+#' @param data Bulk expression data set
+#' @param DEgenes DE genes for limiting the genes of scRNA and Bulk RNA data sets
+#' @param columns samples that are deconvoluted
+#' @param scdata single cell ExpressionSet Object
+#'
+#' @return
+#' @export
+#'
+#' @examples
+deconvolute <- function(data, DEgenes, columns, scdata){
   
   data <- data[,columns]
-  data_de <- data[deres$IterDEgenes,]
+  data_de <- data[DEgenes,]
   Vit_BulkRNAseq <- ExpressionSet(assayData=as.matrix(data_de))
-  pData(Vit_BulkRNAseq) <- data.frame(row.names = columns,
-                                      conds = conds)
-  
+  pData(Vit_BulkRNAseq) <- data.frame(row.names = columns, columns = columns)
+
   NLandL.prop = music_prop(bulk.eset = Vit_BulkRNAseq, 
                            sc.eset = scdata, 
                            clusters = 'CellType',
@@ -60,14 +128,22 @@ getDeconvoluteUI<- function (id) {
            width = NULL,
            tabPanel(title = "Cellular Composition",
                     fluidRow(
-                      column(12,
-                             shinydashboard::box(title = "Cellular Heterogeneity Analysis",
-                                                 solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
-                                                 DT::dataTableOutput(ns("MembershipScoresIterDE"))
-                             )
+                      shinydashboard::box(title = "Cellular Heterogeneity Analysis",
+                                          solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
+                                          DT::dataTableOutput(ns("MembershipScoresIterDE"))
+                      ),
+                      shinydashboard::box(
+                        collapsible = TRUE, title = "Markers", status = "primary", 
+                        solidHeader = TRUE, width = 6,
+                        draggable = TRUE, 
+                        column(12,
+                               plotOutput(ns("heatmap"))
+                        ),
+                        column(8,
+                               uiOutput(ns("heatmap_selection"))
+                        )
                       )
-                    ),
-                    value = "homogeneity"
+                    )
            )
     )
   )
@@ -87,6 +163,7 @@ getDeconvoluteUI<- function (id) {
 #' @param tablename, table name
 #' @param data, matrix data
 #' @param modal, if it is true, the matrix is going to be in a modal
+#' @param highlight if it is true, numerical columns are highlighted
 #' @return panel
 #' @examples
 #'     x <- getScoreTableDetails()
@@ -126,3 +203,5 @@ getScoreTableDetails <- function(output  = NULL, session  = NULL, tablename  = N
     }
   })
 }
+  
+  

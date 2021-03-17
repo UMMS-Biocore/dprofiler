@@ -94,6 +94,24 @@ dprofilermainplot <- function(input = NULL, output = NULL, session = NULL, data 
 }
 
 
+#' getMainPlot
+#' 
+#' a wrapper function for all main plots in Dprofiler
+#'
+#' @param input input
+#' @param output output
+#' @param session session
+#' @param mainname main plot name
+#' @param width shiny box width
+#' @param plotdata plot data
+#' @param which_genes if it is true, DEgenes and IterDEgenes will be used for subseting
+#' @param DEgenes list of initial DE genes
+#' @param IterDEgenes list of Final DE genes
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getMainPlot <- function(input = NULL, output = NULL, session = NULL, mainname = NULL, 
                         width = NULL, plotdata = NULL,
                         which_genes = NULL, DEgenes = NULL, IterDEgenes = NULL){
@@ -136,7 +154,8 @@ getMainPlot <- function(input = NULL, output = NULL, session = NULL, mainname = 
 #' mainScatter
 #'
 #' Creates the main scatter, volcano or MA plot to be displayed within the main
-#' panel.
+#' panel. A version of debrowser's mainScatterNew function with automated width and height
+#' 
 #' @param input, input params
 #' @param data, dataframe that has log2FoldChange and log10padj values
 #' @param source, for event triggering to select genes
@@ -155,7 +174,6 @@ mainScatter <- function(input = NULL, data = NULL, source = NULL) {
   p <- plot_ly(source = source, data=data, x=~x, y=~y, key=~key, alpha = 0.8,
                color=~Legend, colors=getLegendColors(levels(factor(data$Legend))), 
                type="scatter", mode = "markers",
-               # width=input$width - 100, height=input$height,
                text=~paste("<b>", ID, "</b><br>",
                            "<br>", "padj=", format.pval(padj, digits = 2), " ",
                            "-log10padj=", round(log10padj, digits = 2),
@@ -197,6 +215,19 @@ mainScatter <- function(input = NULL, data = NULL, source = NULL) {
   return(p)
 }
 
+#' addDataCols
+#' 
+#' add data columns to de results
+#'
+#' @param data data 
+#' @param de_res DE results
+#' @param cols columns
+#' @param conds conditions
+#'
+#' @return
+#' @export
+#'
+#' @examples
 addDataCols <- function (data = NULL, de_res = NULL, cols = NULL, conds = NULL) 
 {
   if (is.null(data) || (nrow(de_res) == 0 && ncol(de_res) == 
@@ -208,12 +239,10 @@ addDataCols <- function (data = NULL, de_res = NULL, cols = NULL, conds = NULL)
                                                             levels(coldata$group)[1], "libname"]))
   mean_cond_second <- getMean(norm_data, as.vector(coldata[coldata$group == 
                                                              levels(coldata$group)[2], "libname"]))
-  m <- cbind(rownames(de_res), norm_data[rownames(de_res), 
-                                         cols], log10(unlist(mean_cond_second) + 1), log10(unlist(mean_cond_first) + 
-                                                                                             1), de_res[rownames(de_res), c("padj", "log2FoldChange", 
-                                                                                                                            "pvalue", "stat")], 2^de_res[rownames(de_res), 
-                                                                                                                                                         "log2FoldChange"], -1 * log10(de_res[rownames(de_res), 
-                                                                                                                                                                                              "padj"]))
+  m <- cbind(rownames(de_res), norm_data[rownames(de_res), cols], 
+             log10(unlist(mean_cond_second) + 1), log10(unlist(mean_cond_first) + 1), 
+             de_res[rownames(de_res), c("padj", "log2FoldChange", "pvalue", "stat")], 
+             2^de_res[rownames(de_res), "log2FoldChange"], -1 * log10(de_res[rownames(de_res), "padj"]))
   colnames(m) <- c("ID", cols, "y", "x", 
                    "padj", "log2FoldChange", "pvalue", 
                    "stat", "foldChange", "log10padj")
@@ -221,4 +250,19 @@ addDataCols <- function (data = NULL, de_res = NULL, cols = NULL, conds = NULL)
   m$padj[is.na(m[paste0("padj")])] <- 1
   m$pvalue[is.na(m[paste0("pvalue")])] <- 1
   m
+}
+
+mainPlotControlsUI <- function (id) 
+{
+  ns <- NS(id)
+  list(shinydashboard::menuItem(" Plot Type", startExpanded = TRUE, 
+                                radioButtons(ns("mainplot"), "Main Plots:", 
+                                             c(Scatter = "scatter", VolcanoPlot = "volcano", 
+                                               MAPlot = "maplot"))), 
+       shinydashboard::menuItem("Main Options", startExpanded = TRUE, 
+                                sliderInput(ns("backperc"), "Background Data(%):", min = 10, max = 100, value = 100, sep = "", animate = FALSE), 
+                                conditionalPanel(condition <- paste0("input['", ns("mainplot"), "'] == 'volcano'"), 
+                                                 sliderInput(ns("log10padjCutoff"),"Log10 padj value cutoff:", 
+                                                             min = 2, max = 100, value = 60, sep = "", animate = FALSE)), 
+                                uiOutput(ns("mainPlotControlsUI"))))
 }

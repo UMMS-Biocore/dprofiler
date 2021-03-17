@@ -39,16 +39,22 @@ dprofilerUI <- function() {
                                          menuItem("Cond. Select", icon = icon("adjust"), tabName = "CondSelect"),
                                          menuItem("DE Analysis", icon = icon("adjust"), tabName = "DEAnalysis"),
                                          menuItem("Cellular Comp.", icon = icon("adjust"), tabName = "CellComp"),
-                                         menuItem("Filter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
-                                                  uiOutput("cutOffUI"),
-                                                  uiOutput("compselectUI"))
+                                         menuItem("DEFilter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
+                                                  uiOutput("cutOffUI")),
+                                         menuItem("ScoreFilter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
+                                                  uiOutput("ScoreCutOffUI"))
                              ),
                              helpText("Developed by ", a("UMMS Biocore.", href="https://www.umassmed.edu/biocore/", target = "_blank"))
                              ),
                     tabPanel(title = "Discover", value = "discover", id="discover",
-                             debrowser::mainPlotControlsUI("DEResults"),
+                             mainPlotControlsUI("deresults"),
                              # uiOutput('cutoffSelection'),
-                             uiOutput("HeatmapMenu")
+                             shinydashboard::menuItem("DE Heatmaps", 
+                                                      heatmapControlsUI("deresults")),
+                             shinydashboard::menuItem("Deconvolution Heatmaps", 
+                                                      heatmapControlsUI("deconvolute"))
+                             # uiOutput("HeatmapMenu"),
+                             # uiOutput("ConvHeatmapMenu"),
                              )
         )
       ),

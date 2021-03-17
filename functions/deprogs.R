@@ -1,6 +1,6 @@
 #' dprofilerdeanalysis
 #'
-#' Module to perform and visualize DE results.
+#' Module to perform and visualize Iterative DE results.
 #' 
 #' @param input, input variables
 #' @param output, output objects
@@ -9,6 +9,7 @@
 #' @param columns, columns
 #' @param conds, conditions
 #' @param params, de parameters
+#' 
 #' @return DE panel 
 #' @export
 #'
@@ -16,8 +17,7 @@
 #'     x <- dprofilerdeanalysis()
 #'
 dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL, 
-                                data = NULL, columns = NULL, conds = NULL, params = NULL,
-                                scdata = NULL) {
+                                data = NULL, columns = NULL, conds = NULL, params = NULL){
     if(is.null(data)) return(NULL)
     
     # Iterative DE Algorithm
@@ -25,15 +25,11 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
         runIterDE(data, columns, conds, params)
     })
     
-    # # Deconvolution
-    # mixtures <- reactive({
-    #     deconvolute(data, deres(), columns, conds, scdata)
-    # })
-    
     # Apply Filters for DE and Iter DE Results
     prepDat <- reactive({
         applyFiltersNew(addDataCols(data, deres()$DEResults, columns, conds), input)
     })
+    
     iterprepDat <- reactive({
         remaining_columns <- (columns != deres()$cleaned_columns)
         if(length(remaining_columns) > 0){
@@ -43,10 +39,17 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
         applyFiltersNew(addDataCols(data, deres()$IterDEResults, columns, conds), input)
     })
     
+    # Create a reactive scoring table as well
+    Scores <- reactiveVal()
+    
     # Observe for Tables and Plots
     observe({
-        finalScore <- getFinalScores(deres(), data, columns, conds, params, 
-                                     ManuelDEgenes = input$manualgenes, TopStat = input$topstat)
+        
+        # get scpres
+        Scores(getFinalScores(deres(), data, columns, conds, params, 
+                              ManualDEgenes = input$manualgenes, TopStat = input$topstat))
+        
+        # prepare DE tables
         dat <-  prepDat()[prepDat()$Legend == input$legendradio,]
         dat2 <- removeCols(c("ID", "x", "y","Legend", "Size"), dat)
         iterdat <-  iterprepDat()[iterprepDat()$Legend == input$legendradio,]
@@ -58,11 +61,7 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
 
         # Membership Scores
         getIterDESummary(output, session, "HomogeneityVenn", "HomogeneitySummary", deres(), params)
-        getScoreDetails(output, session, "HomogeneityScores", finalScore$DEscore, finalScore$IterDEscore)
-        getScoreTableDetails(output, session, "MembershipScoresIterDE", 
-                             # cbind(finalScore$IterDEscore, mixtures()), 
-                             cbind(finalScore$IterDEscore), 
-                             modal = FALSE, highlight = TRUE)
+        getScoreDetails(output, session, "HomogeneityScores", Scores()$DEscore, Scores()$IterDEscore)
         
         # download handlers
         output$downloadBeforeGenes <- downloadHandler(
@@ -78,11 +77,13 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
             content = function(con) {write(setdiff(deres()$IterDEgenes,deres()$DEgenes), con)}
         )
     })
-    list(dat = prepDat, DEgenes = deres()$DEgenes, iterdat = iterprepDat, IterDEgenes = deres()$IterDEgenes)
+    list(dat = prepDat, DEgenes = deres()$DEgenes, 
+         iterdat = iterprepDat, IterDEgenes = deres()$IterDEgenes,
+         score = Scores)
 }
 
-
 #' getDEResultsUI
+#' 
 #' Creates a panel to visualize DE results
 #'
 #' @param id, namespace id
@@ -101,9 +102,9 @@ getDEResultsUI<- function (id) {
                         fluidRow(
                             shinydashboard::box(title = "Summary", height = 260,
                                                 solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
-                                                column(3,tableOutput(ns("HomogeneitySummary"))),
-                                                column(3,tableOutput(ns("HomogeneitySummaryIter"))),
-                                                column(3,tableOutput(ns("HomogeneitySummaryDE")))
+                                                column(2,htmlOutput(ns("HomogeneitySummary"))),
+                                                column(2,htmlOutput(ns("HomogeneitySummaryIter"))),
+                                                column(2,htmlOutput(ns("HomogeneitySummaryDE")))
                             ),
                             shinydashboard::box(title = "# of DE Genes",
                                                 solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
@@ -136,9 +137,8 @@ getDEResultsUI<- function (id) {
                                                 
                             ),
                             uiOutput(ns("maindeplot"))
+                        )               
                         ),
-                        value = "deresults"
-               ),
                tabPanel(title = "Pure (Homogeneous) Conditions",
                         fluidRow(
                             shinydashboard::box(title = "Differentially Expressed Genes",
@@ -146,9 +146,8 @@ getDEResultsUI<- function (id) {
                                                 uiOutput(ns("DEResults"))
                             ),
                             uiOutput(ns("mainiterdeplot"))
-                        ),
-                        value = "iterderesults"
-               )
+                        )
+                        )
         )
     )
 }
@@ -169,8 +168,25 @@ cutOffSelectionUI <- function(id){
     list(
         getLegendRadio(id),
         textInput(ns("padj"), "padj value cut off", value = "0.01" ),
-        textInput(ns("foldChange"), "foldChange", value = "2" ),
-        textInput(ns("topstat"), "Top Stat", value = "" ), 
+        textInput(ns("foldChange"), "foldChange", value = "2" )
+    )
+}
+
+#' ScoreCutOffSelectionUI
+#'
+#' Gathers the cut off selection for Scoring 
+#'
+#' @param id, namespace id
+#' @note \code{ScoreCutOffSelectionUI}
+#' @return returns the left menu according to the selected tab;
+#' @examples
+#'     x <- ScoreCutOffSelectionUI("cutoff")
+#' @export
+#'
+ScoreCutOffSelectionUI <- function(id){
+    ns <- NS(id)
+    list(
+        textInput(ns("topstat"), "Top Stat", value = "" ),
         fileInput(ns("manualgenes"), "Manual DEgenes")
     )
 }

@@ -6,7 +6,7 @@
 #' @param output, output objects
 #' @param session, session 
 #' @param nextpagebutton, the name of the next page button after loading the data
-#' @param parent_session a parameter to pass the session
+#' @param parent_session a parameter to pass the session for sending update variables to main server
 #' @return main plot
 #'
 #' @return panel
@@ -43,13 +43,21 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   })
   
   # Event for uploading the demo file
-  observeEvent(input$demo3, {
-    # load("demo/demodata3.Rda")
-    load("demo/demodatatemp.Rda")
+  observeEvent(input$demo, {
+    load("demo/demodata.Rda")
     ldata$count <- demodata
     ldata$meta <- metadatatable
-    # ldata$sc_count <- demoscdata
-    # rm(demoscdata)
+    ldata$sc_count <- demoscdata
+    rm(demoscdata)
+    ldata$prof_count <- demoprofdata
+    ldata$prof_meta <- profmetadatatable
+  })
+  
+  # Event for uploading the demo file
+  observeEvent(input$demo_nosc, {
+    load("demo/demodata_nosc.Rda")
+    ldata$count <- demodata
+    ldata$meta <- metadatatable
     ldata$prof_count <- demoprofdata
     ldata$prof_meta <- profmetadatatable
   })
@@ -131,7 +139,7 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   observe({
     getSampleDetails(output, "uploadSummary", "sampleDetails", loadeddata())
     getProfileSampleDetails(output, "uploadSummaryprof", "sampleDetailsprof", loadeddata())
-    getSCRNASampleDetails(output, "uploadSummarysc", "sampleDetailssc", loadeddata())
+    getSCRNASampleDetails(output, "uploadSummarysc", "sampleDetailssc", loadeddata()$sc_count)
   })
   
   list(load=loadeddata)
@@ -154,16 +162,9 @@ dataLoadUI<- function (id) {
     fluidRow(
       column(12,
              actionButtonDE(ns("uploadFile"), label = "Upload", styleclass = "primary"), 
-             actionButtonDE(ns("demo3"),  label = "Load Demo PRJNA554241", styleclass = "primary"))
+             actionButtonDE(ns("demo"),  label = "Load Demo PRJNA554241", styleclass = "primary"),
+             actionButtonDE(ns("demo_nosc"),  label = "Load Demo PRJNA554241 (no scRNA)", styleclass = "primary"))
     ),
-    # fluidRow(
-    #   fileUploadBox(id, "countdata", "Bulk Count Data"),
-    #   fileUploadBox(id, "metadata", "Bulk Metadata")
-    # ),
-    # fluidRow(
-    #   fileUploadBox(id, "profilecountdata", "Profiling Count Data"),
-    #   fileUploadBox(id, "profilemetadata", "Profiling Metadata")
-    # ),
     fluidRow(
       fileUploadBox(id, "countdata", "metadata", "Reference Expression Data Files"),
       fileUploadBox(id, "profilecountdata", "profilemetadata", "Bulk Expression Data Files (Optional)")
@@ -236,12 +237,25 @@ dataSummaryUI<- function(id) {
   )
 }
 
+#' getSCRNASampleDetails
+#' 
+#' get single cell RNA samples details
+#'
+#' @param output output
+#' @param summary summary output name
+#' @param details details output name
+#' @param data single cell ExpressionSet Object
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL, data = NULL) 
 {
   if (is.null(data)) 
     return(NULL)
   output[[summary]] <- renderTable({
-    countdata <- data$sc_count
+    countdata <- data
     samplenums <- dim(countdata)[2]
     rownums <- dim(countdata)[1]
     patientnums <- length(unique(pData(countdata)$Patient))
@@ -251,15 +265,29 @@ getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL
     result
   }, digits = 0, rownames = TRUE, align = "lc")
   output[[paste0(details,"density")]] <- renderPlot({
-    plot_density_ridge(data$sc_count, color_by = "CellType", title = "UMIs per Cell Type", val = "UMI_sum_raw") + 
+    plot_density_ridge(data, color_by = "CellType", title = "UMIs per Cell Type", val = "UMI_sum_raw") + 
       xlim(0,7500)
   })
   output[[paste0(details,"tsne")]] <- renderPlot({
-    plot_tsne_metadata(data$sc_count, color_by = "CellType", title = "Cell Types",
+    plot_tsne_metadata(data, color_by = "CellType", title = "Cell Types",
                        legend_dot_size = 4, text_sizes = c(20, 10, 5, 10, 15, 15))
   })
 }
 
+#' getProfileSampleDetails
+#' 
+#' get single cell RNA samples details
+#'
+#' @param output output
+#' @param summary summary output name
+#' @param details details output name
+#' @param data data
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' 
 getProfileSampleDetails <- function (output = NULL, summary = NULL, details = NULL, data = NULL) 
 {
   if (is.null(data)) 
@@ -292,6 +320,17 @@ getProfileSampleDetails <- function (output = NULL, summary = NULL, details = NU
   })
 }
 
+#' sepRadio
+#'
+#' Radio button for seperators: an inline version of debrowser's sepRadio function
+#'
+#' @param id module id 
+#' @param name 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 sepRadio <- function (id, name) 
 {
   ns <- NS(id)
@@ -300,6 +339,21 @@ sepRadio <- function (id, name)
                inline=T)
 }
 
+
+
+#' fileUploadBox
+#' 
+#' file upload module for bulk data and metadata 
+#'
+#' @param id namespace id
+#' @param inputId_count input data file ID
+#' @param inputId_meta input metadata file ID
+#' @param label label
+#'
+#' @return
+#' @export
+#'
+#' @examples
 fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL, label = NULL) 
 {
   ns <- NS(id)
@@ -325,6 +379,19 @@ fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL,
                       )
 }
 
+#' scfileUploadBox
+#' 
+#' file upload module for single cell ExpressionSet object
+#'
+#' @param id namespace id
+#' @param inputId_count input data file ID
+#' @param inputId_meta input metadata file ID
+#' @param label label
+#'
+#' @return
+#' @export
+#'
+#' @examples
 scfileUploadBox <- function (id = NULL, inputId = NULL, label = NULL) 
 {
   ns <- NS(id)
