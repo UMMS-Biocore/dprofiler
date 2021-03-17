@@ -2,6 +2,7 @@
 #'
 #' Heatmap module to create interactive heatmaps and get selected list from
 #' a heatmap
+#' 
 #' @param input, input variables
 #' @param output, output objects
 #' @param session, session 
@@ -12,7 +13,6 @@
 #'     x <- dprofilerheatmap()
 #'
 #' @export
-#'
 #'
 dprofilerheatmap <- function( input, output, session, expdata = NULL){
   if(is.null(expdata)) return(NULL)
@@ -88,6 +88,17 @@ dprofilerheatmap <- function( input, output, session, expdata = NULL){
 }
 
 
+#' getPlotArea
+#'
+#' a version of debrowser's getPlotArea function with automatic width and length
+#' 
+#' @param input 
+#' @param session 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getPlotArea <- function (input = NULL, session = NULL) 
 {
   if (is.null(input)) 
@@ -100,4 +111,68 @@ getPlotArea <- function (input = NULL, session = NULL)
     ret <- plotOutput(session$ns("heatmap2"))
   }
   ret
+}
+
+#' heatmapJScode
+#'
+#' heatmap JS code for selection functionality
+#'
+#' @return JS Code
+#' @export
+#'
+#' @examples
+#'     x <- heatmapJScode()
+#'
+heatmapJScode <- function() {        
+  'shinyjs.getHoverName = function(params){
+    
+    var defaultParams = {
+    controlname : "hoveredgenename"
+    };
+    params = shinyjs.getParams(params, defaultParams);
+    var out = ""
+    
+    if (typeof  document.getElementsByClassName("nums")[0] != "undefined"){
+    if (typeof  document.getElementsByClassName("nums")[0].querySelectorAll("tspan.line")[0] != "undefined"){
+    out = document.getElementsByClassName("nums")[0].querySelectorAll("tspan.line")[0].innerHTML.match("row: (.*)")[1]
+    $("#deresults-heatmap").attr("gname", out)
+    }
+    }
+    Shiny.onInputChange(params.controlname, $("#deresults-heatmap").attr("gname"));
+    }
+    shinyjs.resetInputParam = function(params){
+        var defaultParams = {
+                controlname : "hoveredgenename"
+        };
+        params = shinyjs.getParams(params, defaultParams);
+        console.log(params.controlname)
+        Shiny.onInputChange(params.controlname, "");
+    }
+    shinyjs.getSelectedGenes = function(params){
+    var defaultParams = {
+    plotId : "heatmap",
+    controlname : "selgenenames"
+    };
+    params = shinyjs.getParams(params, defaultParams);
+    var count = document.getElementById(params.plotId).querySelectorAll("g.y2tick").length
+    var start = 0
+    var out = ""
+    
+    for (i = start; i < count; i++)
+    {
+        if (typeof document.getElementById(params.plotId).querySelectorAll("g.y2tick")[i] != "undefined"){
+        out += document.getElementById(params.plotId).querySelectorAll("g.y2tick")[i].innerHTML.match(">(.*)</text>")[1]  + ","
+        }
+    }
+    Shiny.onInputChange(params.controlname, out);
+    }'
+}
+
+getJSLine <- function() 
+{
+  list(shinyjs::useShinyjs(), shinyjs::extendShinyjs(text = heatmapJScode(), 
+                                                     functions = c("getHoverName", "getSelectedGenes",
+                                                                   "resetInputParam")))
+  # functions = c("getSelectedGenes", 
+  #               "resetInputParam")))
 }
