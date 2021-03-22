@@ -43,11 +43,13 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
   for(i in 1:iter){
     
     # check iterations
-    setProgress(value = (i %% 11)/10, 
-                message = paste("Heterogeneity Detection: Iteration", i, sep = " "), 
+    setProgress(value = (i %% 11)/10,
+                message = paste("Heterogeneity Detection: Iteration", i, sep = " "),
                 detail = paste("# New DE genes:", length(DEgenes),
-                               "               ",
                                "# of Removed Samples: ", length(cleaned_columns), sep = " "))
+    # setProgress(value = (i %% 11)/10, 
+    #             message = paste("Heterogeneity Detection: Iteration", i, sep = " "), 
+    #             detail = as.character((p("artur", br(), "artur"))))
     
     # select subset of genes and columns
     cur_columns <- setdiff(columns, cleaned_columns)
