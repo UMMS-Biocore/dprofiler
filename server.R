@@ -135,16 +135,17 @@ dprofilerServer <- function(input, output, session) {
         ## Regular DE analysis Event ####
         observeEvent (input$goDE, {
           if(is.null(batch())) batch(setBatch(filtd()))
-          updateTabItems(session, "MenuItems", "CondSelect")
           sel(dprofilercondselect(input, output, session,
                                   batch()$BatchEffect()$count, batch()$BatchEffect()$meta))
+          updateTabItems(session, "MenuItems", "CondSelect")
         })
         
         observeEvent (input$goDEFromFilter, {
           if(is.null(batch())) batch(setBatch(filtd()))
-          updateTabItems(session, "MenuItems", "CondSelect")
           sel(dprofilercondselect(input, output, session,
                                   batch()$BatchEffect()$count, batch()$BatchEffect()$meta))
+          updateTabItems(session, "MenuItems", "CondSelect")
+          
         })
         
         observeEvent(input$startDE, {
@@ -224,7 +225,7 @@ dprofilerServer <- function(input, output, session) {
           heatmapControlsUI("deresults")
         })
         
-        ## Bar Main and BoxMain Plots UI
+        ## Bar Main and BoxMain Plots UI ####
         observe({
           if (!is.null(selgenename()) && selgenename()!=""){
             withProgress(message = 'Creating Bar/Box plots', style = "notification", value = 0.1, {
@@ -242,6 +243,31 @@ dprofilerServer <- function(input, output, session) {
       # auxiliary values of buttons and reactive values
       buttonValues <- reactiveValues(goQCplots = FALSE, goDE = FALSE,
                                      startDE = FALSE)
+      
+      # count data and metadata files for help section
+      output$metaFile <-  renderTable({
+        read.delim(system.file("extdata", "www", "metaFile.txt",
+                               package = "debrowser"), header=TRUE, skipNul = TRUE)
+      })
+      output$countFile <-  renderTable({
+        read.delim(system.file("extdata", "www", "countFile.txt",
+                               package = "debrowser"), header=TRUE, skipNul = TRUE)
+      })
+      
+      ## loading icon UI ####
+      output$loading <- renderUI({
+        getLoadingMsg()
+      })
+      
+      output$logo <- renderUI({
+        getLogo()
+      })
+      output$startup <- renderUI({
+        getStartupMsg()
+      })
+      output$afterload <- renderUI({
+        getAfterLoadMsg()
+      })
 
     },
     err=function(errorCondition) {

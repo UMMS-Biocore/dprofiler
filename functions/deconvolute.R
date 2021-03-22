@@ -49,11 +49,16 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
   # Choose Cell Types and top markers
   output$heatmap_selection <- renderUI({
     list(
-      column(3,
+      column(6,
              selectInput(session$ns("select_celltype"), label = "Select Celltype", choices = unique(pData(scdata)$CellType))),
-      column(3,
+      column(6,
             textInput(session$ns("select_top_markers"), label = "Top n Markers", value = "10"))
     )
+  })
+  
+  # prepare heat data
+  data_de_tmm <- reactive({
+    prepHeatData(dc()$init_dedata[,dc()$cols], input)
   })
   
   # heatmap of marker genes
@@ -64,8 +69,7 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
     top_n_markers <- ifelse(is.na(top_n_markers), length(gene_scores),
                             ifelse(top_n_markers > length(gene_scores), length(gene_scores), top_n_markers))
     marker_genes <- rownames(featuresData)[order(gene_scores, decreasing = TRUE)[1:top_n_markers]]
-    data_de_tmm <- getNormalizedMatrix(dc()$init_dedata[marker_genes,dc()$cols], method = "TMM")
-    runHeatmap2(input, session, expdata = as.matrix(data_de_tmm))
+    runHeatmap2(input, session, expdata = as.matrix(data_de_tmm()[marker_genes,]))
   })
   
   # Observe for Tables and Plots

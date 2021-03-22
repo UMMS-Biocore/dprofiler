@@ -91,20 +91,25 @@ selectConditions<-function(Dataset = NULL,
            getConditionSelectorFromMeta(metadata, input, 1,
                                         2, allsamples, selected2)
     ),
-    column(12, style='padding-bottom:15px;',
-           column(12,strong("DE Analysis Parameters:"))
-           ),
-    column(12,
-           getSelectInputBox("demethod", "DE Method", 1, 
-                             c("DESeq2", "EdgeR", "Limma"),
-                             selectedInput("demethod", 1, "DESeq2", input)),
-           getMethodDetails(1, input)),
-    column(12, style='padding-bottom:15px;',
-           column(12,strong("Scoring Parameters:"))
+    column(12, style='padding-bottom:25px;',
+           column(2,  
+                  strong(style ='border-bottom: 1px solid #000000; padding-bottom:5px', 
+                         "Scoring Parameters:"))
     ),
     column(12, 
            getIterMethodDetails(1, input),
-    )
+    ),
+    column(12, style='padding-bottom:25px',
+           column(2,  
+                  strong(style ='border-bottom: 1px solid #000000; padding-bottom:5px', 
+                         "DE Analysis Parameters:"))
+           ),
+    column(12,
+           getSelectInputBox("demethod", 
+                             getIconLabel("DE Method", message = "Method for DE Analysis"),
+                             1, c("DESeq2", "EdgeR", "Limma"),
+                             selectedInput("demethod", 1, "DESeq2", input)),
+           getMethodDetails(1, input))
   )
   
   if (!is.null(selectedInput("conditions_from_meta", 
@@ -124,6 +129,72 @@ selectConditions<-function(Dataset = NULL,
   return(to_return)
 }
 
+#getMethodDetails
+#'
+#' get the detail boxes after DE method selected 
+#'
+#' @param num, panel that is going to be shown
+#' @param input, user input
+#' @examples
+#'     x <- getMethodDetails()
+#'
+#' @export
+#'
+#'
+getMethodDetails <- function(num = 0, input = NULL) {
+  if (num > 0)
+    list(
+      conditionalPanel(
+        (condition <- paste0("input.demethod",num," == 'DESeq2'")),
+        getSelectInputBox("fitType", 
+                          getIconLabel("Fit Type", message = "fitting type for dispersion estimate"), 
+                          num, c("parametric", "local", "mean"), 
+                          selectedInput("testType", num, "parametric",
+                                        input), 2),
+        getSelectInputBox("betaPrior", 
+                          getIconLabel("Beta Prior", message = "Use a zero-mean normal prior. Default for Wald statistics"), 
+                          num, c(FALSE, TRUE), 
+                          selectedInput("betaPrior", num,
+                                        FALSE, input),2),
+        getSelectInputBox("testType", 
+                          getIconLabel("Test Type", message = "Test statistics used in DESeq2"), 
+                          num, c("LRT", "Wald"),  
+                          selectedInput("testType", num, "LRT", input)),
+        getSelectInputBox("shrinkage", 
+                          getIconLabel("Shrinkage", message = "The method of shrinkage estimate for log2FC"), 
+                          num, c("None", "apeglm", "ashr", "normal"),
+                          selectedInput("shrinkage", num, "None", input))),
+      conditionalPanel(
+        (condition <- paste0("input.demethod",num," == 'EdgeR'")),
+        getSelectInputBox("edgeR_normfact", 
+                          getIconLabel("Normalization", message = "Normalization method used in EdgeR"), 
+                          num, c("TMM","RLE","upperquartile","none"), 
+                          selectedInput("edgeR_normfact", num, "TMM", input), 2),
+        column(2,textInput(paste0("dispersion", num), "Dispersion", 
+                           value = isolate(selectedInput("dispersion", 
+                                                         num, "0", input) ))),
+        getSelectInputBox("edgeR_testType", 
+                          getIconLabel("Test Type", message = "Type of model fitting for gene abundances"), 
+                          num, c("exactTest", "glmLRT"), 
+                          selectedInput("edgeR_testType", num,
+                                        "exactTest", input))),
+      conditionalPanel(
+        (condition <- paste0("input.demethod",num," ==  'Limma'")),
+        getSelectInputBox("limma_normfact", getIconLabel("Normalization", message = "Normalization method used in Limma"), 
+                          num, c("TMM","RLE","upperquartile","none"), 
+                          selectedInput("limma_normfact", num, "TMM", input), 2),
+        getSelectInputBox("limma_fitType", 
+                          getIconLabel("Fit Type", message = "Type of model fitting: 'ls' for least squares, 'robust' for robust regression"), 
+                          num, c("ls", "robust"), 
+                          selectedInput("limma_fitType", num, "ls", input)),
+        getSelectInputBox("normBetween", 
+                          getIconLabel("Norm. Bet. Arrays", message = "Normalization Between Array"), 
+                          num, c("none", "scale", "quantile", "cyclicloess",
+                            "Aquantile", "Gquantile", "Rquantile","Tquantile"),
+                          selectedInput("normBetween", num, "none", input))),
+      br())
+}
+
 #' getIterMethodDetails
 #'
 #' get the detail boxes after DE method selected 
@@ -139,30 +210,37 @@ selectConditions<-function(Dataset = NULL,
 getIterMethodDetails <- function(num = 0, input = NULL) {
   if (num > 0)
     list(
-      getSelectInputBox("scoremethod", "Score Method", num, 
-                        c("Silhouette", "NNLS-based"),
+      getSelectInputBox("scoremethod", 
+                        getIconLabel("Score Method", message = "Method for estimating Membership scores"), 
+                        num, c("Silhouette", "NNLS-based"),
                         selectedInput("scoremethod", num, "Silhouette", input)),
-      column(2,textInput(paste0("minscore", num), "Min. Score", 
+      column(2,textInput(paste0("minscore", num), 
+                         getIconLabel("Min. Score", message = "Threshold for acceptable self-membership scores. Score < Min.Score indicates dismemberment of the sample"), 
                          value = isolate(selectedInput("minscore", 
                                                        num, "0.5", input)))),
-      getSelectInputBox("iterde_norm", "Normalization", num, 
-                        c("TMM","RLE","upperquartile","none"), 
+      getSelectInputBox("iterde_norm", 
+                        getIconLabel("Normalization", message = "Normalization method prior to scoring"), 
+                        num, c("TMM","RLE","upperquartile","none"), 
                         selectedInput("iterde_norm", num, "TMM", input), 2),
-      getSelectInputBox("iterde", "DE Selection Method", num, 
-                        c("Stat.", "Log2FC+Padj"),
+      getSelectInputBox("iterde",
+                        getIconLabel("DE Selection Method", message = "Set of conditions for selecting DE genes on each iteration"), 
+                        num, c("Top n Stat.", "Log2FC+Padj"),
                         selectedInput("iterde", num, "Log2FC+Padj", input)),
       conditionalPanel(
-        (condition <- paste0("input.iterde",num," == 'Stat.'")),
-        column(2,textInput(paste0("topstat", num), "Top Stat", 
+        (condition <- paste0("input.iterde",num," == 'Top n Stat.'")),
+        column(2,textInput(paste0("topstat", num), 
+                           getIconLabel("Top n Stat.", message = "DE genes with top n DE Analysis statistics. Might be different for each DE method"), 
                            value = isolate(selectedInput("topstat", 
                                                          num, "100", input) )))
       ),
       conditionalPanel(
         (condition <- paste0("input.iterde",num," == 'Log2FC+Padj'")),
-        column(1,textInput(paste0("logfoldchange", num), "Log2FC",
+        column(1,textInput(paste0("logfoldchange", num),
+                           getIconLabel("Log2FC", message = "Minimum log fold change"), 
                            value = isolate(selectedInput("logfoldchange",
                                                          num, "0.5", input) ))),
-        column(1,textInput(paste0("padj", num), "Padj",
+        column(1,textInput(paste0("padj", num), 
+                           getIconLabel("P-adj value", message = "Maximum adjusted p-value"),
                            value = isolate(selectedInput("padj",
                                                          num, "0.05", input) )))
       )
@@ -234,7 +312,7 @@ prepDataContainer <- function(data = NULL, input = NULL) {
   cols <- c(paste(inputconds$conds[[1]]), 
             paste(inputconds$conds[[2]]))
   params <- unlist(strsplit(inputconds$demethod_params[1], ","))
-  withProgress(message = 'Running DE Algorithms', detail = inputconds$demethod_params[1], value = 0, {
+  withProgress(message = 'Running Heterogeneity Detection', detail = inputconds$demethod_params[1], value = 0, {
     initd <- callModule(dprofilerdeanalysis, "deresults", data = data, 
                         columns = cols, conds = conds, params = params)
     if (!is.null(initd$dat()) && nrow(initd$dat()) > 1){
@@ -254,4 +332,24 @@ prepDataContainer <- function(data = NULL, input = NULL) {
   if(length(inputconds$dclist) <1) return(NULL)
   
   return(inputconds$dclist[[1]])
+}
+
+
+#' getIconLabel
+#' 
+#' creates a label with information icon
+#'
+#' @param label label
+#' @param message message
+#'
+getIconLabel <- function(label = NULL, message = NULL){
+  
+  icon_label <- tags$span(label, 
+    tags$i(
+      class = "glyphicon glyphicon-info-sign", 
+      style = "color:#0072B2;",
+      title = message
+    )
+  )
+  return(icon_label)
 }

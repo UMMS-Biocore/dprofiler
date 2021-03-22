@@ -132,3 +132,43 @@ venn.diagram <- function (x, filename, height = 3000, width = 3000, resolution =
   }
   return(grob.list)
 }
+
+getLoadingMsg <- function (output = NULL) 
+{
+  addResourcePath(prefix = "www", directoryPath = system.file("extdata", 
+                                                              "www", package = "debrowser"))
+  imgsrc_full <- "www/images/loading_start.gif"
+  imgsrc_small <- "www/images/loading.gif"
+  
+  a <- list(tags$head(tags$style(type = "text/css", "\n            #loadmessage {\n            position: fixed;\n            top: 0px;\n            left: 0px;\n            width: 100%;\n            height: 100%;\n            padding: 5px 0px 5px 0px;\n            text-align: center;\n            font-weight: bold;\n            font-size: 100%;\n            color: #000000;\n            opacity: 0.8;\n            z-index: 100;\n            }\n            #loadmessage_small {\n            position: fixed;\n            left: 50%;\n            transform: translateX(-50%);\n            top: 50px;\n            text-align: center;\n            opacity: 0.8;\n            z-index: 999999;\n            }\n                             ")), 
+            conditionalPanel(condition = paste0("$('html').hasClass('shiny-busy')", 
+                                                "& input.MenuItems=='CondSelect'"), 
+                             tags$div(id = "loadmessage", tags$img(src = imgsrc_full))), 
+            conditionalPanel(condition = paste0("$('html').hasClass('shiny-busy')", 
+                                                "& !(input.MenuItems=='CondSelect')"), 
+                             tags$div(id = "loadmessage_small", tags$img(src = imgsrc_small))))
+}
+
+getLoadingMsg1 <- function (output = NULL) 
+{
+  addResourcePath(prefix = "www", directoryPath = system.file("extdata", 
+                                                              "www", package = "debrowser"))
+  imgsrc_full <- "www/images/loading_start.gif"
+  imgsrc_small <- "www/images/loading.gif"
+  
+  a <- list(tags$head(tags$style(type = "text/css", "\n            #loadmessage {\n            position: fixed;\n            top: 0px;\n            left: 0px;\n            width: 100%;\n            height: 100%;\n            padding: 5px 0px 5px 0px;\n            text-align: center;\n            font-weight: bold;\n            font-size: 100%;\n            color: #000000;\n            opacity: 0.8;\n            z-index: 100;\n            }\n            #loadmessage_small {\n            position: fixed;\n            left: 50%;\n            transform: translateX(-50%);\n            top: 50px;\n            text-align: center;\n            opacity: 0.8;\n            z-index: 999999;\n            }\n                             ")), 
+            conditionalPanel(condition = paste0("$('html').hasClass('shiny-busy')"),                  
+            tags$div(id = "loadmessage", tags$img(src = imgsrc_full))))
+}
+
+getLoadingMsg2 <- function (output = NULL) 
+{
+  addResourcePath(prefix = "www", directoryPath = system.file("extdata", 
+                                                              "www", package = "debrowser"))
+  imgsrc_full <- "www/images/loading_start.gif"
+  imgsrc_small <- "www/images/loading.gif"
+  
+  a <- list(tags$head(tags$style(type = "text/css", "\n            #loadmessage {\n            position: fixed;\n            top: 0px;\n            left: 0px;\n            width: 100%;\n            height: 100%;\n            padding: 5px 0px 5px 0px;\n            text-align: center;\n            font-weight: bold;\n            font-size: 100%;\n            color: #000000;\n            opacity: 0.8;\n            z-index: 100;\n            }\n            #loadmessage_small {\n            position: fixed;\n            left: 50%;\n            transform: translateX(-50%);\n            top: 50px;\n            text-align: center;\n            opacity: 0.8;\n            z-index: 999999;\n            }\n                             ")), 
+            conditionalPanel(condition = paste0("$('html').hasClass('shiny-busy')"),   
+            tags$div(id = "loadmessage", tags$img(src = imgsrc_small))))
+}

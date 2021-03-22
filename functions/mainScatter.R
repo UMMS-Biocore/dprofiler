@@ -29,7 +29,8 @@ dprofilermainplot <- function(input = NULL, output = NULL, session = NULL, data 
   })
   
   observe({
-    # apply filters for buttons
+    
+    # apply filters DE gene main plots 
     iterde_data <- plotdata_iterde()$data
     de_data <- plotdata_de()$data
     iterde_data <- applyFiltersNew(iterde_data[,!colnames(iterde_data) %in% "Legend"], input)
@@ -39,12 +40,16 @@ dprofilermainplot <- function(input = NULL, output = NULL, session = NULL, data 
     getMainPlot(input, output, session, "mainde", 6, de_data)
     getMainPlot(input, output, session, "mainiterde", 6, iterde_data)
     
+    # apply filter for Initial and Final DEgenes
+    iterde_data_foriter <- applyFiltersIter(iterde_data[,!colnames(iterde_data) %in% "Legend"], input)
+    de_data_foriter <- applyFiltersIter(de_data[,!colnames(de_data) %in% "Legend"], input)
+    
     # Initial, Overlapping, and Final Genes main plots 
-    getMainPlot(input, output, session, "maininitial", 4, de_data, 
+    getMainPlot(input, output, session, "maininitial", 4, de_data_foriter, 
                 which_genes = "Initial", DEgenes = data$DEgenes, IterDEgenes = data$IterDEgenes)
-    getMainPlot(input, output, session, "mainoverlap", 4, iterde_data, 
+    getMainPlot(input, output, session, "mainoverlap", 4, iterde_data_foriter, 
                 which_genes = "Overlap", DEgenes = data$DEgenes, IterDEgenes = data$IterDEgenes)
-    getMainPlot(input, output, session, "mainfinal", 4, iterde_data, 
+    getMainPlot(input, output, session, "mainfinal", 4, iterde_data_foriter, 
                 which_genes = "Final", DEgenes = data$DEgenes, IterDEgenes = data$IterDEgenes)
     
   })
@@ -171,15 +176,16 @@ mainScatter <- function(input = NULL, data = NULL, source = NULL) {
   if ( is.null(data) ) return(NULL)
   
   data <- na.omit(data)
-  p <- plot_ly(source = source, data=data, x=~x, y=~y, key=~key, alpha = 0.8,
-               color=~Legend, colors=getLegendColors(levels(factor(data$Legend))), 
-               type="scatter", mode = "markers",
-               text=~paste("<b>", ID, "</b><br>",
-                           "<br>", "padj=", format.pval(padj, digits = 2), " ",
-                           "-log10padj=", round(log10padj, digits = 2),
-                           "<br>", "log2FC=", round(log2FoldChange, digits = 2), " ",
-                           "foldChange=", round(foldChange, digits = 2),
-                           "<br>", sep = " ")) %>%
+  p <-   plot_ly(source = source, data=data, x=~x, y=~y, key=~key, alpha = 0.8,
+                 color=~droplevels(factor(Legend, levels = c("NS","Up","Down"))), 
+                 colors=getLegendColors(getLevelOrder(unique(data$Legend))), 
+                 type="scatter", mode = "markers",
+                 text=~paste("<b>", ID, "</b><br>",
+                             "<br>", "padj=", format.pval(padj, digits = 2), " ",
+                             "-log10padj=", round(log10padj, digits = 2),
+                             "<br>", "log2FC=", round(log2FoldChange, digits = 2), " ",
+                             "foldChange=", round(foldChange, digits = 2),
+                             "<br>", sep = " ")) %>%
     plotly::layout(xaxis = list(title = input$xlab),
                    yaxis = list(title = input$ylab), 
                    autosize = TRUE)
@@ -252,17 +258,48 @@ addDataCols <- function (data = NULL, de_res = NULL, cols = NULL, conds = NULL)
   m
 }
 
-mainPlotControlsUI <- function (id) 
+mainPlotControlsUI <- function (id)
 {
   ns <- NS(id)
-  list(shinydashboard::menuItem(" Plot Type", startExpanded = TRUE, 
-                                radioButtons(ns("mainplot"), "Main Plots:", 
-                                             c(Scatter = "scatter", VolcanoPlot = "volcano", 
-                                               MAPlot = "maplot"))), 
-       shinydashboard::menuItem("Main Options", startExpanded = TRUE, 
-                                sliderInput(ns("backperc"), "Background Data(%):", min = 10, max = 100, value = 100, sep = "", animate = FALSE), 
-                                conditionalPanel(condition <- paste0("input['", ns("mainplot"), "'] == 'volcano'"), 
-                                                 sliderInput(ns("log10padjCutoff"),"Log10 padj value cutoff:", 
-                                                             min = 2, max = 100, value = 60, sep = "", animate = FALSE)), 
+  list(shinydashboard::menuItem(" Plot Type", startExpanded = TRUE,
+                                radioButtons(ns("mainplot"), "Main Plots:",
+                                             c(Scatter = "scatter", VolcanoPlot = "volcano",
+                                               MAPlot = "maplot"))),
+       shinydashboard::menuItem("Main Options", startExpanded = TRUE,
+                                sliderInput(ns("backperc"), "Background Data(%):", min = 10, max = 100, value = 100, sep = "", animate = FALSE),
+                                conditionalPanel(condition <- paste0("input['", ns("mainplot"), "'] == 'volcano'"),
+                                                 sliderInput(ns("log10padjCutoff"),"Log10 padj value cutoff:",
+                                                             min = 2, max = 100, value = 60, sep = "", animate = FALSE)),
                                 uiOutput(ns("mainPlotControlsUI"))))
+}
+
+
+applyFiltersIter <- function (data = NULL, input = NULL) 
+{
+  if (is.null(data)) 
+    return(NULL)
+  m <- data
+  m$Legend[m$log2FoldChange > 0 ] <- "Up"
+  m$Legend[m$log2FoldChange < 0 ] <- "Down"
+  return(m)
+}
+
+getLegendColors <-  function(Legend = c("Up", "Down", "NS")) 
+{
+  colors <- c()
+  for (i in seq(1:length(Legend))) {
+    if (Legend[i] == "Up") {
+      colors <- c(colors, "#ff0000")
+    }
+    else if (Legend[i] == "Down") {
+      colors <- c(colors, "#0000ff")
+    }
+    else if (Legend[i] == "NS") {
+      colors <- c(colors, "#808080")
+    }
+    else if (Legend[i] == "GS") {
+      colors <- c(colors, "#008000")
+    }
+  }
+  colors
 }
