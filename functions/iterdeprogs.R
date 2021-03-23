@@ -10,6 +10,7 @@
 #' @param conds, experimental conditions. The order has to match
 #'     with the column order
 #' @param params, all params for the DE methods
+#' @param session session
 #' @return de results
 #' 
 #' @export
@@ -17,7 +18,7 @@
 #' @examples
 #'     x <- runDE()
 #'     
-runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL){
+runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, session = NULL){
   
   if (is.null(data)) return(NULL)
   data <- data[,columns]
@@ -34,11 +35,21 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL){
   # set variables and cutoff values
   cleaned_columns <- NULL
   DEgenes_new <- NULL
+  DEgenes <- NULL
   data_tmm <- getNormalizedMatrix(data, method=iterde_norm)
   iter <- 100
   
   # iteration until convergence
   for(i in 1:iter){
+    
+    # check iterations
+    setProgress(value = (i %% 11)/10,
+                message = paste("Heterogeneity Detection: Iteration", i, sep = " "),
+                detail = paste("# New DE genes:", length(DEgenes),
+                               "# of Removed Samples: ", length(cleaned_columns), sep = " "))
+    # setProgress(value = (i %% 11)/10, 
+    #             message = paste("Heterogeneity Detection: Iteration", i, sep = " "), 
+    #             detail = as.character((p("artur", br(), "artur"))))
     
     # select subset of genes and columns
     cur_columns <- setdiff(columns, cleaned_columns)

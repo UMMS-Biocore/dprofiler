@@ -22,7 +22,7 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
     
     # Iterative DE Algorithm
     deres <- reactive({
-        runIterDE(data, columns, conds, params)
+        runIterDE(data, columns, conds, params, session)
     })
     
     # Apply Filters for DE and Iter DE Results
@@ -63,19 +63,8 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
         getIterDESummary(output, session, "HomogeneityVenn", "HomogeneitySummary", deres(), params)
         getScoreDetails(output, session, "HomogeneityScores", Scores()$DEscore, Scores()$IterDEscore)
         
-        # download handlers
-        output$downloadBeforeGenes <- downloadHandler(
-          filename = function() {paste('initial_degenes.txt')},
-          content = function(con) {write(setdiff(deres()$DEgenes,deres()$IterDEgenes), con)}
-        )
-        output$downloadOverlapGenes <- downloadHandler(
-            filename = function() {paste('overlapping_degenes.txt')},
-            content = function(con) {write(intersect(deres()$DEgenes,deres()$IterDEgenes), con)}
-        )
-        output$downloadAfterGenes <- downloadHandler(
-            filename = function() { paste('final_degenes.txt')},
-            content = function(con) {write(setdiff(deres()$IterDEgenes,deres()$DEgenes), con)}
-        )
+        # download handler for DE genes
+        getDEgenesDownloadButtons(output, session, deres()$DEgenes, deres()$IterDEgenes)
     })
     list(dat = prepDat, DEgenes = deres()$DEgenes, 
          iterdat = iterprepDat, IterDEgenes = deres()$IterDEgenes,
@@ -98,7 +87,7 @@ getDEResultsUI<- function (id) {
     list(
         tabBox(id = "DEAnalysisBox",
                width = NULL,
-               tabPanel(title = "Homogeneity Detection",
+               tabPanel(title = "Differential Hetergeneity Detection",
                         fluidRow(
                             shinydashboard::box(title = "Summary", height = 260,
                                                 solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
@@ -188,5 +177,42 @@ ScoreCutOffSelectionUI <- function(id){
     list(
         textInput(ns("topstat"), "Top Stat", value = "" ),
         fileInput(ns("manualgenes"), "Manual DEgenes")
+    )
+}
+
+#' getDEgenesDownloadButtons
+#'
+#' Buttons for downloading Initial, overlapping and DE genes
+#' 
+#' @param output output 
+#' @param session session
+#' @param DEgenes Initial DE genes
+#' @param IterDEgenes Final DE genes
+#'
+#' @return
+#' @export
+#'
+#' @examples
+getDEgenesDownloadButtons <- function(output, session,  DEgenes, IterDEgenes){
+    
+    genes <- setdiff(DEgenes,IterDEgenes)
+    if(length(genes) == 0) genes <- DEgenes
+    output$downloadBeforeGenes <- downloadHandler(
+        filename = function() {paste('initial_degenes.txt')},
+        content = function(con) {write(genes, con)}
+    )
+    
+    genes <- intersect(DEgenes,IterDEgenes)
+    if(length(genes) == 0) genes <- IterDEgenes
+    output$downloadOverlapGenes <- downloadHandler(
+        filename = function() {paste('overlapping_degenes.txt')},
+        content = function(con) {write(genes, con)}
+    )
+    
+    genes <- setdiff(IterDEgenes,DEgenes)
+    if(length(genes) == 0) genes <- IterDEgenes
+    output$downloadAfterGenes <- downloadHandler(
+        filename = function() { paste('final_degenes.txt')},
+        content = function(con) {write(genes, con)}
     )
 }

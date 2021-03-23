@@ -26,6 +26,7 @@ source("functions/deconvolute.R")
 source("functions/mainScatter.R")
 source("functions/heatmap.R")
 source("functions/Bar.R")
+source("functions/help.R")
 
 # Run the application 
 shinyApp(ui = shinyUI(DprofilerUI),

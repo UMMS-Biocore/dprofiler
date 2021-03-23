@@ -44,7 +44,7 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   
   # Event for uploading the demo file
   observeEvent(input$demo, {
-    load("demo/demodata.Rda")
+    load("demo/demodata_trimsc.Rda")
     ldata$count <- demodata
     ldata$meta <- metadatatable
     ldata$sc_count <- demoscdata
@@ -61,6 +61,17 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     ldata$prof_count <- demoprofdata
     ldata$prof_meta <- profmetadatatable
   })
+  
+  # # Event for uploading the demo file
+  # observeEvent(input$demo_trimmedsc, {
+  #   load("demo/demodata_trimsc.Rda")
+  #   ldata$count <- demodata
+  #   ldata$meta <- metadatatable
+  #   ldata$sc_count <- demoscdata
+  #   rm(demoscdata)
+  #   ldata$prof_count <- demoprofdata
+  #   ldata$prof_meta <- profmetadatatable
+  # })
   
   # Event for uploading any file
   observeEvent(input$uploadFile, {
@@ -164,10 +175,11 @@ dataLoadUI<- function (id) {
              actionButtonDE(ns("uploadFile"), label = "Upload", styleclass = "primary"), 
              actionButtonDE(ns("demo"),  label = "Load Demo PRJNA554241", styleclass = "primary"),
              actionButtonDE(ns("demo_nosc"),  label = "Load Demo PRJNA554241 (no scRNA)", styleclass = "primary"))
+             # actionButtonDE(ns("demo_trimmedsc"),  label = "Load Demo PRJNA554241 (trim. scRNA)", styleclass = "primary"))
     ),
     fluidRow(
-      fileUploadBox(id, "countdata", "metadata", "Reference Expression Data Files"),
-      fileUploadBox(id, "profilecountdata", "profilemetadata", "Bulk Expression Data Files (Optional)")
+      fileUploadBox(id, "countdata", "metadata", "Reference Bulk Expression Data"),
+      fileUploadBox(id, "profilecountdata", "profilemetadata", "Profiling Bulk Expression Data (Optional)")
     ),
     fluidRow(
       scfileUploadBox(id, "sccountdata", "scRNA Expression Data Object (Optional)"),
@@ -191,7 +203,7 @@ dataSummaryUI<- function(id) {
   list(
   fluidRow(
     column(12,uiOutput(ns("nextButton"))),
-    shinydashboard::box(title = "Reference Expression Data Summary", solidHeader = TRUE, status = "info",
+    shinydashboard::box(title = "Reference Bulk Data Summary", solidHeader = TRUE, status = "info",
                         width = 6, 
                         fluidRow(
                           column(12, 
@@ -203,7 +215,7 @@ dataSummaryUI<- function(id) {
                           )
                         )
     ),
-    shinydashboard::box(title = "Bulk Expression Data Summary", solidHeader = TRUE, status = "info",
+    shinydashboard::box(title = "Profiling Bulk Data Summary", solidHeader = TRUE, status = "info",
                         width = 6, 
                         fluidRow(
                           column(12, 
@@ -217,7 +229,7 @@ dataSummaryUI<- function(id) {
     )
   ),
   fluidRow(
-    shinydashboard::box(title = "scRNA Expression Data Summary", solidHeader = TRUE, status = "info",
+    shinydashboard::box(title = "scRNA Data Summary", solidHeader = TRUE, status = "info",
                         width = 12, 
                         fluidRow(
                           column(12, 
@@ -368,7 +380,7 @@ fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL,
                                sepRadio(id, paste0(inputId_count, "Sep"))
                       ),
                       
-                      helpText(paste0("Upload MetaData")), 
+                      helpText(paste0("Upload MetaData (Optional)")), 
                       tags$div(style = "margin-bottom:-30px",
                                fileInput(inputId = ns(inputId_meta), label = NULL, accept = fileTypes())
                       ),

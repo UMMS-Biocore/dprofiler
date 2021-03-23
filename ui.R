@@ -34,10 +34,16 @@ dprofilerUI <- function() {
         tabsetPanel(id = "menutabs", type = "tabs",
                     tabPanel(title = "Menu", value = "dataprep", id="dataprep",
                              sidebarMenu(id="MenuItems",
+                                         menuItem("Quick Start Guide", icon = icon("user"),
+                                                  menuSubItem("Intro. and Data Upload", tabName = "Intro"),
+                                                  menuSubItem("Data Preprocessing", tabName = "assesment"),
+                                                  menuSubItem("Diff. Hetero. Analysis", tabName = "heteroanalysis"),
+                                                  menuSubItem("FAQ", tabName ="FAQ")
+                                         ),
                                          menuItem("Upload", icon = icon("upload"), tabName = "Upload"),
                                          menuItem("Data Processing", icon = icon("filter"), tabName = "DataProcessing"),
                                          menuItem("Cond. Select", icon = icon("adjust"), tabName = "CondSelect"),
-                                         menuItem("DE Analysis", icon = icon("adjust"), tabName = "DEAnalysis"),
+                                         menuItem("Diff. Hetero. Analysis", icon = icon("adjust"), tabName = "DEAnalysis"),
                                          menuItem("Cellular Comp.", icon = icon("adjust"), tabName = "CellComp"),
                                          menuItem("DEFilter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
                                                   uiOutput("cutOffUI")),
@@ -53,8 +59,6 @@ dprofilerUI <- function() {
                                                       heatmapControlsUI("deresults")),
                              shinydashboard::menuItem("Deconvolution Heatmaps", 
                                                       heatmapControlsUI("deconvolute"))
-                             # uiOutput("HeatmapMenu"),
-                             # uiOutput("ConvHeatmapMenu"),
                              )
         )
       ),
@@ -63,7 +67,13 @@ dprofilerUI <- function() {
       dashboardBody(
           
           tabItems(#id = "methodtabs", type = "tabs",
-
+                    
+                   # Help Tab
+                   tabItem(tabName="Intro", getIntroText()),
+                   tabItem(tabName="assesment", getDataAssesmentText()),
+                   tabItem(tabName="heteroanalysis", getHeteroAnalysisText()),
+                   tabItem(tabName="FAQ",  getQAText()),
+                   
                    # Upload Tab
                    tabItem(tabName="Upload",
                            tabBox(id = "UploadBox", 
