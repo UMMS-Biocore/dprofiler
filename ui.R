@@ -29,8 +29,9 @@ dprofilerUI <- function() {
       # Shiny dashboard Side
       dashboardSidebar(
         width = 250,
-        debrowser::getJSLine(),
-        uiOutput("loading"),
+        getJSLine(),
+        add_busy_spinner(spin = "fading-circle", position = "bottom-right"),
+        use_waiter(),
         tabsetPanel(id = "menutabs", type = "tabs",
                     tabPanel(title = "Menu", value = "dataprep", id="dataprep",
                              sidebarMenu(id="MenuItems",
@@ -45,6 +46,7 @@ dprofilerUI <- function() {
                                          menuItem("Cond. Select", icon = icon("adjust"), tabName = "CondSelect"),
                                          menuItem("Diff. Hetero. Analysis", icon = icon("adjust"), tabName = "DEAnalysis"),
                                          menuItem("Cellular Comp.", icon = icon("adjust"), tabName = "CellComp"),
+                                         menuItem("Profiling", icon = icon("adjust"), tabName = "Profile"),
                                          menuItem("DEFilter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
                                                   uiOutput("cutOffUI")),
                                          menuItem("ScoreFilter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
@@ -118,6 +120,11 @@ dprofilerUI <- function() {
                    # Deconvolution Tab
                    tabItem(tabName="CellComp", 
                            uiOutput("cellcompUI")
+                   ),
+                   
+                   # Profiling Tab
+                   tabItem(tabName="Profile", 
+                           uiOutput("ProfilingUI")
                    )
           )
           

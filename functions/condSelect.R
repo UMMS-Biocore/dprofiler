@@ -44,7 +44,7 @@ condSelectUI<- function(){
                           fluidRow(
                             uiOutput("conditionSelector"),
                             column(12,
-                                   actionButtonDE("startDE", "Start DE", styleclass = "primary")
+                                   actionButtonDE("startDE", "Start", styleclass = "primary")
                                    )
                           ))
   )
@@ -75,20 +75,20 @@ selectConditions<-function(Dataset = NULL,
   if (is.null(Dataset)) return(NULL)
   
   selectedSamples <- function(num){
-    if (is.null(input[[paste0("condition", num)]]))
+    if (is.null(input[[paste0(session$ns("condition"), num)]]))
       getSampleNames(colnames(Dataset), num %% 2 )
     else
-      input[[paste0("condition", num)]]
+      input[[paste0(session$ns("condition"), num)]]
   }
 
   allsamples <- getSampleNames( colnames(Dataset), "all" )
   selected1 <- selectedSamples(1)
   selected2 <- selectedSamples(2)
   to_return <- list(
-    column(12, getMetaSelector(metadata = metadata, input=input, n = 1),
-           getConditionSelectorFromMeta(metadata, input, 1,
+    column(12, getMetaSelector(metadata = metadata, session = session, input=input, n = 1),
+           getConditionSelectorFromMeta(metadata, session = session, input, 1,
                                         1, allsamples, selected1),
-           getConditionSelectorFromMeta(metadata, input, 1,
+           getConditionSelectorFromMeta(metadata, session = session, input, 1,
                                         2, allsamples, selected2)
     ),
     column(12, style='padding-bottom:25px;',
@@ -97,7 +97,7 @@ selectConditions<-function(Dataset = NULL,
                          "Scoring Parameters:"))
     ),
     column(12, 
-           getIterMethodDetails(1, input),
+           getIterMethodDetails(1, session, input),
     ),
     column(12, style='padding-bottom:25px',
            column(2,  
@@ -105,31 +105,82 @@ selectConditions<-function(Dataset = NULL,
                          "DE Analysis Parameters:"))
            ),
     column(12,
-           getSelectInputBox("demethod", 
+           getSelectInputBox(session$ns("demethod"), 
                              getIconLabel("DE Method", message = "Method for DE Analysis"),
                              1, c("DESeq2", "EdgeR", "Limma"),
-                             selectedInput("demethod", 1, "DESeq2", input)),
-           getMethodDetails(1, input))
+                             selectedInput(session$ns("demethod"), 1, "DESeq2", input)),
+           getMethodDetails(1, session, input))
   )
   
-  if (!is.null(selectedInput("conditions_from_meta", 
-                             1, NULL, input)) && selectedInput("conditions_from_meta", 
+  if (!is.null(selectedInput(session$ns("conditions_from_meta"), 
+                             1, NULL, input)) && selectedInput(session$ns("conditions_from_meta"), 
                                                                1, NULL, input) != "No Selection"){
-    facts <- levels(factor(metadata[,selectedInput("conditions_from_meta", 
+    facts <- levels(factor(metadata[,selectedInput(session$ns("conditions_from_meta"),
                                                    1, NULL, input)]))
     facts <- facts[facts != "" & facts != "NA"]
     if (length(facts) != 2) {
       showNotification("There must be exactly 2 groups in the selected condition. 
                          Please use NA or space to remove extra sample groups from metadata selection.", 
                        type = "error")
-      updateSelectInput(session, paste0("conditions_from_meta", 1), selected="No Selection" )
+      updateSelectInput(session, paste0(session$ns("conditions_from_meta"), 1), selected="No Selection" )
     }
   }
   
   return(to_return)
 }
 
-#getMethodDetails
+getMetaSelector <- function (metadata = NULL, session = NULL, input = NULL, n = 0) 
+{
+  if (!is.null(metadata)) {
+    df <- metadata
+    col_count <- length(colnames(df))
+    list(HTML("<hr style=\"color: white; border:solid 1px white;\">"), 
+         br(), column(10, 
+                      selectInput(paste0(session$ns("conditions_from_meta"), n), 
+                                  label = "Select Meta", choices = as.list(c("No Selection", colnames(df)[2:col_count])), 
+                                  multiple = FALSE, 
+                                  selected = selectedInput(session$ns("conditions_from_meta"), n, "Selection 2", input))))
+  }
+}
+
+getConditionSelectorFromMeta <- function (metadata = NULL, session = NULL, input = NULL, index = 1, num = 0, 
+                                                   choices = NULL, selected = NULL) 
+{
+  a <- list(column(6, selectInput(paste0(session$ns("condition"), num), 
+                                  label = paste0("Condition ", num), choices = choices, 
+                                  multiple = TRUE, selected = selected)))
+  if (!is.null(metadata)) {
+    selected_meta <- selectedInput(session$ns("conditions_from_meta"), 
+                                   index, NULL, input)
+    if (is.null(selected_meta)) 
+      selected_meta <- "No Selection"
+    if (selected_meta != "No Selection") {
+      old_selection <- ""
+      if (!is.null(input[[paste0(session$ns("condition"), num)]])) {
+        selected <- input[[paste0(session$ns("condition"), num)]]
+      }
+      meta_choices_all <- NULL
+      if (!is.null(selected_meta)) 
+        meta_choices_all <- get_conditions_given_selection(metadata, selected_meta)
+      if (old_selection != selected_meta) {
+        if (typeof(meta_choices_all) == "character") {
+          meta_choices <- list("There must be exactly 2 groups.")
+        }
+        else {
+          meta1 <- meta_choices_all[[2 - (num%%2)]]
+          meta_choices <- unlist(meta1, recursive = FALSE)
+        }
+        selected <- meta_choices
+      }
+      a <- list(column(6, selectInput(paste0(session$ns("condition"), num), 
+                                      label = paste0("Condition ", num), 
+                                      choices = choices, multiple = TRUE, selected = selected)))
+    }
+  }
+  return(a)
+}
+
+#  getMethodDetails
 #'
 #' get the detail boxes after DE method selected 
 #'
@@ -141,57 +192,65 @@ selectConditions<-function(Dataset = NULL,
 #' @export
 #'
 #'
-getMethodDetails <- function(num = 0, input = NULL) {
+getMethodDetails <- function(num = 0, session = NULL, input = NULL) {
   if (num > 0)
     list(
       conditionalPanel(
         (condition <- paste0("input.demethod",num," == 'DESeq2'")),
-        getSelectInputBox("fitType", 
+        ns = session$ns, 
+        getSelectInputBox(session$ns("fitType"), 
                           getIconLabel("Fit Type", message = "fitting type for dispersion estimate"), 
                           num, c("parametric", "local", "mean"), 
-                          selectedInput("testType", num, "parametric",
-                                        input), 2),
-        getSelectInputBox("betaPrior", 
+                          selectedInput(session$ns("testType"), num, "parametric", input), 2),
+        getSelectInputBox(session$ns("betaPrior"), 
                           getIconLabel("Beta Prior", message = "Use a zero-mean normal prior. Default for Wald statistics"), 
                           num, c(FALSE, TRUE), 
-                          selectedInput("betaPrior", num,
-                                        FALSE, input),2),
-        getSelectInputBox("testType", 
+                          selectedInput("betaPrior", num, FALSE, input),2),
+        getSelectInputBox(session$ns("testType"), 
                           getIconLabel("Test Type", message = "Test statistics used in DESeq2"), 
                           num, c("LRT", "Wald"),  
-                          selectedInput("testType", num, "LRT", input)),
-        getSelectInputBox("shrinkage", 
+                          selectedInput(session$ns("testType"), num, "Wald", input)),
+        getSelectInputBox(session$ns("shrinkage"), 
                           getIconLabel("Shrinkage", message = "The method of shrinkage estimate for log2FC"), 
                           num, c("None", "apeglm", "ashr", "normal"),
-                          selectedInput("shrinkage", num, "None", input))),
+                          selectedInput(session$ns("shrinkage"), num, "None", input))),
       conditionalPanel(
         (condition <- paste0("input.demethod",num," == 'EdgeR'")),
-        getSelectInputBox("edgeR_normfact", 
+        ns = session$ns, 
+        getSelectInputBox(session$ns("edgeR_normfact"), 
                           getIconLabel("Normalization", message = "Normalization method used in EdgeR"), 
                           num, c("TMM","RLE","upperquartile","none"), 
-                          selectedInput("edgeR_normfact", num, "TMM", input), 2),
-        column(2,textInput(paste0("dispersion", num), "Dispersion", 
-                           value = isolate(selectedInput("dispersion", 
+                          selectedInput(session$ns("edgeR_normfact"), num, "TMM", input), 2),
+        column(2,textInput(paste0(session$ns("dispersion"), num), "Dispersion", 
+                           value = isolate(selectedInput(session$ns("dispersion"), 
                                                          num, "0", input) ))),
-        getSelectInputBox("edgeR_testType", 
+        getSelectInputBox(session$ns("edgeR_testType"), 
                           getIconLabel("Test Type", message = "Type of model fitting for gene abundances"), 
                           num, c("exactTest", "glmLRT"), 
-                          selectedInput("edgeR_testType", num,
-                                        "exactTest", input))),
+                          selectedInput(session$ns("edgeR_testType"), num, "exactTest", input))),
       conditionalPanel(
         (condition <- paste0("input.demethod",num," ==  'Limma'")),
-        getSelectInputBox("limma_normfact", getIconLabel("Normalization", message = "Normalization method used in Limma"), 
+        ns = session$ns, 
+        getSelectInputBox(session$ns("limma_normfact"), 
+                          getIconLabel("Normalization", message = "Normalization method used in Limma"), 
                           num, c("TMM","RLE","upperquartile","none"), 
-                          selectedInput("limma_normfact", num, "TMM", input), 2),
-        getSelectInputBox("limma_fitType", 
+                          selectedInput(session$ns("limma_normfact"), num, "TMM", input), 2),
+        getSelectInputBox(session$ns("limma_fitType"), 
                           getIconLabel("Fit Type", message = "Type of model fitting: 'ls' for least squares, 'robust' for robust regression"), 
                           num, c("ls", "robust"), 
-                          selectedInput("limma_fitType", num, "ls", input)),
-        getSelectInputBox("normBetween", 
+                          selectedInput(session$ns("limma_fitType"), num, "ls", input)),
+        getSelectInputBox(session$ns("normBetween"), 
                           getIconLabel("Norm. Bet. Arrays", message = "Normalization Between Array"), 
                           num, c("none", "scale", "quantile", "cyclicloess",
                             "Aquantile", "Gquantile", "Rquantile","Tquantile"),
-                          selectedInput("normBetween", num, "none", input))),
+                          selectedInput(session$ns("normBetween"), num, "none", input)),
+        getSelectInputBox(session$ns("datatype"), 
+                          getIconLabel("Data Type", message = "Either Count or microarray data"), 
+                          num, c("count", "microarray"),
+                          selectedInput(session$ns("datatype"), num, "count", input))
+        
+        ),
+      
       br())
 }
 
@@ -207,41 +266,43 @@ getMethodDetails <- function(num = 0, input = NULL) {
 #' @export
 #'
 #'
-getIterMethodDetails <- function(num = 0, input = NULL) {
+getIterMethodDetails <- function(num = 0, session = NULL, input = NULL) {
   if (num > 0)
     list(
-      getSelectInputBox("scoremethod", 
+      getSelectInputBox(session$ns("scoremethod"), 
                         getIconLabel("Score Method", message = "Method for estimating Membership scores"), 
                         num, c("Silhouette", "NNLS-based"),
-                        selectedInput("scoremethod", num, "Silhouette", input)),
-      column(2,textInput(paste0("minscore", num), 
+                        selectedInput(session$ns("scoremethod"), num, "Silhouette", input)),
+      column(2,textInput(paste0(session$ns("minscore"), num), 
                          getIconLabel("Min. Score", message = "Threshold for acceptable self-membership scores. Score < Min.Score indicates dismemberment of the sample"), 
-                         value = isolate(selectedInput("minscore", 
+                         value = isolate(selectedInput(session$ns("minscore"), 
                                                        num, "0.5", input)))),
-      getSelectInputBox("iterde_norm", 
+      getSelectInputBox(session$ns("iterde_norm"), 
                         getIconLabel("Normalization", message = "Normalization method prior to scoring"), 
                         num, c("TMM","RLE","upperquartile","none"), 
-                        selectedInput("iterde_norm", num, "TMM", input), 2),
-      getSelectInputBox("iterde",
+                        selectedInput(session$ns("iterde_norm"), num, "TMM", input), 2),
+      getSelectInputBox(session$ns("iterde"),
                         getIconLabel("DE Selection Method", message = "Set of conditions for selecting DE genes on each iteration"), 
                         num, c("Top n Stat.", "Log2FC+Padj"),
-                        selectedInput("iterde", num, "Log2FC+Padj", input)),
+                        selectedInput(session$ns("iterde"), num, "Log2FC+Padj", input)),
       conditionalPanel(
         (condition <- paste0("input.iterde",num," == 'Top n Stat.'")),
-        column(2,textInput(paste0("topstat", num), 
+        ns = session$ns,
+        column(2,textInput(paste0(session$ns("topstat"), num), 
                            getIconLabel("Top n Stat.", message = "DE genes with top n DE Analysis statistics. Might be different for each DE method"), 
-                           value = isolate(selectedInput("topstat", 
+                           value = isolate(selectedInput(session$ns("topstat"), 
                                                          num, "100", input) )))
       ),
       conditionalPanel(
-        (condition <- paste0("input.iterde",num," == 'Log2FC+Padj'")),
-        column(1,textInput(paste0("logfoldchange", num),
+        (condition <- paste0("input.iterde",num," == 'Log2FC+Padj'")), 
+        ns = session$ns,
+        column(1,textInput(paste0(session$ns("logfoldchange"), num),
                            getIconLabel("Log2FC", message = "Minimum log fold change"), 
-                           value = isolate(selectedInput("logfoldchange",
+                           value = isolate(selectedInput(session$ns("logfoldchange"),
                                                          num, "0.5", input) ))),
-        column(1,textInput(paste0("padj", num), 
+        column(1,textInput(paste0(session$ns("padj"), num), 
                            getIconLabel("P-adj value", message = "Maximum adjusted p-value"),
-                           value = isolate(selectedInput("padj",
+                           value = isolate(selectedInput(session$ns("padj"),
                                                          num, "0.05", input) )))
       )
     )
@@ -292,7 +353,7 @@ prepDataContainer <- function(data = NULL, input = NULL) {
       isolate(input[[paste0("limma_normfact",cnt)]]),
       isolate(input[[paste0("limma_fitType",cnt)]]),
       isolate(input[[paste0("normBetween",cnt)]]), 
-      "", sep=",")
+      isolate(input[[paste0("datatype",cnt)]]), sep=",")
   }
   
   # condition inputs for iterative de analysis
@@ -322,6 +383,8 @@ prepDataContainer <- function(data = NULL, input = NULL) {
                                      init_iterdedata = initd$iterdat(),
                                      IterDEgenes = initd$IterDEgenes,
                                      score = initd$score,
+                                     deconvolute_genes= initd$deconvolute_genes,
+                                     cleaned_columns = initd$cleaned_columns,
                                      demethod_params = inputconds$demethod_params[1])
     } else {
       return(NULL)
