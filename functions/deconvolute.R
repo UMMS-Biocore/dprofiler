@@ -12,10 +12,12 @@
 prepDeconvolute <- function(dc = NULL, scdata = NULL){
   if (is.null(dc)) return(NULL)
   
+  waiter_show(html = waiting_screen, color = transparent(.5))
   withProgress(message = 'Running RNA Deconvolution', value = 0, {
     mixtures <- callModule(dprofilerdeconvolute, "deconvolute", dc, scdata)
     mix <- mixtures()
   })
+  waiter_hide()
   
   return(mix)
 }
@@ -43,7 +45,7 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
 
   # Deconvolution
   mixtures <- reactive({
-      deconvolute(dc()$init_dedata, dc()$IterDEgenes, dc()$cols, scdata)
+      deconvolute(dc()$init_dedata, isolate(dc()$deconvolute_genes()), dc()$cols, scdata)
   })
   
   # Choose Cell Types and top markers
@@ -77,43 +79,13 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
     
     # Score and deconvolution paper 
     ScoreTable <- cbind(dc()$score()$IterDEscore, mixtures())
-    getScoreTableDetails(output, session, "MembershipScoresIterDE", ScoreTable, 
+    getDeconvoluteTableDetails(output, session, "MembershipScoresIterDE", ScoreTable, 
                          modal = FALSE, highlight = TRUE)
     
   })
   
   return(mixtures = mixtures)
 }
-
-
-#' deconvolute
-#' 
-#' the deconvolution function based on MuSiC algorithm
-#'
-#' @param data Bulk expression data set
-#' @param DEgenes DE genes for limiting the genes of scRNA and Bulk RNA data sets
-#' @param columns samples that are deconvoluted
-#' @param scdata single cell ExpressionSet Object
-#'
-#' @return
-#' @export
-#'
-#' @examples
-deconvolute <- function(data, DEgenes, columns, scdata){
-  
-  data <- data[,columns]
-  data_de <- data[DEgenes,]
-  Vit_BulkRNAseq <- ExpressionSet(assayData=as.matrix(data_de))
-  pData(Vit_BulkRNAseq) <- data.frame(row.names = columns, columns = columns)
-
-  NLandL.prop = music_prop(bulk.eset = Vit_BulkRNAseq, 
-                           sc.eset = scdata, 
-                           clusters = 'CellType',
-                           samples = 'Patient', verbose = T)
-  
-  return(NLandL.prop$Est.prop.weighted)
-}
-
 
 #' getDeconvoluteUI
 #' Creates a panel to visualize DE results
@@ -153,12 +125,12 @@ getDeconvoluteUI<- function (id) {
   )
 }
 
-#' getScoreTableDetails
+#' getDeconvoluteTableDetails
 #' 
 #' get table details
 #' To be able to put a table into two lines are necessary;
 #' into the server part;
-#' getScoreTableDetails(output, session, "dataname", data, modal=TRUE)
+#' getDeconvoluteTableDetails(output, session, "dataname", data, modal=TRUE)
 #' into the ui part;
 #' uiOutput(ns("dataname"))
 #'   
@@ -170,11 +142,11 @@ getDeconvoluteUI<- function (id) {
 #' @param highlight if it is true, numerical columns are highlighted
 #' @return panel
 #' @examples
-#'     x <- getScoreTableDetails()
+#'     x <- getDeconvoluteTableDetails()
 #'
 #' @export
 #'
-getScoreTableDetails <- function(output  = NULL, session  = NULL, tablename  = NULL, data = NULL, 
+getDeconvoluteTableDetails <- function(output  = NULL, session  = NULL, tablename  = NULL, data = NULL, 
                                  modal = NULL, highlight = FALSE){
   if (is.null(data)) return(NULL)
   output[[tablename]] <- DT::renderDataTable({
@@ -208,4 +180,35 @@ getScoreTableDetails <- function(output  = NULL, session  = NULL, tablename  = N
   })
 }
   
+#' deconvolute
+#' 
+#' the deconvolution function based on MuSiC algorithm
+#'
+#' @param data Bulk expression data set
+#' @param DEgenes DE genes for limiting the genes of scRNA and Bulk RNA data sets
+#' @param columns samples that are deconvoluted
+#' @param scdata single cell ExpressionSet Object
+#'
+#' @return
+#' @export
+#'
+#' @examples
+deconvolute <- function(data, DEgenes, columns, scdata){
+  
+  data <- data[,columns]
+  
+  data <- getNormalizedMatrix(data,method = "TMM")
+  
+  data_de <- data[DEgenes,]
+  Vit_BulkRNAseq <- ExpressionSet(assayData=as.matrix(data_de))
+  pData(Vit_BulkRNAseq) <- data.frame(row.names = columns, columns = columns)
+  
+  
+  NLandL.prop = music_prop(bulk.eset = Vit_BulkRNAseq, 
+                           sc.eset = scdata, 
+                           clusters = 'CellType',
+                           samples = 'Patient', verbose = T)
+  
+  return(NLandL.prop$Est.prop.weighted)
+}
   

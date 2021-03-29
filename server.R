@@ -96,15 +96,18 @@ dprofilerServer <- function(input, output, session) {
                  shiny.autoreload=TRUE, warn =-1)
       }
       
-      output$programtitle <- renderUI({
-        # togglePanels(0, c(0), session)
-        getProgramTitle(session)
-      })
+      # output$programtitle <- renderUI({
+      #   # togglePanels(0, c(0), session)
+      #   getProgramTitle(session)
+      # })
       
+      ## Reactive Values #### 
+      BigImage <- reactiveVal(FALSE)
       uploadeddata <- reactiveVal()
       filtd <- reactiveVal()
       batch <- reactiveVal()
       sel <- reactiveVal()
+      sel_prof <- reactiveVal()
       dc <- reactiveVal()
       dec <- reactiveVal()
       
@@ -148,9 +151,13 @@ dprofilerServer <- function(input, output, session) {
           
         })
         
+        
         observeEvent(input$startDE, {
           if(!is.null(batch()$BatchEffect()$count)){
+            # waiter_show(html = waiting_screen, color = transparent(0))
+            waiter_show(html = waiting_screen, color = transparent(.5))
             res <- prepDataContainer(batch()$BatchEffect()$count, input)
+            waiter_hide()
             if(is.null(res)) return(NULL)
             dc(res)
             updateTabItems(session, "MenuItems", "DEAnalysis")
@@ -168,23 +175,6 @@ dprofilerServer <- function(input, output, session) {
         
         output$deresUI <- renderUI({
           getDEResultsUI("deresults")
-        })
-        
-
-        ## Cellular Heterogeneity Event ####
-        observeEvent(input$deconvolute, {
-          if(!is.null(dc())){
-            deconvolute <- prepDeconvolute(dc, uploadeddata()$load()$sc_count)
-            updateTabItems(session, "MenuItems", "CellComp")
-          }
-        })
-        
-        output$cellcompUI <- renderUI({
-          getDeconvoluteUI("deconvolute")
-        })
-        
-        output$ConvHeatmapMenu  <- renderUI({
-          heatmapControlsUI("deconvolute")
         })
 
         ## Main plots UI ####
@@ -237,6 +227,44 @@ dprofilerServer <- function(input, output, session) {
           }
         })
         
+        ## Cellular Heterogeneity Event ####
+        observeEvent(input$deconvolute, {
+          if(!is.null(dc())){
+            deconvolute <- prepDeconvolute(dc, uploadeddata()$load()$sc_count)
+            updateTabItems(session, "MenuItems", "CellComp")
+          } 
+        })
+        
+        output$cellcompUI <- renderUI({
+          getDeconvoluteUI("deconvolute")
+        })
+        
+        output$ConvHeatmapMenu  <- renderUI({
+          heatmapControlsUI("deconvolute")
+        })
+        
+        ## Profiling Event ####
+        observeEvent (input$gotoprofile, {
+          if(!is.null(dc())){
+            callModule(dprofilercondselect, "profiling", uploadeddata()$load()$prof_count, uploadeddata()$load()$prof_meta)
+            updateTabItems(session, "MenuItems", "Profile")
+          }
+        })
+        
+        observeEvent(input$startprofiling, {
+          if(!is.null(dc())){
+            waiter_show(html = waiting_screen, color = transparent(.5))
+            profiling <- callModule(dprofilerprofiling, "profiling", dc(), uploadeddata()$load()$prof_count,
+                                    uploadeddata()$load()$prof_meta)
+            waiter_hide()
+          }
+        })
+        
+        output$ProfilingUI <- renderUI({
+          getProfilingUI("profiling")
+        })
+        
+        
       })
       
       
@@ -254,11 +282,11 @@ dprofilerServer <- function(input, output, session) {
                                package = "debrowser"), header=TRUE, skipNul = TRUE)
       })
       
-      ## loading icon UI ####
-      output$loading <- renderUI({
-        getLoadingMsg()
-      })
-      
+      # ## loading icon UI ####
+      # output$loading <- renderUI({
+      #   debrowser::getLoadingMsg()
+      # })
+
       output$logo <- renderUI({
         getLogo()
       })

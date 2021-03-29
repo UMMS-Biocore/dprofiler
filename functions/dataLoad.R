@@ -62,16 +62,6 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     ldata$prof_meta <- profmetadatatable
   })
   
-  # # Event for uploading the demo file
-  # observeEvent(input$demo_trimmedsc, {
-  #   load("demo/demodata_trimsc.Rda")
-  #   ldata$count <- demodata
-  #   ldata$meta <- metadatatable
-  #   ldata$sc_count <- demoscdata
-  #   rm(demoscdata)
-  #   ldata$prof_count <- demoprofdata
-  #   ldata$prof_meta <- profmetadatatable
-  # })
   
   # Event for uploading any file
   observeEvent(input$uploadFile, {
@@ -175,7 +165,6 @@ dataLoadUI<- function (id) {
              actionButtonDE(ns("uploadFile"), label = "Upload", styleclass = "primary"), 
              actionButtonDE(ns("demo"),  label = "Load Demo PRJNA554241", styleclass = "primary"),
              actionButtonDE(ns("demo_nosc"),  label = "Load Demo PRJNA554241 (no scRNA)", styleclass = "primary"))
-             # actionButtonDE(ns("demo_trimmedsc"),  label = "Load Demo PRJNA554241 (trim. scRNA)", styleclass = "primary"))
     ),
     fluidRow(
       fileUploadBox(id, "countdata", "metadata", "Reference Bulk Expression Data"),
@@ -249,43 +238,6 @@ dataSummaryUI<- function(id) {
   )
 }
 
-#' getSCRNASampleDetails
-#' 
-#' get single cell RNA samples details
-#'
-#' @param output output
-#' @param summary summary output name
-#' @param details details output name
-#' @param data single cell ExpressionSet Object
-#'
-#' @return
-#' @export
-#'
-#' @examples
-getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL, data = NULL) 
-{
-  if (is.null(data)) 
-    return(NULL)
-  output[[summary]] <- renderTable({
-    countdata <- data
-    samplenums <- dim(countdata)[2]
-    rownums <- dim(countdata)[1]
-    patientnums <- length(unique(pData(countdata)$Patient))
-    result <- rbind(samplenums, rownums, patientnums)
-    rownames(result) <- c("# of barcodes", "# of rows (genes/regions)", "# of samples")
-    colnames(result) <- "Value"
-    result
-  }, digits = 0, rownames = TRUE, align = "lc")
-  output[[paste0(details,"density")]] <- renderPlot({
-    plot_density_ridge(data, color_by = "CellType", title = "UMIs per Cell Type", val = "UMI_sum_raw") + 
-      xlim(0,7500)
-  })
-  output[[paste0(details,"tsne")]] <- renderPlot({
-    plot_tsne_metadata(data, color_by = "CellType", title = "Cell Types",
-                       legend_dot_size = 4, text_sizes = c(20, 10, 5, 10, 15, 15))
-  })
-}
-
 #' getProfileSampleDetails
 #' 
 #' get single cell RNA samples details
@@ -332,25 +284,42 @@ getProfileSampleDetails <- function (output = NULL, summary = NULL, details = NU
   })
 }
 
-#' sepRadio
+#' getSCRNASampleDetails
+#' 
+#' get single cell RNA samples details
 #'
-#' Radio button for seperators: an inline version of debrowser's sepRadio function
-#'
-#' @param id module id 
-#' @param name 
+#' @param output output
+#' @param summary summary output name
+#' @param details details output name
+#' @param data single cell ExpressionSet Object
 #'
 #' @return
 #' @export
 #'
 #' @examples
-sepRadio <- function (id, name) 
+getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL, data = NULL) 
 {
-  ns <- NS(id)
-  radioButtons(inputId = ns(name), label = "Separator", 
-               choices = c(Comma = ",", Semicolon = ";", Tab = "\t"), selected = "\t",
-               inline=T)
+  if (is.null(data)) 
+    return(NULL)
+  output[[summary]] <- renderTable({
+    countdata <- data
+    samplenums <- dim(countdata)[2]
+    rownums <- dim(countdata)[1]
+    patientnums <- length(unique(pData(countdata)$Patient))
+    result <- rbind(samplenums, rownums, patientnums)
+    rownames(result) <- c("# of barcodes", "# of rows (genes/regions)", "# of samples")
+    colnames(result) <- "Value"
+    result
+  }, digits = 0, rownames = TRUE, align = "lc")
+  output[[paste0(details,"density")]] <- renderPlot({
+    plot_density_ridge(data, color_by = "CellType", title = "UMIs per Cell Type", val = "UMI_sum_raw") + 
+      xlim(0,7500)
+  })
+  output[[paste0(details,"tsne")]] <- renderPlot({
+    plot_tsne_metadata(data, color_by = "CellType", title = "Cell Types",
+                       legend_dot_size = 4, text_sizes = c(20, 10, 5, 10, 15, 15))
+  })
 }
-
 
 
 #' fileUploadBox
@@ -420,4 +389,23 @@ scfileUploadBox <- function (id = NULL, inputId = NULL, label = NULL)
                       )
                       
   )
+}
+
+#' sepRadio
+#'
+#' Radio button for seperators: an inline version of debrowser's sepRadio function
+#'
+#' @param id module id 
+#' @param name 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+sepRadio <- function (id, name) 
+{
+  ns <- NS(id)
+  radioButtons(inputId = ns(name), label = "Separator", 
+               choices = c(Comma = ",", Semicolon = ";", Tab = "\t"), selected = "\t",
+               inline=T)
 }

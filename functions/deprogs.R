@@ -21,9 +21,10 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
     if(is.null(data)) return(NULL)
     
     # Iterative DE Algorithm
-    deres <- reactive({
-        runIterDE(data, columns, conds, params, session)
-    })
+    deres <- reactive(runIterDE(data, columns, conds, params, session))
+    
+    # Expression Profiles
+    expression_profiles <- reactive(getExpressionProfiles(deres(), data, columns, conds))
     
     # Apply Filters for DE and Iter DE Results
     prepDat <- reactive({
@@ -39,15 +40,34 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
         applyFiltersNew(addDataCols(data, deres()$IterDEResults, columns, conds), input)
     })
     
+    # Choose Cell Types and top markers
+    output$deconvolute_genes <- renderUI({
+        list(selectInput(session$ns("deconvolute_genes"), NULL, selected = c("Homogeneous Conditions"),
+                         choices = c("Heterogeneous Conditions","Homogeneous Conditions")))
+    })
+    
     # Create a reactive scoring table as well
-    Scores <- reactiveVal()
+    score <- reactiveVal()
+    deconvolute_genes <- reactiveVal()
     
     # Observe for Tables and Plots
     observe({
         
-        # get scpres
-        Scores(getFinalScores(deres(), data, columns, conds, params, 
+        temp <- expression_profiles()
+        
+        # get scores and expression profiles
+        score(getFinalScores(deres(), data, columns, conds, params, 
                               ManualDEgenes = input$manualgenes, TopStat = input$topstat))
+
+        # get deconvolution genes
+        deconvolute_genes({
+            which_genes <- ifelse(is.null(input$deconvolute_genes), TRUE, input$deconvolute_genes)
+            if(which_genes == "Homogeneous Conditions"){
+                deres()$IterDEgenes
+            } else{
+                deres()$DEgenes
+            }
+        })
         
         # prepare DE tables
         dat <-  prepDat()[prepDat()$Legend == input$legendradio,]
@@ -61,14 +81,14 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
 
         # Membership Scores
         getIterDESummary(output, session, "HomogeneityVenn", "HomogeneitySummary", deres(), params)
-        getScoreDetails(output, session, "HomogeneityScores", Scores()$DEscore, Scores()$IterDEscore)
+        getScoreDetails(output, session, "HomogeneityScores", score()$DEscore, score()$IterDEscore)
         
         # download handler for DE genes
         getDEgenesDownloadButtons(output, session, deres()$DEgenes, deres()$IterDEgenes)
     })
-    list(dat = prepDat, DEgenes = deres()$DEgenes, 
-         iterdat = iterprepDat, IterDEgenes = deres()$IterDEgenes,
-         score = Scores)
+    
+    list(dat = prepDat, DEgenes = deres()$DEgenes, iterdat = iterprepDat, IterDEgenes = deres()$IterDEgenes,
+         score = score, deconvolute_genes = deconvolute_genes, cleaned_columns = deres()$cleaned_columns)
 }
 
 #' getDEResultsUI
@@ -107,7 +127,10 @@ getDEResultsUI<- function (id) {
                             shinydashboard::box(title = "Membership Scores",
                                                 solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
                                                 plotlyOutput(ns("HomogeneityScores")),
-                                                actionButtonDE("deconvolute", "Go to Cellular Composition", styleclass = "primary")
+                                                column(4,actionButtonDE("deconvolute", "Go to Cellular Composition", styleclass = "primary")),
+                                                column(4,actionButtonDE("gotoprofile", "Go to Profiling", styleclass = "primary")),
+                                                column(4,uiOutput(ns("deconvolute_genes"))),
+                                                
                             ),
                             uiOutput(ns("maininitialplot")),                                  
                             uiOutput(ns("mainoverlapplot")),
@@ -216,3 +239,60 @@ getDEgenesDownloadButtons <- function(output, session,  DEgenes, IterDEgenes){
         content = function(con) {write(genes, con)}
     )
 }
+
+runDE <- function (data = NULL, columns = NULL, conds = NULL, params = NULL) 
+{
+    if (is.null(data)) 
+        return(NULL)
+    de_res <- NULL
+    if (startsWith(params[1], "DESeq2")) 
+        de_res <- runDESeq2(data, columns, conds, params)
+    else if (startsWith(params[1], "EdgeR")) 
+        de_res <- runEdgeR(data, columns, conds, params)
+    else if (startsWith(params[1], "Limma")) 
+        de_res <- runLimma(data, columns, conds, params)
+    data.frame(de_res)
+}
+
+runLimma <- function (data = NULL, columns = NULL, conds = NULL, params = NULL) 
+{
+    if (is.null(data)) 
+        return(NULL)
+    if (length(params) < 3) 
+        params <- strsplit(params, ",")[[1]]
+    normfact = if (!is.null(params[2])) 
+        params[2]
+    fitType = if (!is.null(params[3])) 
+        params[3]
+    normBet = if (!is.null(params[4])) 
+        params[4]
+    datatype = if(!is.null((params[5])))
+        params[5]
+    data <- data[, columns]
+    conds <- factor(conds)
+    cnum = summary(conds)[levels(conds)[1]]
+    tnum = summary(conds)[levels(conds)[2]]
+    filtd <- data
+    des <- factor(c(rep(levels(conds)[1], cnum), rep(levels(conds)[2], 
+                                                     tnum)))
+    names(filtd) <- des
+    design <- cbind(Grp1 = 1, Grp2vs1 = des)
+    if(datatype == "count"){
+        dge <- DGEList(counts = filtd, group = des)
+        dge <- calcNormFactors(dge, method = normfact, samples = columns)
+        v <- voom(dge, design = design, normalize.method = normBet,
+                  plot = FALSE)
+        fit <- lmFit(v, design = design)
+    } else {
+        fit <- lmFit(filtd, design = design)
+    }
+    fit <- eBayes(fit)
+    options(digits = 4)
+    tab <- topTable(fit, coef = 2, number = dim(fit)[1], genelist = fit$genes$NAME)
+    res <- data.frame(cbind(tab$logFC, tab$P.Value, tab$adj.P.Val, tab$t))
+    colnames(res) <- c("log2FoldChange", "pvalue", "padj", "stat")
+    rownames(res) <- rownames(tab)
+    return(res)
+}
+
+
