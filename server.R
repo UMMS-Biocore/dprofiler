@@ -96,11 +96,6 @@ dprofilerServer <- function(input, output, session) {
                  shiny.autoreload=TRUE, warn =-1)
       }
       
-      # output$programtitle <- renderUI({
-      #   # togglePanels(0, c(0), session)
-      #   getProgramTitle(session)
-      # })
-      
       ## Reactive Values #### 
       BigImage <- reactiveVal(FALSE)
       uploadeddata <- reactiveVal()
@@ -122,6 +117,7 @@ dprofilerServer <- function(input, output, session) {
         ## Data Filtering Event ####
         observeEvent (input$Filter, {
           if(!is.null(uploadeddata()$load())){
+            shinyjs::toggle(id = "dataprocessing")
             updateTabItems(session, "MenuItems", "DataProcessing")
             filtd(callModule(debrowserlowcountfilter, "lcf", uploadeddata()$load()))
           }
@@ -135,32 +131,31 @@ dprofilerServer <- function(input, output, session) {
           }
         })
         
-        ## Regular DE analysis Event ####
+        ## Heterogeneity Analysis Events ####
         observeEvent (input$goDE, {
           if(is.null(batch())) batch(setBatch(filtd()))
           sel(dprofilercondselect(input, output, session,
                                   batch()$BatchEffect()$count, batch()$BatchEffect()$meta))
-          updateTabItems(session, "MenuItems", "CondSelect")
+          updateTabItems(session, "MenuItems", "DEAnalysis")
         })
         
         observeEvent (input$goDEFromFilter, {
           if(is.null(batch())) batch(setBatch(filtd()))
           sel(dprofilercondselect(input, output, session,
                                   batch()$BatchEffect()$count, batch()$BatchEffect()$meta))
-          updateTabItems(session, "MenuItems", "CondSelect")
+          updateTabItems(session, "MenuItems", "DEAnalysis")
           
         })
         
         
         observeEvent(input$startDE, {
           if(!is.null(batch()$BatchEffect()$count)){
-            # waiter_show(html = waiting_screen, color = transparent(0))
             waiter_show(html = waiting_screen, color = transparent(.5))
-            res <- prepDataContainer(batch()$BatchEffect()$count, input)
+            res <- prepDataContainer(batch()$BatchEffect()$count, input, session)
             waiter_hide()
             if(is.null(res)) return(NULL)
             dc(res)
-            updateTabItems(session, "MenuItems", "DEAnalysis")
+            # updateTabItems(session, "MenuItems", "DEAnalysis")
             buttonValues$startDE <- TRUE
           }
         })
@@ -210,10 +205,6 @@ dprofilerServer <- function(input, output, session) {
             selgenename(selectedHeat()$shgClicked())
           }
         })
-
-        output$HeatmapMenu  <- renderUI({
-          heatmapControlsUI("deresults")
-        })
         
         ## Bar Main and BoxMain Plots UI ####
         observe({
@@ -227,11 +218,17 @@ dprofilerServer <- function(input, output, session) {
           }
         })
         
-        ## Cellular Heterogeneity Event ####
+        ## Cellular Heterogeneity Events ####
+        observeEvent (input$gotodeconvolute, {
+          if(!is.null(dc())){
+            sel(callModule(dprofilercondselect, "deconvolute", uploadeddata()$load()$sc_count))
+            updateTabItems(session, "MenuItems", "CellComp")
+          }
+        })
+        
         observeEvent(input$deconvolute, {
           if(!is.null(dc())){
-            deconvolute <- prepDeconvolute(dc, uploadeddata()$load()$sc_count)
-            updateTabItems(session, "MenuItems", "CellComp")
+            deconvolute <- prepDeconvolute(dc, uploadeddata()$load()$sc_count, session)
           } 
         })
         
@@ -239,14 +236,10 @@ dprofilerServer <- function(input, output, session) {
           getDeconvoluteUI("deconvolute")
         })
         
-        output$ConvHeatmapMenu  <- renderUI({
-          heatmapControlsUI("deconvolute")
-        })
-        
-        ## Profiling Event ####
+        ## Profiling Events ####
         observeEvent (input$gotoprofile, {
           if(!is.null(dc())){
-            callModule(dprofilercondselect, "profiling", uploadeddata()$load()$prof_count, uploadeddata()$load()$prof_meta)
+            sel(callModule(dprofilercondselect, "profiling", uploadeddata()$load()$prof_count, uploadeddata()$load()$prof_meta))
             updateTabItems(session, "MenuItems", "Profile")
           }
         })
@@ -281,11 +274,6 @@ dprofilerServer <- function(input, output, session) {
         read.delim(system.file("extdata", "www", "countFile.txt",
                                package = "debrowser"), header=TRUE, skipNul = TRUE)
       })
-      
-      # ## loading icon UI ####
-      # output$loading <- renderUI({
-      #   debrowser::getLoadingMsg()
-      # })
 
       output$logo <- renderUI({
         getLogo()

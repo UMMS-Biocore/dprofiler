@@ -9,6 +9,7 @@
 #' @param columns, columns
 #' @param conds, conditions
 #' @param params, de parameters
+#' @param parent_session parent session
 #' 
 #' @return DE panel 
 #' @export
@@ -17,7 +18,8 @@
 #'     x <- dprofilerdeanalysis()
 #'
 dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL, 
-                                data = NULL, columns = NULL, conds = NULL, params = NULL){
+                                data = NULL, columns = NULL, conds = NULL, params = NULL, 
+                                parent_session = NULL){
     if(is.null(data)) return(NULL)
     
     # Iterative DE Algorithm
@@ -42,7 +44,7 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
     
     # Choose Cell Types and top markers
     output$deconvolute_genes <- renderUI({
-        list(selectInput(session$ns("deconvolute_genes"), NULL, selected = c("Homogeneous Conditions"),
+        list(selectInput(session$ns("deconvolute_genes"), "", selected = c("Homogeneous Conditions"),
                          choices = c("Heterogeneous Conditions","Homogeneous Conditions")))
     })
     
@@ -52,6 +54,9 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
     
     # Observe for Tables and Plots
     observe({
+        
+        # switch to heterogeneity analysis page
+        updateTabsetPanel(parent_session, "DEAnalysisBox", "heterogeneity")
         
         temp <- expression_profiles()
         
@@ -107,13 +112,16 @@ getDEResultsUI<- function (id) {
     list(
         tabBox(id = "DEAnalysisBox",
                width = NULL,
+               tabPanel(title = "Conditions",
+                   condSelectUI()
+               ),
                tabPanel(title = "Differential Hetergeneity Detection",
                         fluidRow(
-                            shinydashboard::box(title = "Summary", height = 260,
+                            shinydashboard::box(title = "Summary",
                                                 solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
-                                                column(2,htmlOutput(ns("HomogeneitySummary"))),
-                                                column(2,htmlOutput(ns("HomogeneitySummaryIter"))),
-                                                column(2,htmlOutput(ns("HomogeneitySummaryDE")))
+                                                column(4,uiOutput(ns("HomogeneitySummary"))),
+                                                column(4,htmlOutput(ns("HomogeneitySummaryIter"))),
+                                                column(4,htmlOutput(ns("HomogeneitySummaryDE")))
                             ),
                             shinydashboard::box(title = "# of DE Genes",
                                                 solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
@@ -127,9 +135,11 @@ getDEResultsUI<- function (id) {
                             shinydashboard::box(title = "Membership Scores",
                                                 solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
                                                 plotlyOutput(ns("HomogeneityScores")),
-                                                column(4,actionButtonDE("deconvolute", "Go to Cellular Composition", styleclass = "primary")),
-                                                column(4,actionButtonDE("gotoprofile", "Go to Profiling", styleclass = "primary")),
-                                                column(4,uiOutput(ns("deconvolute_genes"))),
+                                                column(4,actionButtonDE("gotodeconvolute", "Go to Cellular Composition", 
+                                                                        styleclass = "primary", style = 'margin-top:21px')),
+                                                column(3,actionButtonDE("gotoprofile", "Go to Profiling", 
+                                                                        styleclass = "primary", style = 'margin-top:21px')),
+                                                #column(4,uiOutput(ns("deconvolute_genes")))
                                                 
                             ),
                             uiOutput(ns("maininitialplot")),                                  
@@ -139,7 +149,7 @@ getDEResultsUI<- function (id) {
                             uiOutput(ns("BoxMainUI")),
                             uiOutput(ns("heatmapUI"))
                         ),
-                        value = "homogeneity"
+                        value = "heterogeneity"
                ),
                tabPanel(title = "Impure (Heterogeneous) Conditions",
                         fluidRow(

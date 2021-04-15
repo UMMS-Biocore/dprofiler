@@ -173,6 +173,4 @@ getJSLine <- function()
   list(shinyjs::useShinyjs(), shinyjs::extendShinyjs(text = heatmapJScode(), 
                                                      functions = c("getHoverName", "getSelectedGenes",
                                                                    "resetInputParam")))
-  # functions = c("getSelectedGenes", 
-  #               "resetInputParam")))
 }

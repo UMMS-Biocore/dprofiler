@@ -4,17 +4,18 @@
 #'
 #' @param dc reactive object of DE analysis
 #' @param scdata single cell ExpressionSet Object
+#' @param parent_session main session
 #'
 #' @return
 #' @export
 #'
 #' @examples
-prepDeconvolute <- function(dc = NULL, scdata = NULL){
+prepDeconvolute <- function(dc = NULL, scdata = NULL, parent_session = NULL){
   if (is.null(dc)) return(NULL)
   
   waiter_show(html = waiting_screen, color = transparent(.5))
   withProgress(message = 'Running RNA Deconvolution', value = 0, {
-    mixtures <- callModule(dprofilerdeconvolute, "deconvolute", dc, scdata)
+    mixtures <- callModule(dprofilerdeconvolute, "deconvolute", dc, scdata, parent_session)
     mix <- mixtures()
   })
   waiter_hide()
@@ -30,48 +31,71 @@ prepDeconvolute <- function(dc = NULL, scdata = NULL){
 #' @param input, input variables
 #' @param output, output objects
 #' @param session, session
-#' @param data, a matrix that includes expression values
-#' @param columns, columns
-#' @param conds, conditions
-#' @param params, de parameters
+#' @param dc, de results
+#' @param scdata, single cell data
+#' @param parent_session main session
+#' 
 #' @return DE panel
 #' @export
 #'
 #' @examples
 #'     x <- dprofilerdeconvolute()
 #'
-dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc = NULL, scdata = NULL) {
+dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc = NULL, 
+                                 scdata = NULL, parent_session = NULL) {
   if(is.null(dc)) return(NULL)
 
   # Deconvolution
   mixtures <- reactive({
-      deconvolute(dc()$init_dedata, isolate(dc()$deconvolute_genes()), dc()$cols, scdata)
+      mixture <- deconvolute(dc()$init_dedata, isolate(dc()$deconvolute_genes()), dc()$cols, scdata)
+      updateTabsetPanel(session = parent_session, "DeconvoluteBox", "deconvoluteresults")
+      mixture
   })
   
-  # Choose Cell Types and top markers
+  # prepare heat data
+  data_de_tmm <- reactive({
+    marker_genes <- getMarkerGenes(scdata, dc()$IterDEgenes, input)
+    heatdata <- prepHeatData(dc()$init_dedata[,dc()$cols], input)
+    as.matrix(heatdata[marker_genes,])
+  })
+  
+  output$heatmap <- renderPlotly({
+    if(!is.null(data_de_tmm())){
+      withProgress(message = 'Drawing Heatmap', detail = "interactive", value = 0, {
+        runHeatmap(input, session, data_de_tmm())
+      })
+    }
+  })
+  
+  output$heatmap2 <- renderPlot({
+    if(!is.null(data_de_tmm())){
+      withProgress(message = 'Drawing Heatmap', detail = "non-interactive", value = 0, {
+        runHeatmap2(input, session, data_de_tmm())
+      })
+    }
+  })
+  
+  output$heatmapUI <- renderUI({
+    if (is.null(input$interactive)) return(NULL)
+    column(6,
+           shinydashboard::box(
+             collapsible = TRUE, title = session$ns("Markers"), status = "primary", 
+             solidHeader = TRUE, width = NULL,
+             draggable = TRUE,
+             column(12,getPlotArea(input, session)),
+             column(8,uiOutput(session$ns("heatmap_selection")))
+           )
+    )
+  })
+  
+  # Choose Cell Types and top markers on heatmap
   output$heatmap_selection <- renderUI({
     list(
       column(6,
              selectInput(session$ns("select_celltype"), label = "Select Celltype", choices = unique(pData(scdata)$CellType))),
       column(6,
-            textInput(session$ns("select_top_markers"), label = "Top n Markers", value = "10"))
+             textInput(session$ns("select_top_markers"), label = "Top n Markers", value = "10"))
     )
-  })
-  
-  # prepare heat data
-  data_de_tmm <- reactive({
-    prepHeatData(dc()$init_dedata[,dc()$cols], input)
-  })
-  
-  # heatmap of marker genes
-  output$heatmap <- renderPlot({
-    featuresData <- fData(scdata)[rownames(fData(scdata)) %in% dc()$IterDEgenes,]
-    gene_scores <- featuresData[,paste0(input$select_celltype,"_marker_score_CellType")]
-    top_n_markers <- as.numeric(input$select_top_markers)
-    top_n_markers <- ifelse(is.na(top_n_markers), length(gene_scores),
-                            ifelse(top_n_markers > length(gene_scores), length(gene_scores), top_n_markers))
-    marker_genes <- rownames(featuresData)[order(gene_scores, decreasing = TRUE)[1:top_n_markers]]
-    runHeatmap2(input, session, expdata = as.matrix(data_de_tmm()[marker_genes,]))
   })
   
   # Observe for Tables and Plots
@@ -102,24 +126,27 @@ getDeconvoluteUI<- function (id) {
   list(
     tabBox(id = "DeconvoluteBox",
            width = NULL,
+           tabPanel(title = "Conditions",
+                    fluidRow(
+                      shinydashboard::box(title = "Select Conditions",
+                                          solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
+                                          uiOutput(ns("conditionSelector")),
+                                          column(4,actionButtonDE("deconvolute", "Start", 
+                                                                  styleclass = "primary", style = 'margin-top:21px'))
+                                          
+                      )
+                    ),
+                    value = "deconvoluteconditions"
+           ),
            tabPanel(title = "Cellular Composition",
                     fluidRow(
                       shinydashboard::box(title = "Cellular Heterogeneity Analysis",
                                           solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
                                           DT::dataTableOutput(ns("MembershipScoresIterDE"))
                       ),
-                      shinydashboard::box(
-                        collapsible = TRUE, title = "Markers", status = "primary", 
-                        solidHeader = TRUE, width = 6,
-                        draggable = TRUE, 
-                        column(12,
-                               plotOutput(ns("heatmap"))
-                        ),
-                        column(8,
-                               uiOutput(ns("heatmap_selection"))
-                        )
-                      )
-                    )
+                      uiOutput(ns("heatmapUI"))
+                    ),
+                    value = "deconvoluteresults"
            )
     )
   )
@@ -210,5 +237,29 @@ deconvolute <- function(data, DEgenes, columns, scdata){
                            samples = 'Patient', verbose = T)
   
   return(NLandL.prop$Est.prop.weighted)
+}
+
+
+#' getMarkerGenes
+#'
+#' @param scdata single cell data
+#' @param IterDEgenes DE genes from bulk data
+#' @param input input 
+#'
+#' @examples
+getMarkerGenes <- function(scdata, IterDEgenes, input){
+  
+  if(!is.null(IterDEgenes)){
+    featuresData <- fData(scdata)[rownames(fData(scdata)) %in% IterDEgenes,]
+  } else {
+    featuresData <- fData(scdata)
+  }
+  gene_scores <- featuresData[,paste0(input$select_celltype,"_marker_score_CellType")]
+  top_n_markers <- as.numeric(input$select_top_markers)
+  top_n_markers <- ifelse(is.na(top_n_markers), length(gene_scores),
+                          ifelse(top_n_markers > length(gene_scores), length(gene_scores), top_n_markers))
+  marker_genes <- rownames(featuresData)[order(gene_scores, decreasing = TRUE)[1:top_n_markers]]
+ 
+  return(marker_genes)
 }
   

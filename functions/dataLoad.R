@@ -53,7 +53,7 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     ldata$prof_meta <- profmetadatatable
   })
   
-  # Event for uploading the demo file
+  # Event for uploading the demo file with no single cell data
   observeEvent(input$demo_nosc, {
     load("demo/demodata_nosc.Rda")
     ldata$count <- demodata
@@ -62,6 +62,19 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     ldata$prof_meta <- profmetadatatable
   })
   
+  # Cell Type Selector Menu for single cell data
+  output$identSelector <- renderUI({
+    numeric_columns <- colnames(pData(ldata$sc_count))[sapply(as.data.frame(pData(ldata$sc_count)),is.numeric)]
+    character_columns <- colnames(pData(ldata$sc_count))[!sapply(as.data.frame(pData(ldata$sc_count)),is.numeric)]
+    list(
+      column(2,
+             selectInput(session$ns("selectident"), label = "Select Ident", 
+                         choices = character_columns, selected = "CellType")),
+      column(2,
+             selectInput(session$ns("selectumi"), label = "Select UMI column", 
+                         choices = numeric_columns, selected = "UMI_sum_raw"))
+    )
+  })
   
   # Event for uploading any file
   observeEvent(input$uploadFile, {
@@ -70,24 +83,25 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     ###
     # check count data and import 
     ###
-    checkRes <- checkCountData(input)
-    if (checkRes != "success"){
-      showNotification(checkRes, type = "error")
-      return(NULL)
-    }
     counttable <-as.data.frame(
       try(
         read.delim(input$countdata$datapath, 
                    header=T, sep=input$countdataSep, 
-                   row.names=1, strip.white=TRUE ), TRUE))
+                   strip.white=TRUE ), TRUE))
+    counttable <- counttable[,sapply(counttable, is.numeric)]
     metadatatable <- c()
-    if (!is.null(input$metadata$datapath)){
+    if (!is.null(input$metadata)){
       metadatatable <- as.data.frame(
         try(
           read.delim(input$metadata$datapath, 
                      header=TRUE, sep=input$metadataSep, strip.white=TRUE), TRUE))
+      checkRes <- checkMetaData(input, counttable)
+      if (checkRes != "success"){
+        showNotification(checkRes, type = "error")
+        return(NULL)
+      }
     }
-    else{
+    else {
       metadatatable <- cbind(colnames(counttable), 1)
       colnames(metadatatable) <- c("Sample", "Batch")
     }
@@ -97,38 +111,38 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     ###
     # check sc count data and import 
     ###
-    ldata$sc_count <- readRDS(input$sccountdata)
-    colnames_sc_count <- colnames(pData(ldata$sc_count))
-    colnames_sc_count[colnames_sc_count == input$sccountdataumilabel] <- "UMI_sum_raw"
-    colnames_sc_count[colnames_sc_count == input$sccountdataclusterlabel] <- "CellType"
-    colnames_sc_count[colnames_sc_count == input$sccountdatasamplelabel] <- "Patient"
-    colnames(pData(ldata$sc_count)) <- colnames_sc_count
+    if(!is.null(input$sccountdata)){
+      ldata$sc_count <- readRDS(input$sccountdata$datapath)
+    }
     
     ###
     # check prof data and import 
-    ###
-    profcounttable <-as.data.frame(
-      try(
-        read.delim(input$profilecountdata$datapath,
-                   header=T, sep=input$profilecountdataSep,
-                   row.names=1, strip.white=TRUE ), TRUE))
-    profmetadatatable <- c()
-    if (!is.null(input$profilemetadata$datapath)){
-      profmetadatatable <- as.data.frame(
+    ### 
+    if(!is.null(input$profilecountdata)){
+      profcounttable <-as.data.frame(
         try(
-          read.delim(input$profilemetadata$datapath,
-                     header=TRUE, sep=input$profilemetadataSep, strip.white=TRUE), TRUE))
+          read.delim(input$profilecountdata$datapath,
+                     header=T, sep=input$profilecountdataSep,
+                     strip.white=TRUE ), TRUE))
+      profcounttable <- profcounttable[,sapply(profcounttable, is.numeric)]
+      profmetadatatable <- c()
+      if (!is.null(input$profilemetadata)){
+        profmetadatatable <- as.data.frame(
+          try(
+            read.delim(input$profilemetadata$datapath,
+                       header=TRUE, sep=input$profilemetadataSep, strip.white=TRUE), TRUE))
+      }
+      else{
+        profmetadatatable <- cbind(colnames(profcounttable), 1)
+        colnames(profmetadatatable) <- c("Sample", "Batch")
+      }
+      ldata$prof_count <- profcounttable
+      ldata$prof_meta <- profmetadatatable 
     }
-    else{
-      profmetadatatable <- cbind(colnames(profcounttable), 1)
-      colnames(profmetadatatable) <- c("Sample", "Batch")
-    }
-    ldata$prof_count <- profcounttable
-    ldata$prof_meta <- profmetadatatable
     
     # check if count table is null
     if(is.null(counttable)) 
-        top("Please upload the count file")
+        stop("Please upload the count file")
     
   })
   
@@ -140,7 +154,8 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   observe({
     getSampleDetails(output, "uploadSummary", "sampleDetails", loadeddata())
     getProfileSampleDetails(output, "uploadSummaryprof", "sampleDetailsprof", loadeddata())
-    getSCRNASampleDetails(output, "uploadSummarysc", "sampleDetailssc", loadeddata()$sc_count)
+    getSCRNASampleDetails(output, "uploadSummarysc", "sampleDetailssc", loadeddata()$sc_count, 
+                          input$selectident, input$selectumi)
   })
   
   list(load=loadeddata)
@@ -221,9 +236,10 @@ dataSummaryUI<- function(id) {
     shinydashboard::box(title = "scRNA Data Summary", solidHeader = TRUE, status = "info",
                         width = 12, 
                         fluidRow(
-                          column(12, 
+                          column(3, 
                                  tableOutput(ns("uploadSummarysc"))
-                          )
+                          ),
+                          uiOutput(ns('identSelector'))
                         ),
                         fluidRow(
                           column(6,div(style = 'overflow: scroll', 
@@ -231,7 +247,7 @@ dataSummaryUI<- function(id) {
                           ),
                           column(6,div(style = 'overflow: scroll', 
                                        plotOutput(ns("sampleDetailssctsne")))
-                          )
+                          ),
                         )
     )
   )
@@ -254,7 +270,7 @@ dataSummaryUI<- function(id) {
 #' 
 getProfileSampleDetails <- function (output = NULL, summary = NULL, details = NULL, data = NULL) 
 {
-  if (is.null(data)) 
+  if (is.null(data$prof_count)) 
     return(NULL)
   output[[summary]] <- renderTable({
     countdata <- data$prof_count
@@ -297,26 +313,29 @@ getProfileSampleDetails <- function (output = NULL, summary = NULL, details = NU
 #' @export
 #'
 #' @examples
-getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL, data = NULL) 
+getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL, data = NULL, 
+                                   ident = NULL, UMI_column = NULL) 
 {
   if (is.null(data)) 
     return(NULL)
+  
+  if(is.null(ident) | is.null(UMI_column))
+    return(NULL)
+  
   output[[summary]] <- renderTable({
     countdata <- data
     samplenums <- dim(countdata)[2]
     rownums <- dim(countdata)[1]
-    patientnums <- length(unique(pData(countdata)$Patient))
-    result <- rbind(samplenums, rownums, patientnums)
-    rownames(result) <- c("# of barcodes", "# of rows (genes/regions)", "# of samples")
+    result <- rbind(samplenums, rownums)
+    rownames(result) <- c("# of barcodes", "# of rows (genes/regions)")
     colnames(result) <- "Value"
     result
   }, digits = 0, rownames = TRUE, align = "lc")
   output[[paste0(details,"density")]] <- renderPlot({
-    plot_density_ridge(data, color_by = "CellType", title = "UMIs per Cell Type", val = "UMI_sum_raw") + 
-      xlim(0,7500)
+    plot_density_ridge(data, color_by = ident, title = UMI_column, val = UMI_column)
   })
   output[[paste0(details,"tsne")]] <- renderPlot({
-    plot_tsne_metadata(data, color_by = "CellType", title = "Cell Types",
+    plot_tsne_metadata(data, color_by = ident, title = ident,
                        legend_dot_size = 4, text_sizes = c(20, 10, 5, 10, 15, 15))
   })
 }
@@ -376,17 +395,18 @@ fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL,
 scfileUploadBox <- function (id = NULL, inputId = NULL, label = NULL) 
 {
   ns <- NS(id)
+  options(shiny.maxRequestSize=30*1024^2)
   shinydashboard::box(title = label, 
                       solidHeader = TRUE, status = "info", width = 6, 
                       helpText(paste0("Upload Data")),
                       fileInput(inputId = ns(inputId), label = NULL, accept = fileTypes()),
-                      fluidRow(
-                        column(6,textInput(inputId = ns(paste0(inputId,"umilabel")), label = "UMI Column Name", value = "UMI_sum_raw")),
-                        column(6,textInput(inputId = ns(paste0(inputId,"clusterlabel")), label = "Cell Type Column Name", value = "CellType"))
-                      ),
-                      fluidRow(
-                        column(6,textInput(inputId = ns(paste0(inputId,"samplelabel")), label = "Samples Column Name", value = "Patient")),
-                      )
+                      # fluidRow(
+                      #   column(6,textInput(inputId = ns(paste0(inputId,"umilabel")), label = "UMI Column Name", value = "UMI_sum_raw")),
+                      #   column(6,textInput(inputId = ns(paste0(inputId,"clusterlabel")), label = "Cell Type Column Name", value = "CellType"))
+                      # ),
+                      # fluidRow(
+                      #   column(6,textInput(inputId = ns(paste0(inputId,"samplelabel")), label = "Samples Column Name", value = "Patient")),
+                      # )
                       
   )
 }
