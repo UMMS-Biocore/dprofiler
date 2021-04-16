@@ -43,7 +43,6 @@ dprofilerUI <- function() {
                                          ),
                                          menuItem("Upload", icon = icon("upload"), tabName = "Upload"),
                                          menuItem("Data Processing", icon = icon("filter"), tabName = "DataProcessing"),
-                                         menuItem("Cond. Select", icon = icon("adjust"), tabName = "CondSelect"),
                                          menuItem("Diff. Hetero. Analysis", icon = icon("adjust"), tabName = "DEAnalysis"),
                                          menuItem("Cellular Comp.", icon = icon("adjust"), tabName = "CellComp"),
                                          menuItem("Profiling", icon = icon("adjust"), tabName = "Profile"),
@@ -53,22 +52,21 @@ dprofilerUI <- function() {
                                                   uiOutput("ScoreCutOffUI"))
                              ),
                              helpText("Developed by ", a("UMMS Biocore.", href="https://www.umassmed.edu/biocore/", target = "_blank"))
-                             ),
+                    ),
                     tabPanel(title = "Discover", value = "discover", id="discover",
                              mainPlotControlsUI("deresults"),
-                             # uiOutput('cutoffSelection'),
                              shinydashboard::menuItem("DE Heatmaps", 
                                                       heatmapControlsUI("deresults")),
                              shinydashboard::menuItem("Deconvolution Heatmaps", 
                                                       heatmapControlsUI("deconvolute"))
-                             )
+                    )
         )
       ),
       
       # Shiny dashboard Body
       dashboardBody(
           
-          tabItems(#id = "methodtabs", type = "tabs",
+          tabItems(
                     
                    # Help Tab
                    tabItem(tabName="Intro", getIntroText()),
@@ -107,10 +105,10 @@ dprofilerUI <- function() {
                            )
                    ),
                    
-                   # Condition Selection Tab
-                   tabItem(tabName="CondSelect", 
-                           condSelectUI()
-                   ),
+                   # # Condition Selection Tab
+                   # tabItem(tabName="CondSelect", 
+                   #         condSelectUI()
+                   # ),
                    
                    # DE Analysis Tab
                    tabItem(tabName="DEAnalysis", 

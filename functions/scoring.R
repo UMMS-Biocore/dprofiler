@@ -62,112 +62,86 @@ getScoreDetails <- function(output = NULL, session = NULL,
 getIterDESummary <- function(output = NULL, session = NULL, vennname = NULL, summaryname = NULL, 
                              deres = NULL, params = NULL){
   
-  # Iteration Summary
-  # output[[summaryname]] <- renderTable({
-  #   result <- rbind(deres$NumberofIters, length(deres$cleaned_columns), 
-  #                   length(deres$DEgenes), length(deres$IterDEgenes))
-  #   rownames(result) <- c("# of Iterations", "# of Hetero. Samples", 
-  #                         "# of Initial DE genes", "# of Final DE genes ")
-  #   colnames(result) <- "Value"
-  #   result
-  # }, digits = 0, rownames = TRUE, align = "lc")
   output[[summaryname]] <- renderUI({
-    texts <- paste(
-      h4("Iter. DE Summary"),
-      p(strong("# of Iterations:"), deres$NumberofIters),
-      p(strong("# of Hetero. Samples:"), length(deres$cleaned_columns)), 
-      p(strong("# of Initial DE genes:"), length(deres$DEgenes)),
-      p(strong("# of Final DE genes:"), length(deres$IterDEgenes)), 
-      sep = " "
+    
+   style = "padding-right: 10px"
+   texts <- tags$div(
+      h4("Summary"),
+      tags$table(
+        tags$tr(
+          tags$td(style = style, p(strong("# of Iterations:"), deres$NumberofIters)),
+          tags$td(style = style, p(strong("# of Initial DE genes:"), length(deres$DEgenes)))
+        ),
+        tags$tr(
+          tags$td(style = style, p(strong("# of Hetero. Samples:"), length(deres$cleaned_columns))),
+          tags$td(style = style, p(strong("# of Final DE genes:"), length(deres$IterDEgenes)))
+        )
       )
-    HTML(texts)
+   )
   })
   
   # Scoring parameters 
   scoresummaryname <- paste0(summaryname,"Iter")
-  # output[[scoresummaryname]] <- renderTable({
-  #   result <- params[6:9]
-  #   if(params[9] == "Stat."){
-  #     result <- matrix(c(result, params[10:11]),ncol = 1)
-  #     rownames(result) <- c("Score Method", "Min. Score", "Normalization","Selection Method", 
-  #                           "Log2FC", "P-adj")
-  #   } else {
-  #     result <- matrix(c(result, params[12]),ncol = 1)
-  #     rownames(result) <- c("Score Method", "Min. Score", "Normalization","Selection Method", 
-  #                           "# of Top Statistics")
-  #   }
-  #   colnames(result) <- "Value"
-  #   result
-  # }, digits = 0, rownames = TRUE, align = "lc")
   output[[scoresummaryname]] <- renderUI({
-    texts <- paste(
-      h4("Scoring Parameters"),
-      p(strong("Score Method:"), params[6]),
-      p(strong("Min. Score:"),  params[7]),
-      p(strong("Normalization:"),  params[8]),
-      p(strong("Selection Method:"),  params[9]),
-      sep = " "
-    )
+    
+    style = "padding-right: 10px"
     if(params[9] == "Stat."){
-      texts <- paste(texts,
-                     p(strong("# of Top Statistics:"), params[12]),
-                     sep = " "
-      )
+      additional_texts <- paste(p(strong("# of Top Statistics:"), params[12]), sep = " ")
     } else {
-      texts <- paste(texts,
-                     p(strong("Log2FC:"), params[10], strong("P-adj:"),  params[11]),
-                     sep = " "
-      )
+      additional_texts <- paste(p(strong("Log2FC:"), params[10], strong("P-adj:"),  params[11]), sep = " ")
     }
-    HTML(texts)
+    texts <- tags$div(
+      h4("Scoring Parameters"),
+      tags$table(
+        tags$tr(
+          tags$td(style = style, p(strong("Score Method:"), params[6])),
+          tags$td(style = style, p(strong("Selection Method:"),  params[9])),
+        ),
+        tags$tr(
+          tags$td(style = style, p(strong("Min. Score:"),  params[7])),
+          tags$td(style = style, HTML(additional_texts))
+        ),
+        tags$tr(
+          tags$td(style = style, p(strong("Normalization:"),  params[8]))
+        )
+      )
+    )
+    texts
   })
   
   # DE parameters
   desummaryname <- paste0(summaryname,"DE")
-  # output[[desummaryname]] <- renderTable({
-  #   if(params[1] == "DESeq2"){
-  #     result <- matrix(params[1:5],ncol = 1)
-  #     rownames(result) <- c("DE Method", "Fit Type", "Beta Prior","Test Type", "Shrinkage")
-  #   } else if(params[1] == "EdgeR") {
-  #     result <- matrix(params[1:4],ncol = 1)
-  #     rownames(result) <- c("DE Method", "Normalization", "Dispersion", "Test Type")
-  #   } else{
-  #     result <- matrix(params[1:4],ncol = 1)
-  #     rownames(result) <- c("DE Method", "Normalization", "Fit Type", "Norm.Bet.Arrays")
-  #   }
-  #   colnames(result) <- "Value"
-  #   result
-  # }, digits = 0, rownames = TRUE, align = "lc")
   
   output[[desummaryname]] <- renderUI({
-    texts <- paste(h4("DE Summary"),
-                   p(strong("DE Method:"), params[1]), 
-                   sep = " ")
     
+    style = "padding-right: 10px"
     if(params[1] == "DESeq2"){
-      texts <- paste(texts,
-        p(strong("Fit Type:"), params[2]),
-        p(strong("Beta Prior:"), params[3]), 
-        p(strong("Test Type:"), params[4]),
-        p(strong("Shrinkage:"), params[5]),
-        sep = " "
-      )
+      param_text <- c("DE method:", "Fit Type:", "Beta Prior:", "Test Type:", "Shrinkage:")
     } else if(params[1] == "EdgeR") {
-      texts <- paste(texts,
-                     p(strong("Normalization:"), params[2]),
-                     p(strong("Dispersion:"), params[3]), 
-                     p(strong("Test Type:"), params[4]),
-                     sep = " "
-      )
+      param_text <- c("DE method:", "Normalization:", "Dispersion:", "Test Type:", "")
     } else{
-      texts <- paste(texts,
-                     p(strong("Normalization:"), params[2]),
-                     p(strong("Fit Type:"), params[3]), 
-                     p(strong("Norm.Bet.Arrays:"), params[4]),
-                     sep = " "
-      )
+      param_text <- c("DE method:", "Normalization:", "Fit Type:", "Norm.Bet.Arrays:", "")
     }
-    HTML(texts)
+
+    texts <- tags$div(
+      h4("DE parameters"),
+      tags$table(
+        tags$tr(
+          tags$td(style = style, p(strong(param_text[1]), params[1])),
+          tags$td(style = style, p(strong(param_text[3]),  params[3])),
+        ),
+        tags$tr(
+          tags$td(style = style, p(strong(param_text[2]),  params[2])),
+          tags$td(style = style, p(strong(param_text[4]),  params[4])),
+        ),
+        if(params[1] == "DESeq2"){
+          tags$tr(
+            tags$td(style = style, p(strong("Normalization:"),  params[5]))
+          )
+        }
+      )
+    )
+    texts
   })
   
   x <- list(
@@ -175,8 +149,7 @@ getIterDESummary <- function(output = NULL, session = NULL, vennname = NULL, sum
     B = deres$IterDEgenes
   )
   output[[vennname]] <- renderPlot({
-    display_venn(x,
-                 category.names = c("Init. DE genes" , "Final DE genes"),
+    display_venn(x, category.names = c("Init. DE genes" , "Final DE genes"),
                  fill = c("#999999", "#E69F00"))
   })
 }
@@ -188,12 +161,13 @@ getIterDESummary <- function(output = NULL, session = NULL, vennname = NULL, sum
 #' @param x a list of elements for each groups
 #' @param ... 
 #'
-#' @return
-#' @export
-#'
 #' @examples
-display_venn <- function(x, ...){
+display_venn <- function(x, category.names, ...){
   grid.newpage()
-  venn_object <- venn.diagram(x, filename = NULL, ...)
+  venn_object <- draw.pairwise.venn(area1 = length(x[[1]]), 
+                                    area2 = length(x[[2]]), 
+                                    cross.area = length(intersect(x[[1]], x[[2]])), 
+                                    category = category.names, 
+                                    ind = FALSE, ...)
   grid.draw(venn_object)
 }

@@ -21,7 +21,26 @@ dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, dat
   if (is.null(data)) return(NULL)
   
   output$conditionSelector <- renderUI({
-    selectConditions(data, metadata, session, input)
+    if(class(data) == "ExpressionSet"){
+      selected <- selectScRNAConditions(data, session, input)
+    } else {
+      selected <- selectConditions(data, metadata, session, input)
+    }
+    selected
+  })
+  
+  observeEvent(input[["conditions_from_meta0"]],{
+    if(class(data) == "ExpressionSet"){
+      print(input[["condition"]])
+      print(input[["conditions_from_meta0"]])
+      metadata <- pData(data)
+      if(!is.null(input[["conditions_from_meta0"]])){
+        if(input[["conditions_from_meta0"]]!="No Selection"){
+          updateSelectInput(session, "condition", choices = unique(metadata[,input[["conditions_from_meta0"]]]),
+                            selected = unique(metadata[,input[["conditions_from_meta0"]]]))
+        }
+      }
+    }
   })
   
   return(NULL)
@@ -112,9 +131,8 @@ selectConditions<-function(Dataset = NULL,
            getMethodDetails(1, session, input))
   )
   
-  if (!is.null(selectedInput(session$ns("conditions_from_meta"), 
-                             1, NULL, input)) && selectedInput(session$ns("conditions_from_meta"), 
-                                                               1, NULL, input) != "No Selection"){
+  if (!is.null(selectedInput(session$ns("conditions_from_meta"), 1, NULL, input)) && 
+      selectedInput(session$ns("conditions_from_meta"), 1, NULL, input) != "No Selection"){
     facts <- levels(factor(metadata[,selectedInput(session$ns("conditions_from_meta"),
                                                    1, NULL, input)]))
     facts <- facts[facts != "" & facts != "NA"]
@@ -126,6 +144,53 @@ selectConditions<-function(Dataset = NULL,
     }
   }
   
+  return(to_return)
+}
+
+#' selectScRNAConditions
+#'
+#' Selects user input conditions, multiple if present, to be
+#' used in DESeq.
+#'
+#' @param scdata, used single cell dataset 
+#' @param metadata, metadatatable to select from metadata
+#' @param session, session
+#' @param input, input params
+#'
+#' @examples
+#'     x<- selectScRNAConditions()
+#'
+selectScRNAConditions<-function(scdata = NULL,
+                                session = NULL,
+                                input = NULL) {
+  
+  # meta data
+  metadata <- pData(scdata)
+  character_columns <- colnames(metadata)[!sapply(as.data.frame(metadata),is.numeric)]
+  metadata <- metadata[,character_columns]
+  
+  selectedSamples <- function(num){
+    if (is.null(input[[paste0(session$ns("condition"), num)]]))
+      getSampleNames(colnames(scdata), num %% 2 )
+    else
+      input[[paste0(session$ns("condition"), num)]]
+  }
+  
+  allsamples <- getSampleNames(colnames(scdata), "all" )
+  selected1 <- selectedSamples(1)
+  selected2 <- selectedSamples(2)
+  
+  # meta data selection pane
+  to_return <- list(
+    column(12,
+           getMetaSelector(metadata, session, input),
+           getIdentSelectorFromMeta(metadata, session, input, choices = "No Selection"),
+           column(6,
+                  selectInput(session$ns("deconvolute_genes"), "DE genes", selected = c("Homogeneous Conditions"),
+                              choices = c("Heterogeneous Conditions","Homogeneous Conditions"))),
+    )
+    
+  )
   return(to_return)
 }
 
@@ -178,6 +243,21 @@ getConditionSelectorFromMeta <- function (metadata = NULL, session = NULL, input
     }
   }
   return(a)
+}
+
+getIdentSelectorFromMeta <- function (metadata = NULL, session = NULL, input = NULL, 
+                                      choices = NULL, selected = NULL){
+  if (!is.null(metadata)) {
+    selected_meta <- selectedInput(session$ns("conditions_from_meta"), 0, NULL, input)
+    if (is.null(selected_meta)) 
+      selected_meta <- "No Selection"
+    if(selected_meta != "No Selection"){
+      choices <- unique(metadata[,selected_meta])
+    }
+    a <- list(column(6, selectInput(session$ns("condition"), 
+                                    label = "Ident Type", 
+                                    choices = choices, multiple = TRUE, selected = choices[1])))
+    }
 }
 
 #  getMethodDetails
@@ -314,13 +394,14 @@ getIterMethodDetails <- function(num = 0, session = NULL, input = NULL) {
 #'
 #' @param data, loaded dataset
 #' @param input, input parameters
+#' @param session session
 #' @return data
 #' @export
 #'
 #' @examples
 #'     x <- prepDataContainer()
 #'
-prepDataContainer <- function(data = NULL, input = NULL) {
+prepDataContainer <- function(data = NULL, input = NULL, session = NULL) {
   if (is.null(data)) return(NULL)
   
   inputconds <- reactiveValues(demethod_params = list(), conds = list(), dclist = list())
@@ -373,9 +454,11 @@ prepDataContainer <- function(data = NULL, input = NULL) {
   cols <- c(paste(inputconds$conds[[1]]), 
             paste(inputconds$conds[[2]]))
   params <- unlist(strsplit(inputconds$demethod_params[1], ","))
-  withProgress(message = 'Running Heterogeneity Detection', detail = inputconds$demethod_params[1], value = 0, {
+  withProgress(message = 'Running Heterogeneity Detection', 
+               detail = paste0("DEmethod: ", params[1], " ScoringMethod: ", params[6]),
+               value = 0, {
     initd <- callModule(dprofilerdeanalysis, "deresults", data = data, 
-                        columns = cols, conds = conds, params = params)
+                        columns = cols, conds = conds, params = params, parent_session = session)
     if (!is.null(initd$dat()) && nrow(initd$dat()) > 1){
       inputconds$dclist[[1]] <- list(conds = conds, cols = cols, 
                                      init_dedata=initd$dat(),
