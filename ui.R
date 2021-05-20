@@ -14,12 +14,12 @@
 dprofilerUI <- function() {
   dbHeader <- shinydashboard::dashboardHeader(titleWidth = 250)
   dbHeader$children[[2]]$children <- tags$a(style='color: white;',
-                                            id="top_logo" , "Dprofiler")
+                                            id="top_logo" , "Dprofiler v1.0.0")
   addResourcePath(prefix = "www", directoryPath = "www/")
   library("debrowser")
   dprofiler <- (fluidPage(
     shinyjs::useShinyjs(),
-    tags$head(tags$title("Dprofiler"),
+    tags$head(tags$title("Dprofiler v1.0.0"),
               tags$link(rel = "stylesheet", type = "text/css",
                         href = "www/shinydashboard_additional.css")
     ),
@@ -36,25 +36,35 @@ dprofilerUI <- function() {
                     tabPanel(title = "Menu", value = "dataprep", id="dataprep",
                              sidebarMenu(id="MenuItems",
                                          menuItem("Quick Start Guide", icon = icon("user"),
-                                                  menuSubItem("Intro. and Data Upload", tabName = "Intro"),
+                                                  menuSubItem("What is Dprofiler?", tabName = "dprofilerintro"),
+                                                  menuSubItem("Data Upload", tabName = "Intro"),
                                                   menuSubItem("Data Preprocessing", tabName = "assesment"),
-                                                  menuSubItem("Diff. Hetero. Analysis", tabName = "heteroanalysis"),
+                                                  menuSubItem("Computational Profiling", tabName = "heteroanalysis"),
+                                                  menuSubItem("Cellular Comp. Analysis", tabName = "cellularanalysis"),
+                                                  menuSubItem("Comparative Profiling", tabName = "comparativeanalysis"),
                                                   menuSubItem("FAQ", tabName ="FAQ")
                                          ),
-                                         menuItem("Upload", icon = icon("upload"), tabName = "Upload"),
+                                         menuItem("Data Upload", icon = icon("upload"), tabName = "Upload"),
                                          menuItem("Data Processing", icon = icon("filter"), tabName = "DataProcessing"),
-                                         menuItem("Diff. Hetero. Analysis", icon = icon("adjust"), tabName = "DEAnalysis"),
-                                         menuItem("Cellular Comp.", icon = icon("adjust"), tabName = "CellComp"),
-                                         menuItem("Profiling", icon = icon("adjust"), tabName = "Profile"),
-                                         menuItem("DEFilter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
-                                                  uiOutput("cutOffUI")),
-                                         menuItem("ScoreFilter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
-                                                  uiOutput("ScoreCutOffUI"))
+                                         menuItem("Computational Profiling", icon = icon("dna"), tabName = "DEAnalysis"),
+                                         menuItem("Cellular Comp. Analysis", icon = icon("chart-bar"), tabName = "CellComp"),
+                                         menuItem("Comparative Profiling", icon = icon("project-diagram"), tabName = "Profile")
+                                         # menuItem("DEFilter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
+                                         #          uiOutput("cutOffUI")),
+                                         # menuItem("ScoreFilter",  icon = icon("code"), tabName = "CondSelect",  startExpanded = TRUE,
+                                         #          uiOutput("ScoreCutOffUI"))
                              ),
                              helpText("Developed by ", a("UMMS Biocore.", href="https://www.umassmed.edu/biocore/", target = "_blank"))
                     ),
                     tabPanel(title = "Discover", value = "discover", id="discover",
                              mainPlotControlsUI("deresults"),
+                             menuItem("DEFilter",  startExpanded = TRUE,
+                                      # uiOutput("cutOffUI"),
+                                      cutOffSelectionUI("deresults")),
+                             menuItem("ScoreFilter", startExpanded = TRUE,
+                                      # uiOutput("ScoreCutOffUI"),
+                                      ScoreCutOffSelectionUI("deresults")
+                                      ),
                              shinydashboard::menuItem("DE Heatmaps", 
                                                       heatmapControlsUI("deresults")),
                              shinydashboard::menuItem("Deconvolution Heatmaps", 
@@ -69,9 +79,12 @@ dprofilerUI <- function() {
           tabItems(
                     
                    # Help Tab
+                   tabItem(tabName="dprofilerintro", getDprofilerText()),
                    tabItem(tabName="Intro", getIntroText()),
                    tabItem(tabName="assesment", getDataAssesmentText()),
-                   tabItem(tabName="heteroanalysis", getHeteroAnalysisText()),
+                   tabItem(tabName="heteroanalysis", getCompProfilingText()),
+                   tabItem(tabName="cellularanalysis", getCompCellularText()),
+                   tabItem(tabName="comparativeanalysis", getComparativeProfText()),
                    tabItem(tabName="FAQ",  getQAText()),
                    
                    # Upload Tab
@@ -92,12 +105,12 @@ dprofilerUI <- function() {
                    tabItem(tabName="DataProcessing", 
                            tabBox(id = "DataProcessingBox", 
                                   width = NULL,
-                                  tabPanel(title = "Filter",
+                                  tabPanel(title = "Filtering",
                                            conditionalPanel((condition <- "input.Filter"),
                                                             dataLCFUI("lcf")),
                                            value = "filter"
                                   ),
-                                  tabPanel(title = "BatchEffect",
+                                  tabPanel(title = "Batch Effect Correction",
                                            conditionalPanel((condition <- "input.Batch"),
                                                             batchEffectUI("batcheffect")),
                                            value = "batcheffect"

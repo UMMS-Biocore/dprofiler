@@ -245,7 +245,7 @@ addDataCols <- function (data = NULL, de_res = NULL, cols = NULL, conds = NULL)
                                                             levels(coldata$group)[1], "libname"]))
   mean_cond_second <- getMean(norm_data, as.vector(coldata[coldata$group == 
                                                              levels(coldata$group)[2], "libname"]))
-  m <- cbind(rownames(de_res), norm_data[rownames(de_res), cols], 
+  m <- cbind(rownames(de_res), norm_data[de_res$gene, cols], 
              log10(unlist(mean_cond_second) + 1), log10(unlist(mean_cond_first) + 1), 
              de_res[rownames(de_res), c("padj", "log2FoldChange", "pvalue", "stat")], 
              2^de_res[rownames(de_res), "log2FoldChange"], -1 * log10(de_res[rownames(de_res), "padj"]))
@@ -255,6 +255,11 @@ addDataCols <- function (data = NULL, de_res = NULL, cols = NULL, conds = NULL)
   m <- as.data.frame(m)
   m$padj[is.na(m[paste0("padj")])] <- 1
   m$pvalue[is.na(m[paste0("pvalue")])] <- 1
+  
+  if(!is.null(de_res$Comparison)){
+    m <- data.frame(m, Comparison = de_res[rownames(de_res), "Comparison"])
+  }
+  
   m
 }
 

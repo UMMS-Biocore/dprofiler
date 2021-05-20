@@ -20,6 +20,10 @@
 dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, data = NULL, metadata = NULL) {
   if (is.null(data)) return(NULL)
   
+  if(class(data) == "ExpressionSet"){
+    metadata <- pData(data)
+  }
+  
   output$conditionSelector <- renderUI({
     if(class(data) == "ExpressionSet"){
       selected <- selectScRNAConditions(data, session, input)
@@ -31,9 +35,6 @@ dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, dat
   
   observeEvent(input[["conditions_from_meta0"]],{
     if(class(data) == "ExpressionSet"){
-      print(input[["condition"]])
-      print(input[["conditions_from_meta0"]])
-      metadata <- pData(data)
       if(!is.null(input[["conditions_from_meta0"]])){
         if(input[["conditions_from_meta0"]]!="No Selection"){
           updateSelectInput(session, "condition", choices = unique(metadata[,input[["conditions_from_meta0"]]]),
@@ -169,25 +170,23 @@ selectScRNAConditions<-function(scdata = NULL,
   character_columns <- colnames(metadata)[!sapply(as.data.frame(metadata),is.numeric)]
   metadata <- metadata[,character_columns]
   
-  selectedSamples <- function(num){
-    if (is.null(input[[paste0(session$ns("condition"), num)]]))
-      getSampleNames(colnames(scdata), num %% 2 )
-    else
-      input[[paste0(session$ns("condition"), num)]]
-  }
-  
-  allsamples <- getSampleNames(colnames(scdata), "all" )
-  selected1 <- selectedSamples(1)
-  selected2 <- selectedSamples(2)
-  
   # meta data selection pane
   to_return <- list(
     column(12,
            getMetaSelector(metadata, session, input),
            getIdentSelectorFromMeta(metadata, session, input, choices = "No Selection"),
-           column(6,
+           column(3,
+                  selectInput(session$ns('deconvolute_samples'), "Samples", choices = colnames(metadata),
+                              selected = colnames(metadata)[1])
+                  ),
+           column(3,
                   selectInput(session$ns("deconvolute_genes"), "DE genes", selected = c("Homogeneous Conditions"),
-                              choices = c("Heterogeneous Conditions","Homogeneous Conditions"))),
+                              choices = c("Heterogeneous Conditions","Homogeneous Conditions","Marker Genes"))),
+           # conditionalPanel(
+           #   (condition <- "input.deconvolute_genes == 'Marker Genes'"),
+             column(3,
+                    textInput(session$ns("top_genes"), label = "Top N Markers", value = "1000"))
+           #)
     )
     
   )
@@ -254,8 +253,8 @@ getIdentSelectorFromMeta <- function (metadata = NULL, session = NULL, input = N
     if(selected_meta != "No Selection"){
       choices <- unique(metadata[,selected_meta])
     }
-    a <- list(column(6, selectInput(session$ns("condition"), 
-                                    label = "Ident Type", 
+    a <- list(column(12, selectInput(session$ns("condition"), 
+                                    label = "Identifications", 
                                     choices = choices, multiple = TRUE, selected = choices[1])))
     }
 }
@@ -357,10 +356,10 @@ getIterMethodDetails <- function(num = 0, session = NULL, input = NULL) {
                          getIconLabel("Min. Score", message = "Threshold for acceptable self-membership scores. Score < Min.Score indicates dismemberment of the sample"), 
                          value = isolate(selectedInput(session$ns("minscore"), 
                                                        num, "0.5", input)))),
-      getSelectInputBox(session$ns("iterde_norm"), 
-                        getIconLabel("Normalization", message = "Normalization method prior to scoring"), 
-                        num, c("TMM","RLE","upperquartile","none"), 
-                        selectedInput(session$ns("iterde_norm"), num, "TMM", input), 2),
+      # getSelectInputBox(session$ns("iterde_norm"), 
+      #                   getIconLabel("Normalization", message = "Normalization method prior to scoring"), 
+      #                   num, c("TMM","RLE","upperquartile","none"), 
+      #                   selectedInput(session$ns("iterde_norm"), num, "TMM", input), 2),
       getSelectInputBox(session$ns("iterde"),
                         getIconLabel("DE Selection Method", message = "Set of conditions for selecting DE genes on each iteration"), 
                         num, c("Top n Stat.", "Log2FC+Padj"),
@@ -441,7 +440,7 @@ prepDataContainer <- function(data = NULL, input = NULL, session = NULL) {
   inputconds$demethod_params[cnt] <- paste(inputconds$demethod_params[cnt],
                                            isolate(input[[paste0("scoremethod",cnt)]]),
                                            isolate(input[[paste0("minscore",cnt)]]),
-                                           isolate(input[[paste0("iterde_norm",cnt)]]), 
+                                           # isolate(input[[paste0("iterde_norm",cnt)]]), 
                                            isolate(input[[paste0("iterde",cnt)]]),
                                            isolate(input[[paste0("logfoldchange",cnt)]]),
                                            isolate(input[[paste0("padj",cnt)]]),
@@ -454,7 +453,7 @@ prepDataContainer <- function(data = NULL, input = NULL, session = NULL) {
   cols <- c(paste(inputconds$conds[[1]]), 
             paste(inputconds$conds[[2]]))
   params <- unlist(strsplit(inputconds$demethod_params[1], ","))
-  withProgress(message = 'Running Heterogeneity Detection', 
+  withProgress(message = 'Running Computational Profiling', 
                detail = paste0("DEmethod: ", params[1], " ScoringMethod: ", params[6]),
                value = 0, {
     initd <- callModule(dprofilerdeanalysis, "deresults", data = data, 
@@ -466,7 +465,7 @@ prepDataContainer <- function(data = NULL, input = NULL, session = NULL) {
                                      init_iterdedata = initd$iterdat(),
                                      IterDEgenes = initd$IterDEgenes,
                                      score = initd$score,
-                                     deconvolute_genes= initd$deconvolute_genes,
+                                     # deconvolute_genes= initd$deconvolute_genes,
                                      cleaned_columns = initd$cleaned_columns,
                                      demethod_params = inputconds$demethod_params[1])
     } else {

@@ -38,7 +38,7 @@ batchEffectUI <- function (id) {
                             )
                           ),
                           conditionalPanel(condition = paste0("input['", ns("submitBatchEffect"),"']"),
-                                           actionButtonDE("goDE", "Go to Differential Heterogeneity Analysis", styleclass = "primary"))),
+                                           actionButtonDE("goDE", "Go to Computational Profiling", styleclass = "primary"))),
       shinydashboard::box(title = "Plots",
                           solidHeader = TRUE, status = "info",  width = 12, 
                           fluidRow(column(1, div()),
@@ -117,7 +117,7 @@ dataLCFUI<- function (id) {
                           conditionalPanel(condition = paste0("input['", ns("submitLCF"),"']"),
                                            actionButtonDE("Batch", label = "Batch Effect Correction", styleclass = "primary"),
                                            conditionalPanel(condition = "!(input.Batch)",
-                                                            actionButtonDE("goDEFromFilter", "Go to Differential Heterogeneity Analysis", styleclass = "primary"),
+                                                            actionButtonDE("goDEFromFilter", "Go to Computational Profiling", styleclass = "primary"),
                                            ))
       ),
       shinydashboard::box(title = "Histograms",

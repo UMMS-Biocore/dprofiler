@@ -47,7 +47,14 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
 
   # Deconvolution
   mixtures <- reactive({
-      mixture <- deconvolute(dc()$init_dedata, isolate(dc()$deconvolute_genes()), dc()$cols, scdata)
+      if(isolate(input$deconvolute_genes) == "DE Genes (Homogeneous Conds.)"){
+        degenes <- dc()$IterDEgenes
+      } else if(isolate(input$deconvolute_genes) == "DE Genes (Heterogeneous Conds.)"){
+        degenes <- dc()$DEgenes
+      } else {
+        degenes <- getAllMarkerGenes(scdata, dc()$init_dedata, input)
+      }
+      mixture <- deconvolute(dc()$init_dedata, degenes, dc()$cols, scdata, input)
       updateTabsetPanel(session = parent_session, "DeconvoluteBox", "deconvoluteresults")
       mixture
   })
@@ -92,7 +99,7 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
   output$heatmap_selection <- renderUI({
     list(
       column(6,
-             selectInput(session$ns("select_celltype"), label = "Select Celltype", choices = unique(pData(scdata)$CellType))),
+             selectInput(session$ns("select_celltype"), label = "Select Celltype", choices = isolate(input$condition))),
       column(6,
              textInput(session$ns("select_top_markers"), label = "Top n Markers", value = "10"))
     )
@@ -138,9 +145,9 @@ getDeconvoluteUI<- function (id) {
                     ),
                     value = "deconvoluteconditions"
            ),
-           tabPanel(title = "Cellular Composition",
+           tabPanel(title = "Cellular Compositions",
                     fluidRow(
-                      shinydashboard::box(title = "Cellular Heterogeneity Analysis",
+                      shinydashboard::box(title = "RNA Deconvolution",
                                           solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
                                           DT::dataTableOutput(ns("MembershipScoresIterDE"))
                       ),
@@ -179,6 +186,7 @@ getDeconvoluteTableDetails <- function(output  = NULL, session  = NULL, tablenam
   output[[tablename]] <- DT::renderDataTable({
     if (!is.null(data)){
       dttable <- DT::datatable(data, extensions = 'Buttons',
+                               rownames = FALSE,
                                options = list( server = TRUE,
                                                dom = "Blfrtip",
                                                buttons = 
@@ -215,26 +223,50 @@ getDeconvoluteTableDetails <- function(output  = NULL, session  = NULL, tablenam
 #' @param DEgenes DE genes for limiting the genes of scRNA and Bulk RNA data sets
 #' @param columns samples that are deconvoluted
 #' @param scdata single cell ExpressionSet Object
+#' @param input input
 #'
 #' @return
 #' @export
 #'
 #' @examples
-deconvolute <- function(data, DEgenes, columns, scdata){
+deconvolute <- function(data, DEgenes, columns, scdata, input){
   
+  # parameters
+  celltypes <- isolate(input$condition)
+  celltype_label <- isolate(input$conditions_from_meta0)
+  samples <- isolate(input$deconvolute_samples)
+  
+  # Bulk Data
   data <- data[,columns]
-  
   data <- getNormalizedMatrix(data,method = "TMM")
-  
+  genes_data <- rownames(data)
+  DEgenes <- intersect(genes_data, DEgenes)
   data_de <- data[DEgenes,]
   Vit_BulkRNAseq <- ExpressionSet(assayData=as.matrix(data_de))
   pData(Vit_BulkRNAseq) <- data.frame(row.names = columns, columns = columns)
   
-  
+  # Single cell data
+  metadata <- pData(scdata)
+  scdata <- scdata[,metadata[,celltype_label] %in% celltypes] 
+  metadata <- metadata[metadata[,celltype_label] %in% celltypes,]
+    
+  # normalized integrated library sizes
+  exprs_srt <- exprs(scdata)
+  metadata$nCount_integratedRNA_norm <- colSums(exprs_srt)
+  metadata <- as_tibble(metadata) %>% group_by(CellType) %>% mutate(nCount_integratedRNA_normmean = mean(nCount_integratedRNA_norm))
+  exprs_srt <- apply(exprs_srt, 1,function(x){
+    return((x/metadata$nCount_integratedRNA_normmean)*100)
+  })
+  scdata <- ExpressionSet(assayData=t(exprs_srt))
+  pData(scdata) <- data.frame(metadata)
+  rownames(scdata) <- colnames(exprs_srt)
+  colnames(scdata) <- rownames(exprs_srt)
+
+  # deconvolute
   NLandL.prop = music_prop(bulk.eset = Vit_BulkRNAseq, 
                            sc.eset = scdata, 
-                           clusters = 'CellType',
-                           samples = 'Patient', verbose = T)
+                           clusters = celltype_label,
+                           samples = samples, verbose = T)
   
   return(NLandL.prop$Est.prop.weighted)
 }
@@ -258,8 +290,42 @@ getMarkerGenes <- function(scdata, IterDEgenes, input){
   top_n_markers <- as.numeric(input$select_top_markers)
   top_n_markers <- ifelse(is.na(top_n_markers), length(gene_scores),
                           ifelse(top_n_markers > length(gene_scores), length(gene_scores), top_n_markers))
-  marker_genes <- rownames(featuresData)[order(gene_scores, decreasing = TRUE)[1:top_n_markers]]
+  marker_genes <- rownames(featuresData)[order(gene_scores, decreasing = FALSE)[1:top_n_markers]]
  
   return(marker_genes)
+}
+
+#' getAllMarkerGenes
+#'
+#' @param scdata single cell data
+#' @param data reference bulk data
+#' @param input input 
+#'
+#' @examples
+getAllMarkerGenes <- function(scdata, data, input){
+  
+  # pull those genes that are in bulk data
+  featuresData <- fData(scdata)
+  rownames_fdata <- rownames(featuresData)
+  rownames_fdata <- intersect(rownames_fdata, rownames(data))
+  featuresData <- featuresData[rownames_fdata, ]
+  
+  # select cell types and their ranks
+  gene_scores <- featuresData[,paste0(isolate(input$condition),"_marker_score_CellType"), drop = FALSE]
+  top_n_markers <- as.numeric(isolate(input$top_genes))
+  top_n_markers <- ifelse(is.na(top_n_markers), nrow(gene_scores),
+                          ifelse(top_n_markers > nrow(gene_scores), nrow(gene_scores), top_n_markers))
+  
+  # pull genes
+  gene_list <- c()
+  marker_genes <- list()
+  for(i in 1:ncol(gene_scores)){
+    marker_genes[[i]] <- rownames(featuresData)[order(gene_scores[,i], decreasing = FALSE)[1:top_n_markers]]
+  }
+  all_markers <- unlist(marker_genes)
+  duplicates <- names(table(all_markers)[table(all_markers) > 1])
+  gene_list <- unique(all_markers)
+  gene_list <- gene_list[!gene_list %in% duplicates]
+  return(gene_list)
 }
   
