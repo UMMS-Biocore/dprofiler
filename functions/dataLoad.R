@@ -44,7 +44,7 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   
   # Event for uploading the demo file
   observeEvent(input$demo, {
-    load("demo/demodata_trimsc.Rda")
+    load("demo/demodata_trimsc_integrated.Rda")
     ldata$count <- demodata
     ldata$meta <- metadatatable
     ldata$sc_count <- demoscdata
@@ -68,7 +68,7 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     character_columns <- colnames(pData(ldata$sc_count))[!sapply(as.data.frame(pData(ldata$sc_count)),is.numeric)]
     list(
       column(2,
-             selectInput(session$ns("selectident"), label = "Select Ident", 
+             selectInput(session$ns("selectident"), label = "Select Identification", 
                          choices = character_columns, selected = "CellType")),
       column(2,
              selectInput(session$ns("selectumi"), label = "Select UMI column", 
@@ -182,8 +182,8 @@ dataLoadUI<- function (id) {
              actionButtonDE(ns("demo_nosc"),  label = "Load Demo PRJNA554241 (no scRNA)", styleclass = "primary"))
     ),
     fluidRow(
-      fileUploadBox(id, "countdata", "metadata", "Reference Bulk Expression Data"),
-      fileUploadBox(id, "profilecountdata", "profilemetadata", "Profiling Bulk Expression Data (Optional)")
+      fileUploadBox(id, "countdata", "metadata", "Bulk Expression Data"),
+      fileUploadBox(id, "profilecountdata", "profilemetadata", "Reference Bulk Expression Data (Optional)")
     ),
     fluidRow(
       scfileUploadBox(id, "sccountdata", "scRNA Expression Data Object (Optional)"),
@@ -207,7 +207,7 @@ dataSummaryUI<- function(id) {
   list(
   fluidRow(
     column(12,uiOutput(ns("nextButton"))),
-    shinydashboard::box(title = "Reference Bulk Data Summary", solidHeader = TRUE, status = "info",
+    shinydashboard::box(title = "Bulk Data Summary", solidHeader = TRUE, status = "info",
                         width = 6, 
                         fluidRow(
                           column(12, 
@@ -219,7 +219,7 @@ dataSummaryUI<- function(id) {
                           )
                         )
     ),
-    shinydashboard::box(title = "Profiling Bulk Data Summary", solidHeader = TRUE, status = "info",
+    shinydashboard::box(title = "Reference Bulk Data Summary", solidHeader = TRUE, status = "info",
                         width = 6, 
                         fluidRow(
                           column(12, 
@@ -322,6 +322,9 @@ getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL
   if(is.null(ident) | is.null(UMI_column))
     return(NULL)
   
+  tsne_data <- pData(data)[,c(ident,"x","y")]
+  tsne_data <- as_tibble(tsne_data) %>% group_by_at(1) %>% summarize(x = mean(x), y = mean(y))
+  
   output[[summary]] <- renderTable({
     countdata <- data
     samplenums <- dim(countdata)[2]
@@ -332,11 +335,13 @@ getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL
     result
   }, digits = 0, rownames = TRUE, align = "lc")
   output[[paste0(details,"density")]] <- renderPlot({
-    plot_density_ridge(data, color_by = ident, title = UMI_column, val = UMI_column)
+    plot_density_ridge(data, color_by = ident, title = UMI_column, val = UMI_column) + 
+      theme(legend.position = "none")
   })
   output[[paste0(details,"tsne")]] <- renderPlot({
-    plot_tsne_metadata(data, color_by = ident, title = ident,
-                       legend_dot_size = 4, text_sizes = c(20, 10, 5, 10, 15, 15))
+    plot_tsne_metadata(data, color_by = ident,
+                       legend_dot_size = 4, text_sizes = c(20, 10, 5, 8, 8, 15)) + 
+      geom_text(tsne_data, mapping = aes(x = x, y = y, label = tsne_data[[1]]), size=5)
   })
 }
 
@@ -360,7 +365,7 @@ fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL,
   shinydashboard::box(title = label, 
                       solidHeader = TRUE, status = "info", width = 6, 
                       
-                      helpText(paste0("Upload Data")), 
+                      helpText(paste0("Upload Data Table")), 
                       tags$div(style = "margin-bottom:-30px",
                         fileInput(inputId = ns(inputId_count), label = NULL, accept = fileTypes())
                       ),
@@ -368,7 +373,7 @@ fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL,
                                sepRadio(id, paste0(inputId_count, "Sep"))
                       ),
                       
-                      helpText(paste0("Upload MetaData (Optional)")), 
+                      helpText(paste0("Upload MetaData Table (Optional)")), 
                       tags$div(style = "margin-bottom:-30px",
                                fileInput(inputId = ns(inputId_meta), label = NULL, accept = fileTypes())
                       ),
@@ -398,16 +403,8 @@ scfileUploadBox <- function (id = NULL, inputId = NULL, label = NULL)
   options(shiny.maxRequestSize=30*1024^2)
   shinydashboard::box(title = label, 
                       solidHeader = TRUE, status = "info", width = 6, 
-                      helpText(paste0("Upload Data")),
-                      fileInput(inputId = ns(inputId), label = NULL, accept = fileTypes()),
-                      # fluidRow(
-                      #   column(6,textInput(inputId = ns(paste0(inputId,"umilabel")), label = "UMI Column Name", value = "UMI_sum_raw")),
-                      #   column(6,textInput(inputId = ns(paste0(inputId,"clusterlabel")), label = "Cell Type Column Name", value = "CellType"))
-                      # ),
-                      # fluidRow(
-                      #   column(6,textInput(inputId = ns(paste0(inputId,"samplelabel")), label = "Samples Column Name", value = "Patient")),
-                      # )
-                      
+                      helpText(paste0("Upload ExpressionSet Object (.rds)")),
+                      fileInput(inputId = ns(inputId), label = NULL, accept = fileTypes())
   )
 }
 

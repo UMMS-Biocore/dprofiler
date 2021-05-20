@@ -7,6 +7,7 @@
 #' @param session, session
 #' @param data, a matrix that includes expression values
 #' @param dc, results of iterative DE Analysis
+#' @param parent_session parent session
 #' @return DE panel
 #' @export
 #'
@@ -14,15 +15,21 @@
 #'     x <- dprofilerprofiling()
 #'
 dprofilerprofiling <- function(input = NULL, output = NULL, session = NULL, dc = NULL, profiledata = NULL,
-                               profilemetadata = NULL) {
+                               profilemetadata = NULL, parent_session = NULL) {
   if(is.null(dc)) return(NULL)
 
   # get details
-  prof_details <- getProfilingDEparameter(profiledata, session, input)
+  prof_details <- getProfilingDEparameter(profiledata, profilemetadata, session, input)
   
   # DE Results
   deres <- reactive({
-    runDE(profiledata, prof_details$cols, prof_details$conds, prof_details$params)
+    waiter_show(html = waiting_screen, color = transparent(.5))
+    withProgress(message = 'Running Profiling', value = 0, {
+      deresults <- runMultipleDE(profiledata, prof_details$cols, prof_details$conds, prof_details$params)
+    })
+    updateTabsetPanel(session = parent_session, "ProfilingResults", "profilingscores")
+    waiter_hide()
+    deresults
   })
   
   # Apply Filters to DE Results
@@ -46,10 +53,8 @@ dprofilerprofiling <- function(input = NULL, output = NULL, session = NULL, dc =
     getTableDetails(output, session, "DEResults", dat2, modal=FALSE)
 
     # get scores
-    scores <- getProfileScores(dc, profiledata[rownames(dat),], profilemetadata)
-    # scores <- getProfileScores(dc, profiledata, profilemetadata)
+    scores <- getProfileScores(dc, dat, profiledata, profilemetadata)
     getProfileScoreDetails(output, session, "MembershipScores", scores)
-    
     
   })
   
@@ -70,7 +75,7 @@ dprofilerprofiling <- function(input = NULL, output = NULL, session = NULL, dc =
 getProfilingUI <- function (id) {
   ns <- NS(id)
   list(
-    tabBox(id = "Profiling Results",
+    tabBox(id = "ProfilingResults",
            width = NULL,
            tabPanel(title = "Conditions",
                     shinydashboard::box(title = "Comparison Selection",
@@ -95,8 +100,9 @@ getProfilingUI <- function (id) {
                       shinydashboard::box(title = "Membership Scores",
                                           solidHeader = T, status = "info",  width = 9, collapsible = TRUE,
                                           plotlyOutput(ns("MembershipScores"))
-                      ),
-                    )
+                      )
+                    ),
+                    value = "profilingscores"
            )
     )
   )
@@ -132,8 +138,12 @@ getProfileScoreDetails <- function(output = NULL, session = NULL, plotname = NUL
 }
 
 
-getProfileScores <- function(dc, profiledata, profilemetadata){
+getProfileScores <- function(dc, dat, profiledata, profilemetadata){
   
+  # unique genes of profile data
+  unique_genes <- unique(dat$ID)
+  profiledata <- profiledata[unique_genes,]
+    
   # get data 
   remaining_columns <- dc$cols[!dc$cols %in% dc$cleaned_columns]
   conds <- dc$conds[!dc$cols %in% dc$cleaned_columns]
@@ -217,16 +227,16 @@ external_silhouette <- function(cluster, dist2){
   return(allsil)
 }
 
-getProfilingDEparameter <- function(data = NULL, session = NULL, input = NULL) {
+getProfilingDEparameter <- function(data = NULL, metadata = NULL, session = NULL, input = NULL) {
   
     if (is.null(data)) return(NULL)
     
     inputconds <- reactiveValues(demethod_params = list(), conds = list(), dclist = list())
     cnt <- 1
-    inputconds$conds <- list()
-    inputconds$conds[[1]] <- isolate(input[[paste0("condition",1)]])
-    inputconds$conds[[2]] <- isolate(input[[paste0("condition",2)]])
-    
+    # inputconds$conds <- list()
+    # inputconds$conds[[1]] <- isolate(input[[paste0("condition",1)]])
+    # inputconds$conds[[2]] <- isolate(input[[paste0("condition",2)]])
+
     #Get parameters for each method
     inputconds$demethod_params <- NULL
     if (isolate(input[[paste0("demethod",cnt)]]) == "DESeq2"){
@@ -265,11 +275,14 @@ getProfilingDEparameter <- function(data = NULL, session = NULL, input = NULL) {
                                              isolate(input[[paste0("topstat",cnt)]]), sep = ","
     )
     
-    conds <- c(rep(paste0("Cond", 1), 
-                   length(inputconds$conds[[1]])), 
-               rep(paste0("Cond", 2), length(inputconds$conds[[2]])))
-    cols <- c(paste(inputconds$conds[[1]]), 
-              paste(inputconds$conds[[2]]))
+    # conds <- c(rep(paste0("Cond", 1), 
+    #                length(inputconds$conds[[1]])), 
+    #            rep(paste0("Cond", 2), length(inputconds$conds[[2]])))
+    # cols <- c(paste(inputconds$conds[[1]]), 
+    #           paste(inputconds$conds[[2]]))
+    conds <- metadata[[input$conditions_from_meta1]]
+    cols <- colnames(data)
+    
     params <- unlist(strsplit(inputconds$demethod_params[1], ","))
     
     return(list(conds = conds, cols = cols, params = params))

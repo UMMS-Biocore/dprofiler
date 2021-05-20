@@ -42,11 +42,11 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
         applyFiltersNew(addDataCols(data, deres()$IterDEResults, columns, conds), input)
     })
     
-    # Choose Cell Types and top markers
-    output$deconvolute_genes <- renderUI({
-        list(selectInput(session$ns("deconvolute_genes"), "", selected = c("Homogeneous Conditions"),
-                         choices = c("Heterogeneous Conditions","Homogeneous Conditions")))
-    })
+    # # Choose Cell Types and top markers
+    # output$deconvolute_genes <- renderUI({
+    #     list(selectInput(session$ns("deconvolute_genes"), "", selected = c("Homogeneous Conditions"),
+    #                      choices = c("Heterogeneous Conditions","Homogeneous Conditions")))
+    # })
     
     # Create a reactive scoring table as well
     score <- reactiveVal()
@@ -62,17 +62,17 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
         
         # get scores and expression profiles
         score(getFinalScores(deres(), data, columns, conds, params, 
-                              ManualDEgenes = input$manualgenes, TopStat = input$topstat))
+                             ManualDEgenes = input$manualgenes, TopStat = input$topstat))
 
-        # get deconvolution genes
-        deconvolute_genes({
-            which_genes <- ifelse(is.null(input$deconvolute_genes), TRUE, input$deconvolute_genes)
-            if(which_genes == "Homogeneous Conditions"){
-                deres()$IterDEgenes
-            } else{
-                deres()$DEgenes
-            }
-        })
+        # # get deconvolution genes
+        # deconvolute_genes({
+        #     which_genes <- ifelse(is.null(input$deconvolute_genes), TRUE, input$deconvolute_genes)
+        #     if(which_genes == "Homogeneous Conditions"){
+        #         deres()$IterDEgenes
+        #     } else{
+        #         deres()$DEgenes
+        #     }
+        # })
         
         # prepare DE tables
         dat <-  prepDat()[prepDat()$Legend == input$legendradio,]
@@ -93,7 +93,7 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
     })
     
     list(dat = prepDat, DEgenes = deres()$DEgenes, iterdat = iterprepDat, IterDEgenes = deres()$IterDEgenes,
-         score = score, deconvolute_genes = deconvolute_genes, cleaned_columns = deres()$cleaned_columns)
+         score = score, deconvolute_genes = NULL, cleaned_columns = deres()$cleaned_columns)
 }
 
 #' getDEResultsUI
@@ -115,7 +115,7 @@ getDEResultsUI<- function (id) {
                tabPanel(title = "Conditions",
                    condSelectUI()
                ),
-               tabPanel(title = "Differential Hetergeneity Detection",
+               tabPanel(title = "Profiling Results",
                         fluidRow(
                             shinydashboard::box(title = "Summary",
                                                 solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
@@ -135,9 +135,9 @@ getDEResultsUI<- function (id) {
                             shinydashboard::box(title = "Membership Scores",
                                                 solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
                                                 plotlyOutput(ns("HomogeneityScores")),
-                                                column(4,actionButtonDE("gotodeconvolute", "Go to Cellular Composition", 
+                                                column(5,actionButtonDE("gotodeconvolute", "Go to Cellular Composition Analysis", 
                                                                         styleclass = "primary", style = 'margin-top:21px')),
-                                                column(3,actionButtonDE("gotoprofile", "Go to Profiling", 
+                                                column(5,actionButtonDE("gotoprofile", "Go to Comparative Profiling", 
                                                                         styleclass = "primary", style = 'margin-top:21px')),
                                                 #column(4,uiOutput(ns("deconvolute_genes")))
                                                 
@@ -261,7 +261,39 @@ runDE <- function (data = NULL, columns = NULL, conds = NULL, params = NULL)
         de_res <- runEdgeR(data, columns, conds, params)
     else if (startsWith(params[1], "Limma")) 
         de_res <- runLimma(data, columns, conds, params)
-    data.frame(de_res)
+    data.frame(de_res, gene = rownames(de_res))
+}
+
+runMultipleDE <- function (data = NULL, columns = NULL, conds = NULL, params = NULL) 
+{
+    if (is.null(data)) 
+        return(NULL)
+    
+    combn_treatment <- combn(levels(droplevels(conds)),2)
+    multiplede_res <- NULL
+    
+    for(i in 1:ncol(combn_treatment)){
+        comb_treat <- combn_treatment[,i]
+        
+        cur_conds <- conds[conds %in% comb_treat]
+        cur_columns <- columns[conds %in% comb_treat]
+        cur_data <- data[,conds %in% comb_treat]
+        
+        de_res <- NULL
+        if (startsWith(params[1], "DESeq2")) 
+            de_res <- runDESeq2(cur_data, cur_columns, cur_conds, params)
+        else if (startsWith(params[1], "EdgeR")) 
+            de_res <- runEdgeR(cur_data, cur_columns, cur_conds, params)
+        else if (startsWith(params[1], "Limma")) 
+            de_res <- runLimma(cur_data, cur_columns, cur_conds, params)
+        data.frame(de_res)
+        
+        multiplede_res <- rbind(multiplede_res, 
+                                data.frame(de_res, 
+                                           Comparison = paste0(comb_treat[1], "_vs_", comb_treat[2]),
+                                           gene = rownames(de_res)))
+    }
+    return(multiplede_res)
 }
 
 runLimma <- function (data = NULL, columns = NULL, conds = NULL, params = NULL) 

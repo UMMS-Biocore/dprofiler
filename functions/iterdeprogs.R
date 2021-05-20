@@ -26,17 +26,17 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
   # parameters 
   ScoreMethod <- params[6]
   threshold <- as.numeric(params[7])
-  iterde_norm <- params[8]
-  iterde <- params[9]
-  log2FC <- as.numeric(params[10])
-  padj <- as.numeric(params[11])
-  topstat <- as.numeric(params[12])
+  # iterde_norm <- params[8]
+  iterde <- params[8]
+  log2FC <- as.numeric(params[9])
+  padj <- as.numeric(params[10])
+  topstat <- as.numeric(params[11])
 
   # set variables and cutoff values
   cleaned_columns <- NULL
   DEgenes_new <- NULL
   DEgenes <- NULL
-  data_tmm <- getNormalizedMatrix(data, method=iterde_norm)
+  # data_tmm <- getNormalizedMatrix(data, method=iterde_norm)
   iter <- 100
   
   # iteration until convergence
@@ -45,7 +45,7 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
     # select subset of genes and columns
     cur_columns <- setdiff(columns, cleaned_columns)
     cur_data <- data[, columns %in% cur_columns]
-    cur_data_tmm <- data_tmm[, columns %in% cur_columns]
+    cur_data <- data[, columns %in% cur_columns]
     cur_conds <- conds[columns %in% cur_columns]
     
     # DE analysis
@@ -60,7 +60,7 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
     DEgenes_new <- union(DEgenes_new, DEgenes) 
 
     # DEgenes of the current data
-    data_de <- cur_data_tmm[rownames(cur_data) %in% DEgenes_new, ]
+    data_de <- cur_data[rownames(cur_data) %in% DEgenes_new, ]
     
     if(ScoreMethod == "Silhouette"){
       
@@ -105,7 +105,7 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
     # record the first score
     if(i == 1){
       score <- format(round(score, 3), nsmall = 3)
-      score <- data.frame(Samples = colnames(data_tmm), Conds = conds, Scores = score)
+      score <- data.frame(Samples = colnames(data), Conds = conds, Scores = score)
       DEResults <- results
       DEscore <- score
       NonIterDEgenes <- DEgenes
@@ -122,7 +122,7 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
     
     # check iterations
     setProgress(value = (i %% 11)/10,
-                message = paste("Heterogeneity Detection: Iteration", i, sep = " "),
+                message = paste("Computational Profiling:  Iteration", i, sep = " "),
                 detail = paste("# New DE genes:", length(DEgenes),
                                "# of Removed Samples: ", length(cleaned_columns), sep = " "))
   }
@@ -157,7 +157,7 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
   
   # parameters
   ScoreMethod <- params[6]
-  iterde_norm <- params[8]
+  #  <- params[8]
   TopStat <- as.numeric(TopStat)
   
   # DE genes
@@ -181,16 +181,16 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
   
   # set variables and cutoff values
   cleaned_columns <- deres$cleaned_columns
-  data_tmm <- getNormalizedMatrix(data, method=iterde_norm)
+  # data <- getNormalizedMatrix(data, method=iterde_norm)
     
   # select subset of genes and columns
   cur_columns <- setdiff(columns, cleaned_columns)
   cur_data <- data[, columns %in% cur_columns]
-  cur_data_tmm <- data_tmm[, columns %in% cur_columns]
+  cur_data <- data[, columns %in% cur_columns]
   cur_conds <- conds[columns %in% cur_columns]
   
   # Final Scores of Heterogeneous Groups
-  data_de <- data_tmm[rownames(data) %in% DEgenes, ]
+  data_de <- data[rownames(data) %in% DEgenes, ]
   if(ScoreMethod == "Silhouette"){
     
     # Spearman correlations
@@ -223,10 +223,10 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
     DEscore_new <- c(DEscore_new,
                      DEscore[i,conds[i]==unique(conds)])
   }
-  DEscore <- data.frame(Samples = colnames(data_tmm), Conds = conds, Scores = DEscore_new)
+  DEscore <- data.frame(Samples = colnames(data), Conds = conds, Scores = DEscore_new)
   
   # Final Scores of Heterogeneous groups
-  data_de <- data_tmm[rownames(data) %in% IterDEgenes, ]
+  data_de <- data[rownames(data) %in% IterDEgenes, ]
   if(ScoreMethod == "Silhouette"){
     
     # Spearman correlations
@@ -260,7 +260,7 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
     IterDEscore_new <- c(IterDEscore_new,
                          IterDEscore[i,conds[i]==unique(conds)])
   }
-  IterDEscore <- data.frame(Samples = colnames(data_tmm), Conds = conds, Scores = IterDEscore_new)
+  IterDEscore <- data.frame(Samples = colnames(data), Conds = conds, Scores = IterDEscore_new)
 
   return(list(IterDEscore = IterDEscore, DEscore = DEscore))
 }

@@ -160,13 +160,13 @@ dprofilerServer <- function(input, output, session) {
           }
         })
         
-        output$cutOffUI <- renderUI({
-          cutOffSelectionUI("deresults")
-        })
-        
-        output$ScoreCutOffUI <- renderUI({
-          ScoreCutOffSelectionUI("deresults")
-        })
+        # output$cutOffUI <- renderUI({
+        #   cutOffSelectionUI("deresults")
+        # })
+        # 
+        # output$ScoreCutOffUI <- renderUI({
+        #   ScoreCutOffSelectionUI("deresults")
+        # })
         
         output$deresUI <- renderUI({
           getDEResultsUI("deresults")
@@ -248,7 +248,7 @@ dprofilerServer <- function(input, output, session) {
           if(!is.null(dc())){
             waiter_show(html = waiting_screen, color = transparent(.5))
             profiling <- callModule(dprofilerprofiling, "profiling", dc(), uploadeddata()$load()$prof_count,
-                                    uploadeddata()$load()$prof_meta)
+                                    uploadeddata()$load()$prof_meta, session)
             waiter_hide()
           }
         })
