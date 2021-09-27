@@ -1,0 +1,173 @@
+#' getScoreDetails
+#'
+#' get score details of columns
+#' 
+#' @param output output
+#' @param session session
+#' @param plotname the name of the plot
+#' @param DEscores Scores of impure conditions
+#' @param IterDEscores Scores of pure conditions
+#'
+#' @return
+#' @export
+#'
+#' @examples
+getScoreDetails <- function(output = NULL, session = NULL, 
+                                 plotname = NULL, DEscores = NULL, IterDEscores = NULL) {
+  output[[plotname]] <- renderPlotly({
+    dat <- rbind(
+      data.frame(IterDEscores, type = "Scores of Pure Conditions"),
+      data.frame(DEscores, type = "Scores of Impure Conditions")
+    )
+    dat$Scores <- as.numeric(dat$Scores)
+    p <- ggplot(data=dat, aes(x = reorder(Samples,Scores), y = Scores)) +
+      geom_bar(aes(fill = Conds), stat="identity") + 
+      facet_grid(. ~ type) + 
+      scale_y_continuous(limits=c(0, 1)) + 
+      xlab("Samples") +
+      theme(axis.text.x = element_text(angle = 45),
+            axis.title.x=element_blank(),
+            axis.title.y=element_blank()) 
+
+    p <- ggplotly(p)
+    
+    # Manage plotly labels
+    for(i in 1:length(p$x$data)){
+      temp <- p$x$data[[i]]$text
+      temp <- gsub("Conds: ", "", temp)
+      temp <- gsub("reorder\\(Samples, Scores\\):", "Sample:", temp)
+      temp <- gsub("Scores:", "Score:", temp)
+      p$x$data[[i]]$text <- temp
+    }
+    
+    p
+  })
+}
+
+#' getIterDESummary
+#' 
+#' get summary of Iterative DE Analysis results and venn diagram
+#'
+#' @param output output 
+#' @param session session
+#' @param vennname venn diagram name
+#' @param summaryname summary table name
+#' @param deres DE results
+#' @param params DE parameters
+#'
+#' @return
+#' @export
+#'
+#' @examples
+getIterDESummary <- function(output = NULL, session = NULL, vennname = NULL, summaryname = NULL, 
+                             deres = NULL, params = NULL){
+  
+  output[[summaryname]] <- renderUI({
+    
+   style = "padding-right: 10px"
+   texts <- tags$div(
+      h4("Summary"),
+      tags$table(
+        tags$tr(
+          tags$td(style = style, p(strong("# of Iterations:"), deres$NumberofIters)),
+          tags$td(style = style, p(strong("# of Initial DE genes:"), length(deres$DEgenes)))
+        ),
+        tags$tr(
+          tags$td(style = style, p(strong("# of Hetero. Samples:"), length(deres$cleaned_columns))),
+          tags$td(style = style, p(strong("# of Final DE genes:"), length(deres$IterDEgenes)))
+        )
+      )
+   )
+  })
+  
+  # Scoring parameters 
+  scoresummaryname <- paste0(summaryname,"Iter")
+  output[[scoresummaryname]] <- renderUI({
+    
+    style = "padding-right: 10px"
+    if(params[9] == "Stat."){
+      additional_texts <- paste(p(strong("# of Top Statistics:"), params[12]), sep = " ")
+    } else {
+      additional_texts <- paste(p(strong("Log2FC:"), params[10], strong("P-adj:"),  params[11]), sep = " ")
+    }
+    texts <- tags$div(
+      h4("Scoring Parameters"),
+      tags$table(
+        tags$tr(
+          tags$td(style = style, p(strong("Score Method:"), params[6])),
+          tags$td(style = style, p(strong("Selection Method:"),  params[9])),
+        ),
+        tags$tr(
+          tags$td(style = style, p(strong("Min. Score:"),  params[7])),
+          tags$td(style = style, HTML(additional_texts))
+        ),
+        tags$tr(
+          tags$td(style = style, p(strong("Normalization:"),  params[8]))
+        )
+      )
+    )
+    texts
+  })
+  
+  # DE parameters
+  desummaryname <- paste0(summaryname,"DE")
+  
+  output[[desummaryname]] <- renderUI({
+    
+    style = "padding-right: 10px"
+    if(params[1] == "DESeq2"){
+      param_text <- c("DE method:", "Fit Type:", "Beta Prior:", "Test Type:", "Shrinkage:")
+    } else if(params[1] == "EdgeR") {
+      param_text <- c("DE method:", "Normalization:", "Dispersion:", "Test Type:", "")
+    } else{
+      param_text <- c("DE method:", "Normalization:", "Fit Type:", "Norm.Bet.Arrays:", "")
+    }
+
+    texts <- tags$div(
+      h4("DE parameters"),
+      tags$table(
+        tags$tr(
+          tags$td(style = style, p(strong(param_text[1]), params[1])),
+          tags$td(style = style, p(strong(param_text[3]),  params[3])),
+        ),
+        tags$tr(
+          tags$td(style = style, p(strong(param_text[2]),  params[2])),
+          tags$td(style = style, p(strong(param_text[4]),  params[4])),
+        ),
+        if(params[1] == "DESeq2"){
+          tags$tr(
+            tags$td(style = style, p(strong("Normalization:"),  params[5]))
+          )
+        }
+      )
+    )
+    texts
+  })
+  
+  x <- list(
+    A = deres$DEgenes, 
+    B = deres$IterDEgenes
+  )
+  output[[vennname]] <- renderPlot({
+    display_venn(x, category.names = c("Init. DE genes" , "Final DE genes"),
+                 fill = c("#999999", "#E69F00"))
+  })
+}
+
+#' display_venn
+#' 
+#' display venn diagram
+#'
+#' @param x a list of elements for each groups
+#' @param ... 
+#'
+#' @examples
+display_venn <- function(x, category.names, ...){
+  grid.newpage()
+  venn_object <- draw.pairwise.venn(area1 = length(x[[1]]), 
+                                    area2 = length(x[[2]]), 
+                                    cross.area = length(intersect(x[[1]], x[[2]])), 
+                                    category = category.names, 
+                                    ind = FALSE, ...)
+  grid.draw(venn_object)
+}
