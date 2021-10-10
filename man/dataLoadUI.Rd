@@ -7,13 +7,10 @@
 dataLoadUI(id)
 }
 \arguments{
-\item{id, }{namespace id}
-}
-\value{
-panel
+\item{id}{namespace id}
 }
 \description{
-Creates a panel to upload the data
+Creates panels to upload the data. Adapted from debrowser::dataLoadUI().
 }
 \examples{
     x <- dataLoadUI("load")

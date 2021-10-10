@@ -7,13 +7,14 @@
 getPlotArea(input = NULL, session = NULL)
 }
 \arguments{
-\item{input}{}
+\item{input}{input variables}
 
-\item{session}{}
-}
-\value{
-
+\item{session}{session}
 }
 \description{
-a version of debrowser's getPlotArea function with automatic width and length
+a version of debrowser::getPlotArea function with automatic width and length
+}
+\examples{
+     x <- getPlotArea()
+
 }

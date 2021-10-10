@@ -7,5 +7,5 @@
 getCompProfilingText()
 }
 \description{
-Quick start text for Computational Profiling Analysis
+Dprofiler help text
 }

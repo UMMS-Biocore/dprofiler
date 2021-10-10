@@ -1,18 +1,12 @@
 #' dprofilercondselect
 #'
-#' Condition selection
-#' This is not a module. Module construction didn't used here, just use it 
-#' as functions not in a module.
+#' Condition selection for DE analysis and reference single cell data. Adapted from debrowsercondselect().
 #' 
 #' @param input, input variables
 #' @param output, output objects
 #' @param session, session 
-#' @param data, count data
+#' @param data, count or single cell data
 #' @param metadata, metadata
-#' @return main plot
-#'
-#' @return panel
-#' @export
 #'
 #' @examples
 #'     x <- dprofilercondselect()
@@ -51,11 +45,8 @@ dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, dat
 #' 
 #' Creates a panel to select samples for each condition
 #'
-#' @return panel
 #' @examples
 #'     x <- condSelectUI()
-#'
-#' @export
 #'
 condSelectUI<- function(){
   list(
@@ -73,20 +64,15 @@ condSelectUI<- function(){
 
 #' selectConditions
 #'
-#' Selects user input conditions, multiple if present, to be
-#' used in DESeq.
+#' Selects user input conditions, multiple if present, to be used in DE analysis. 
 #'
 #' @param Dataset, used dataset 
 #' @param metadata, metadatatable to select from metadata
 #' @param session, session
 #' @param input, input params
-#' @note \code{selectConditions}
-#' @return the panel for go plots;
 #'
 #' @examples
 #'     x<- selectConditions()
-#'
-#' @export
 #'
 selectConditions<-function(Dataset = NULL,
                            metadata = NULL,
@@ -150,11 +136,9 @@ selectConditions<-function(Dataset = NULL,
 
 #' selectScRNAConditions
 #'
-#' Selects user input conditions, multiple if present, to be
-#' used in DESeq.
+#' Selects user input conditions used in bulk RNA deconvolution.
 #'
 #' @param scdata, used single cell dataset 
-#' @param metadata, metadatatable to select from metadata
 #' @param session, session
 #' @param input, input params
 #'
@@ -164,6 +148,7 @@ selectConditions<-function(Dataset = NULL,
 selectScRNAConditions<-function(scdata = NULL,
                                 session = NULL,
                                 input = NULL) {
+  if(is.null(scdata)) return(NULL)
   
   # meta data
   metadata <- pData(scdata)
@@ -193,6 +178,18 @@ selectScRNAConditions<-function(scdata = NULL,
   return(to_return)
 }
 
+#' getMetaSelector
+#'
+#' Return the sample selection box using meta data table.
+#' 
+#' @param metadata meta data table
+#' @param session session
+#' @param input input params 
+#' @param n the box number
+#'
+#' @examples
+#'      x <- getMetaSelector()
+#'      
 getMetaSelector <- function (metadata = NULL, session = NULL, input = NULL, n = 0) 
 {
   if (!is.null(metadata)) {
@@ -207,11 +204,27 @@ getMetaSelector <- function (metadata = NULL, session = NULL, input = NULL, n = 
   }
 }
 
+#' getConditionSelectorFromMeta
+#' 
+#' Selects user input conditions to run in DE analysis from metadata.
+#' 
+#' @param metadata meta data table
+#' @param session session 
+#' @param input input
+#' @param index index
+#' @param num num
+#' @param choices choices 
+#' @param selected selected
+#'
+#' @examples
+#'      x <- getConditionSelectorFromMeta()
+#'      
 getConditionSelectorFromMeta <- function (metadata = NULL, session = NULL, input = NULL, index = 1, num = 0, 
-                                                   choices = NULL, selected = NULL) 
+                                          choices = NULL, selected = NULL) 
 {
-  a <- list(column(6, selectInput(paste0(session$ns("condition"), num), 
-                                  label = paste0("Condition ", num), choices = choices, 
+  if(is.null(metadata)) return(NULL)
+  a <- list(column(6, selectInput(paste0(session$ns("condition"), num),
+                                  label = paste0("Condition ", num), choices = choices,
                                   multiple = TRUE, selected = selected)))
   if (!is.null(metadata)) {
     selected_meta <- selectedInput(session$ns("conditions_from_meta"), 
@@ -244,6 +257,19 @@ getConditionSelectorFromMeta <- function (metadata = NULL, session = NULL, input
   return(a)
 }
 
+#' getIdentSelectorFromMeta
+#' 
+#' Select identification from single cell metadata.
+#'
+#' @param metadata meta data table
+#' @param session session
+#' @param input input 
+#' @param choices choices
+#' @param selected selected
+#'
+#' @examples
+#'      x <- getIdentSelectorFromMeta()
+#'      
 getIdentSelectorFromMeta <- function (metadata = NULL, session = NULL, input = NULL, 
                                       choices = NULL, selected = NULL){
   if (!is.null(metadata)) {
@@ -263,13 +289,12 @@ getIdentSelectorFromMeta <- function (metadata = NULL, session = NULL, input = N
 #'
 #' get the detail boxes after DE method selected 
 #'
-#' @param num, panel that is going to be shown
-#' @param input, user input
+#' @param num panel that is going to be shown
+#' @param session session
+#' @param input user input
+#' 
 #' @examples
 #'     x <- getMethodDetails()
-#'
-#' @export
-#'
 #'
 getMethodDetails <- function(num = 0, session = NULL, input = NULL) {
   if (num > 0)
@@ -335,15 +360,14 @@ getMethodDetails <- function(num = 0, session = NULL, input = NULL) {
 
 #' getIterMethodDetails
 #'
-#' get the detail boxes after DE method selected 
+#' get the detail boxes after interative DE method selected 
 #'
-#' @param num, panel that is going to be shown
-#' @param input, user input
+#' @param num panel that is going to be shown
+#' @param session session
+#' @param input user input
+#' 
 #' @examples
 #'     x <- getIterMethodDetails()
-#'
-#' @export
-#'
 #'
 getIterMethodDetails <- function(num = 0, session = NULL, input = NULL) {
   if (num > 0)
@@ -389,14 +413,12 @@ getIterMethodDetails <- function(num = 0, session = NULL, input = NULL) {
 
 #' prepDataContainer
 #'
-#' Prepares the data container that stores values used within DESeq.
+#' Prepares the data container that stores values used within DE analysis. Adapted from debrowser::prepDataContainer.
 #'
 #' @param data, loaded dataset
 #' @param input, input parameters
 #' @param session session
-#' @return data
-#' @export
-#'
+#' 
 #' @examples
 #'     x <- prepDataContainer()
 #'

@@ -15,15 +15,8 @@ selectConditions(Dataset = NULL, metadata = NULL, session = NULL, input = NULL)
 
 \item{input, }{input params}
 }
-\value{
-the panel for go plots;
-}
 \description{
-Selects user input conditions, multiple if present, to be
-used in DESeq.
-}
-\note{
-\code{selectConditions}
+Selects user input conditions, multiple if present, to be used in DE analysis.
 }
 \examples{
     x<- selectConditions()

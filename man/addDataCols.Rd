@@ -15,9 +15,10 @@ addDataCols(data = NULL, de_res = NULL, cols = NULL, conds = NULL)
 
 \item{conds}{conditions}
 }
-\value{
-
-}
 \description{
-add data columns to de results
+add data columns to de results. Adapted from debrowser::addDataCols().
+}
+\examples{
+     x <- addDataCols()
+     
 }

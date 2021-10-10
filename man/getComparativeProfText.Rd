@@ -7,5 +7,5 @@
 getComparativeProfText()
 }
 \description{
-Quick start text for Comparative Profiling Analysis
+Dprofiler help text
 }

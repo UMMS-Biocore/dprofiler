@@ -4,7 +4,7 @@
 \alias{getMarkerGenes}
 \title{getMarkerGenes}
 \usage{
-getMarkerGenes(scdata, IterDEgenes, input)
+getMarkerGenes(scdata = NULL, IterDEgenes = NULL, input = NULL)
 }
 \arguments{
 \item{scdata}{single cell data}
@@ -15,4 +15,8 @@ getMarkerGenes(scdata, IterDEgenes, input)
 }
 \description{
 getMarkerGenes
+}
+\examples{
+    x <- getMarkerGenes()
+    
 }

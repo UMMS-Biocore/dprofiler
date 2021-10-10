@@ -10,7 +10,7 @@ heatmapJScode()
 JS Code
 }
 \description{
-heatmap JS code for selection functionality
+heatmap JS code for selection functionality. Adapted from debrowser::heatmapJScode()
 }
 \examples{
     x <- heatmapJScode()

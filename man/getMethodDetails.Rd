@@ -7,9 +7,11 @@
 getMethodDetails(num = 0, session = NULL, input = NULL)
 }
 \arguments{
-\item{num, }{panel that is going to be shown}
+\item{num}{panel that is going to be shown}
 
-\item{input, }{user input}
+\item{session}{session}
+
+\item{input}{user input}
 }
 \description{
 get the detail boxes after DE method selected

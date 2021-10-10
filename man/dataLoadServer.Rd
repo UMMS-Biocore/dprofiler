@@ -13,21 +13,19 @@ dataLoadServer(
 )
 }
 \arguments{
-\item{input, }{input variables}
+\item{input}{input variables}
 
-\item{output, }{output objects}
+\item{output}{output objects}
 
-\item{session, }{session}
+\item{session}{session}
 
-\item{nextpagebutton, }{the name of the next page button after loading the data}
+\item{nextpagebutton}{the name of the next page button after loading the data}
 
-\item{parent_session}{a parameter to pass the session for sending update variables to main server}
+\item{parent_session}{the parent session}
 }
 \value{
-main plot
-
 panel
 }
 \description{
-Module to load Bulk
+Data loading module for bulk and single cell data sets.
 }

@@ -4,23 +4,20 @@
 \alias{heatmapUI}
 \title{heatmapUI}
 \usage{
-heatmapUI(input, output, session)
+heatmapUI(input = NULL, output = NULL, session = NULL)
 }
 \arguments{
-\item{input, }{input variables}
+\item{input}{input}
 
-\item{output, }{output objects}
+\item{output}{output}
 
-\item{session, }{session}
+\item{session}{session}
 }
 \value{
 the panel for heatmapUI;
 }
 \description{
 Creates a shinyUI to be able to run DEBrowser interactively.
-}
-\note{
-\code{heatmapUI}
 }
 \examples{
     x<-heatmapUI()

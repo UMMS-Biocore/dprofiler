@@ -131,6 +131,21 @@ dataLCFUI<- function (id) {
     ))
 }
 
+#' dprofilerboxmainplot
+#'
+#' Module for a box plot that can be used alongside DEanalysis and heatmaps. Adapted from debrowserboxmainplot().
+#' 
+#' @param input input variables
+#' @param output output variables
+#' @param session session
+#' @param data a matrix with expression values
+#' @param cols columns
+#' @param conds conditions
+#' @param key the gene or region name
+#'
+#' @examples
+#'     x <- dprofilerboxmainplot()
+#'     
 dprofilerboxmainplot <- function (input = NULL, output = NULL, session = NULL, data = NULL, 
                                   cols = NULL, conds = NULL, key = NULL) 
 {
@@ -149,7 +164,23 @@ dprofilerboxmainplot <- function (input = NULL, output = NULL, session = NULL, d
   })
 }
 
-dprofilerbarmainplot <- function (input, output, session, data = NULL, cols = NULL, conds = NULL, 
+#' dprofilerbarmainplot
+#'
+#' Module for a bar plot that can be used in data prep, main plots low count removal modules or any desired module. 
+#' Adapted from dprofilerbarmainplot().
+#' 
+#' @param input input variables
+#' @param output output variables
+#' @param session session
+#' @param data a matrix with expression values
+#' @param cols columns
+#' @param conds conditions
+#' @param key the gene or region name
+#'
+#' @examples
+#'     x <- dprofilerbarmainplot()
+#'  
+dprofilerbarmainplot <- function (input = NULL, output = NULL, session = NULL, data = NULL, cols = NULL, conds = NULL, 
                                   key = NULL) 
 {
   if (is.null(data)) 

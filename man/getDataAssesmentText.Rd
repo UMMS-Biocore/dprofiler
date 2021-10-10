@@ -6,13 +6,6 @@
 \usage{
 getDataAssesmentText()
 }
-\value{
-help text for data assesment
-}
 \description{
-DataAssesment text
-}
-\examples{
-    x<- getDataAssesmentText()
-
+Dprofiler help text
 }

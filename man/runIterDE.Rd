@@ -26,14 +26,11 @@ with the column order}
 
 \item{session}{session}
 }
-\value{
-de results
-}
 \description{
 Run Iterative DE algorithms on the selected parameters.  Output is
 to be used for the interactive display.
 }
 \examples{
-    x <- runDE()
+    x <- runIterDE()
     
 }

@@ -13,11 +13,8 @@ prepDataContainer(data = NULL, input = NULL, session = NULL)
 
 \item{session}{session}
 }
-\value{
-data
-}
 \description{
-Prepares the data container that stores values used within DESeq.
+Prepares the data container that stores values used within DE analysis. Adapted from debrowser::prepDataContainer.
 }
 \examples{
     x <- prepDataContainer()

@@ -7,5 +7,5 @@
 getCompCellularText()
 }
 \description{
-Quick start text for Cellular Composition Analysis
+Dprofiler help text
 }

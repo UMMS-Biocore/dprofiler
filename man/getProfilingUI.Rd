@@ -9,9 +9,6 @@ getProfilingUI(id)
 \arguments{
 \item{id, }{namespace id}
 }
-\value{
-panel
-}
 \description{
 Creates a panel to visualize Profiling results
 }

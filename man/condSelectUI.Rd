@@ -6,9 +6,6 @@
 \usage{
 condSelectUI()
 }
-\value{
-panel
-}
 \description{
 Creates a panel to select samples for each condition
 }

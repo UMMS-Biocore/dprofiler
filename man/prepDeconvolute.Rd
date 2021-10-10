@@ -11,11 +11,12 @@ prepDeconvolute(dc = NULL, scdata = NULL, parent_session = NULL)
 
 \item{scdata}{single cell ExpressionSet Object}
 
-\item{parent_session}{main session}
-}
-\value{
-
+\item{parent_session}{parent session}
 }
 \description{
 Prepares the container for deconvolution methods
+}
+\examples{
+       x <- prepDeconvolute()
+       
 }

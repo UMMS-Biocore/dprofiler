@@ -9,15 +9,10 @@ cutOffSelectionUI(id)
 \arguments{
 \item{id, }{namespace id}
 }
-\value{
-returns the left menu according to the selected tab;
-}
 \description{
 Gathers the cut off selection for DE analysis
 }
-\note{
-\code{cutOffSelectionUI}
-}
 \examples{
     x <- cutOffSelectionUI("cutoff")
+    
 }

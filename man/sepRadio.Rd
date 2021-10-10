@@ -9,11 +9,12 @@ sepRadio(id, name)
 \arguments{
 \item{id}{module id}
 
-\item{name}{}
-}
-\value{
-
+\item{name}{name}
 }
 \description{
-Radio button for seperators: an inline version of debrowser's sepRadio function
+Radio button for seperators: an inline version adapted from debrowser::sepRadio().
+}
+\examples{
+      x <- sepRadio("meta", "metadata")
+      
 }

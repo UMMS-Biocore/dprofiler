@@ -9,11 +9,8 @@ dataSummaryUI(id)
 \arguments{
 \item{id, }{namespace id}
 }
-\value{
-panel
-}
 \description{
-Creates a panel to view the summary of uploaded data
+Creates data table and figures to summarize uploaded data
 }
 \examples{
     x <- dataLoadUI("load")

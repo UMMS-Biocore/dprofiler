@@ -23,12 +23,11 @@ dprofilerprofiling(
 
 \item{dc, }{results of iterative DE Analysis}
 
-\item{parent_session}{parent session}
+\item{profiledata}{expression matrix of profile data}
 
-\item{data, }{a matrix that includes expression values}
-}
-\value{
-DE panel
+\item{profilemetadata}{metadata of profile data}
+
+\item{parent_session}{parent session}
 }
 \description{
 Module to perform and visualize deconvolution results.

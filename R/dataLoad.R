@@ -1,18 +1,20 @@
 #' dataLoadServer
 #'
-#' Module to load Bulk
+#' Data loading module for bulk and single cell data sets.
 #' 
-#' @param input, input variables
-#' @param output, output objects
-#' @param session, session 
-#' @param nextpagebutton, the name of the next page button after loading the data
-#' @param parent_session a parameter to pass the session for sending update variables to main server
-#' @return main plot
+#' @param input input variables
+#' @param output output objects
+#' @param session session 
+#' @param nextpagebutton the name of the next page button after loading the data
+#' @param parent_session the parent session
 #'
 #' @return panel
 #'
 dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpagebutton = NULL, parent_session = NULL) {
   if (is.null(input)) return(NULL)
+  
+  # global variables
+  utils::globalVariables(c("demodata","demoscdata","demoprofdata","pData"))
   
   # reactive values of count and metadata
   ldata <- reactiveValues(count=NULL, meta=NULL, 
@@ -163,14 +165,12 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
 
 #' dataLoadUI
 #' 
-#' Creates a panel to upload the data
+#' Creates panels to upload the data. Adapted from debrowser::dataLoadUI(). 
 #'
-#' @param id, namespace id
-#' @return panel
+#' @param id namespace id
+#' 
 #' @examples
 #'     x <- dataLoadUI("load")
-#'
-#' @export
 #'
 dataLoadUI<- function (id) {
   ns <- NS(id)
@@ -193,14 +193,12 @@ dataLoadUI<- function (id) {
 
 #' dataSummaryUI
 #' 
-#' Creates a panel to view the summary of uploaded data
+#' Creates data table and figures to summarize uploaded data
 #'
 #' @param id, namespace id
-#' @return panel
+#' 
 #' @examples
 #'     x <- dataLoadUI("load")
-#'
-#' @export
 #'
 dataSummaryUI<- function(id) {
   ns <- NS(id)
@@ -256,18 +254,16 @@ dataSummaryUI<- function(id) {
 
 #' getProfileSampleDetails
 #' 
-#' get single cell RNA samples details
+#' get Profile Data Sample Details
 #'
 #' @param output output
 #' @param summary summary output name
 #' @param details details output name
 #' @param data data
 #'
-#' @return
-#' @export
-#'
 #' @examples
-#' 
+#'      x <- getProfileSampleDetails()
+#'      
 getProfileSampleDetails <- function (output = NULL, summary = NULL, details = NULL, data = NULL) 
 {
   if (is.null(data$prof_count)) 
@@ -308,11 +304,12 @@ getProfileSampleDetails <- function (output = NULL, summary = NULL, details = NU
 #' @param summary summary output name
 #' @param details details output name
 #' @param data single cell ExpressionSet Object
-#'
-#' @return
-#' @export
+#' @param ident column in scRNA metadata to visualize 
+#' @param UMI_column column in scRNA metadata with total UMI counts
 #'
 #' @examples
+#'       x <- getSCRNASampleDetails()
+#'       
 getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL, data = NULL, 
                                    ident = NULL, UMI_column = NULL) 
 {
@@ -323,7 +320,7 @@ getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL
     return(NULL)
   
   tsne_data <- pData(data)[,c(ident,"x","y")]
-  tsne_data <- as_tibble(tsne_data) %>% group_by_at(1) %>% summarize(x = mean(x), y = mean(y))
+  tsne_data <- as_tibble(tsne_data) %>% group_by_at(1) %>% summarize(x = mean(.data@x), y = mean(.data@y))
   
   output[[summary]] <- renderTable({
     countdata <- data
@@ -335,11 +332,11 @@ getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL
     result
   }, digits = 0, rownames = TRUE, align = "lc")
   output[[paste0(details,"density")]] <- renderPlot({
-    plot_density_ridge(data, color_by = ident, title = UMI_column, val = UMI_column) + 
+    SignallingSingleCell::plot_density_ridge(data, color_by = ident, title = UMI_column, val = UMI_column) + 
       theme(legend.position = "none")
   })
   output[[paste0(details,"tsne")]] <- renderPlot({
-    plot_tsne_metadata(data, color_by = ident,
+    SignallingSingleCell::plot_tsne_metadata(data, color_by = ident,
                        legend_dot_size = 4, text_sizes = c(20, 10, 5, 8, 8, 15)) + 
       geom_text(tsne_data, mapping = aes(x = x, y = y, label = tsne_data[[1]]), size=5)
   })
@@ -348,17 +345,16 @@ getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL
 
 #' fileUploadBox
 #' 
-#' file upload module for bulk data and metadata 
+#' file upload box for bulk data and metadata. Adapted from debrowser::fileUploadBox()
 #'
 #' @param id namespace id
 #' @param inputId_count input data file ID
 #' @param inputId_meta input metadata file ID
 #' @param label label
 #'
-#' @return
-#' @export
-#'
 #' @examples
+#'       x <- fileUploadBox("meta", "count", "metadata", "Metadata")
+#' 
 fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL, label = NULL) 
 {
   ns <- NS(id)
@@ -386,17 +382,15 @@ fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL,
 
 #' scfileUploadBox
 #' 
-#' file upload module for single cell ExpressionSet object
+#' file upload box for single cell ExpressionSet object.
 #'
 #' @param id namespace id
-#' @param inputId_count input data file ID
-#' @param inputId_meta input metadata file ID
+#' @param inputId input data file ID
 #' @param label label
 #'
-#' @return
-#' @export
-#'
 #' @examples
+#'       x <- fileUploadBox("meta", "metadata", "Metadata")
+#'       
 scfileUploadBox <- function (id = NULL, inputId = NULL, label = NULL) 
 {
   ns <- NS(id)
@@ -410,15 +404,14 @@ scfileUploadBox <- function (id = NULL, inputId = NULL, label = NULL)
 
 #' sepRadio
 #'
-#' Radio button for seperators: an inline version of debrowser's sepRadio function
+#' Radio button for seperators: an inline version adapted from debrowser::sepRadio().
 #'
 #' @param id module id 
-#' @param name 
-#'
-#' @return
-#' @export
+#' @param name name
 #'
 #' @examples
+#'       x <- sepRadio("meta", "metadata")
+#'       
 sepRadio <- function (id, name) 
 {
   ns <- NS(id)

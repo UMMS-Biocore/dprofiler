@@ -4,13 +4,19 @@
 \alias{display_venn}
 \title{display_venn}
 \usage{
-display_venn(x, category.names, ...)
+display_venn(x = NULL, category.names = NULL, ...)
 }
 \arguments{
 \item{x}{a list of elements for each groups}
 
-\item{...}{}
+\item{category.names}{names of venn diagram categories}
+
+\item{...}{addtional parameters passed to draw.pairwise.venn function.}
 }
 \description{
 display venn diagram
+}
+\examples{
+     x <- display_venn()
+     
 }

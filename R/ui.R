@@ -1,22 +1,20 @@
-#' deUI
+#' dprofilerUI
 #'
 #' Creates a shinyUI to be able to run DEBrowser interactively.
 #'
-#' @note \code{deUI}
+#' @note \code{dprofilerUI}
 #' @return the panel for main plots;
 #'
 #' @examples
-#'     x<-deUI()
+#'     x<-dprofilerUI()
 #'
-#' @export
-#'
-
 dprofilerUI <- function() {
   dbHeader <- shinydashboard::dashboardHeader(titleWidth = 250)
   dbHeader$children[[2]]$children <- tags$a(style='color: white;',
                                             id="top_logo" , "Dprofiler v1.0.0")
-  addResourcePath(prefix = "www", directoryPath = "www/")
-  library("debrowser")
+  # addResourcePath(prefix = "www", directoryPath = "www/")
+  # addResourcePath(prefix = "www", directoryPath = system.file("extdata",
+  #                                                             "www", package = "dprofiler"))
   dprofiler <- (fluidPage(
     shinyjs::useShinyjs(),
     tags$head(tags$title("Dprofiler v1.0.0"),

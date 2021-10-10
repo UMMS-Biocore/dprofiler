@@ -11,12 +11,9 @@
 #'     with the column order
 #' @param params, all params for the DE methods
 #' @param session session
-#' @return de results
-#' 
-#' @export
 #' 
 #' @examples
-#'     x <- runDE()
+#'     x <- runIterDE()
 #'     
 runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, session = NULL){
   
@@ -135,9 +132,9 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
 
 #' getFinalScores
 #' 
-#' calculate scores given the iterative DE results
+#' Calculate membership scores given the iterative DE results
 #'
-#' @param deres DE resutlts
+#' @param deres DE results
 #' @param data data
 #' @param columns samples 
 #' @param conds conditions
@@ -145,10 +142,9 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
 #' @param ManualDEgenes manually inserted list of DE genes
 #' @param TopStat the number of top statistics
 #'
-#' @return
-#' @export
-#'
 #' @examples
+#'      x <- getFinalScores()
+#' 
 getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NULL, params = NULL, 
                            ManualDEgenes = NULL, TopStat = NULL){
  
@@ -267,17 +263,17 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
 
 #' custom_silhouette
 #' 
-#' a custom silhouette function for calculating the silhouette measure of each point with respect
+#' A custom silhouette function for calculating the silhouette measure of each point with respect
 #' to each condition
 #'
-#' @param x 
-#' @param dist 
-#'
-#' @return
-#' @export
+#' @param x conditions
+#' @param dist distance matrix
 #'
 #' @examples
-custom_silhouette <- function(x,dist){
+#'      x <- custom_silhouette()
+#'      
+custom_silhouette <- function(x = NULL,dist = NULL){
+  if (is.null(x)) return(NULL)
   
   # Classes and Membership
   unique_class <- unique(x)
@@ -301,5 +297,3 @@ custom_silhouette <- function(x,dist){
   colnames(membership) <- unique_class
   return(membership)
 }
-
-

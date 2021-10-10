@@ -30,12 +30,7 @@ getDeconvoluteTableDetails(
 panel
 }
 \description{
-get table details
-To be able to put a table into two lines are necessary;
-into the server part;
-getDeconvoluteTableDetails(output, session, "dataname", data, modal=TRUE)
-into the ui part;
-uiOutput(ns("dataname"))
+get deconvolution table details
 }
 \examples{
     x <- getDeconvoluteTableDetails()

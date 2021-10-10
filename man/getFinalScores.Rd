@@ -15,7 +15,7 @@ getFinalScores(
 )
 }
 \arguments{
-\item{deres}{DE resutlts}
+\item{deres}{DE results}
 
 \item{data}{data}
 
@@ -29,9 +29,10 @@ getFinalScores(
 
 \item{TopStat}{the number of top statistics}
 }
-\value{
-
-}
 \description{
-calculate scores given the iterative DE results
+Calculate membership scores given the iterative DE results
+}
+\examples{
+     x <- getFinalScores()
+
 }

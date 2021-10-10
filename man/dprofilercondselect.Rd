@@ -19,19 +19,12 @@ dprofilercondselect(
 
 \item{session, }{session}
 
-\item{data, }{count data}
+\item{data, }{count or single cell data}
 
 \item{metadata, }{metadata}
 }
-\value{
-main plot
-
-panel
-}
 \description{
-Condition selection
-This is not a module. Module construction didn't used here, just use it 
-as functions not in a module.
+Condition selection for DE analysis and reference single cell data. Adapted from debrowsercondselect().
 }
 \examples{
     x <- dprofilercondselect()

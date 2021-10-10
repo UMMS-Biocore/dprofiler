@@ -12,12 +12,9 @@ selectScRNAConditions(scdata = NULL, session = NULL, input = NULL)
 \item{session, }{session}
 
 \item{input, }{input params}
-
-\item{metadata, }{metadatatable to select from metadata}
 }
 \description{
-Selects user input conditions, multiple if present, to be
-used in DESeq.
+Selects user input conditions used in bulk RNA deconvolution.
 }
 \examples{
     x<- selectScRNAConditions()

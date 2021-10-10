@@ -1,6 +1,6 @@
 #' getScoreDetails
 #'
-#' get score details of columns
+#' get score details of Iterative DE analysis
 #' 
 #' @param output output
 #' @param session session
@@ -8,12 +8,13 @@
 #' @param DEscores Scores of impure conditions
 #' @param IterDEscores Scores of pure conditions
 #'
-#' @return
-#' @export
-#'
 #' @examples
+#'      x <- getScoreDetails()
+#'      
 getScoreDetails <- function(output = NULL, session = NULL, 
                                  plotname = NULL, DEscores = NULL, IterDEscores = NULL) {
+  if (is.null(DEscores)) return(NULL)
+  
   output[[plotname]] <- renderPlotly({
     dat <- rbind(
       data.frame(IterDEscores, type = "Scores of Pure Conditions"),
@@ -55,15 +56,14 @@ getScoreDetails <- function(output = NULL, session = NULL,
 #' @param deres DE results
 #' @param params DE parameters
 #'
-#' @return
-#' @export
-#'
 #' @examples
+#'      x <- getIterDESummary()
+#'      
 getIterDESummary <- function(output = NULL, session = NULL, vennname = NULL, summaryname = NULL, 
                              deres = NULL, params = NULL){
+  if (is.null(output)) return(NULL)
   
   output[[summaryname]] <- renderUI({
-    
    style = "padding-right: 10px"
    texts <- tags$div(
       h4("Summary"),
@@ -159,10 +159,15 @@ getIterDESummary <- function(output = NULL, session = NULL, vennname = NULL, sum
 #' display venn diagram
 #'
 #' @param x a list of elements for each groups
-#' @param ... 
+#' @param category.names names of venn diagram categories
+#' @param ... addtional parameters passed to draw.pairwise.venn function. 
 #'
 #' @examples
-display_venn <- function(x, category.names, ...){
+#'      x <- display_venn()
+#'      
+display_venn <- function(x = NULL, category.names = NULL, ...){
+  if (is.null(x)) return(NULL)
+  
   grid.newpage()
   venn_object <- draw.pairwise.venn(area1 = length(x[[1]]), 
                                     area2 = length(x[[2]]), 

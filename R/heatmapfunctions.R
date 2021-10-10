@@ -1,19 +1,18 @@
 #' heatmapServer
 #'
 #' Sets up shinyServer to be able to run heatmapServer interactively.
+#' Adapted from debrowser::heatmapServer()
 #'
-#' @note \code{heatmapServer}
-#' @param input, input params from UI
-#' @param output, output params to UI
-#' @param session, session variable
-#' @return the panel for main plots;
+#' @param input input 
+#' @param output output 
+#' @param session session 
 #'
 #' @examples
-#'     heatmapServer
+#'     x <- heatmapServer()
 #'
-#' @export
-
-heatmapServer <- function(input, output, session) {
+heatmapServer <- function(input = NULL, output = NULL, session = NULL) {
+  if (is.null(input)) return(NULL)
+  
   updata <- reactiveVal()
   selected <- reactiveVal()
   expdata <- reactiveVal()
@@ -66,25 +65,20 @@ heatmapServer <- function(input, output, session) {
 #'
 #' Creates a shinyUI to be able to run DEBrowser interactively.
 #'
-#' @param input, input variables
-#' @param output, output objects
-#' @param session, session
+#' @param input input
+#' @param output output 
+#' @param session session
 #'
-#' @note \code{heatmapUI}
 #' @return the panel for heatmapUI;
 #'
 #' @examples
 #'     x<-heatmapUI()
 #'
-#' @export
-#'
-
-heatmapUI <- function(input, output, session) {
+heatmapUI <- function(input = NULL, output = NULL, session = NULL) {
   header <- dashboardHeader(
     title = "DEBrowser Heatmap"
   )
   sidebar <- dashboardSidebar(getJSLine(),
-                              # shinyjs::useShinyjs(),
                               sidebarMenu(id="DEBrowserHeatmap",
                                           menuItem("Upload", tabName = "Upload"),
                                           menuItem("Heatmap", tabName = "Heatmap"),

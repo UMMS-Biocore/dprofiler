@@ -13,15 +13,11 @@ mainScatter(input = NULL, data = NULL, source = NULL)
 
 \item{source, }{for event triggering to select genes}
 }
-\value{
-scatter, volcano or MA plot
-}
 \description{
 Creates the main scatter, volcano or MA plot to be displayed within the main
 panel. A version of debrowser's mainScatterNew function with automated width and height
 }
 \examples{
-    
     x <- mainScatter()
 
 }

@@ -2,8 +2,7 @@
 % Please edit documentation in R/deconvolute.R
 \name{getDeconvoluteUI}
 \alias{getDeconvoluteUI}
-\title{getDeconvoluteUI
-Creates a panel to visualize DE results}
+\title{getDeconvoluteUI}
 \usage{
 getDeconvoluteUI(id)
 }
@@ -14,8 +13,7 @@ getDeconvoluteUI(id)
 panel
 }
 \description{
-getDeconvoluteUI
-Creates a panel to visualize DE results
+Creates a panel to visualize deconvolution results
 }
 \examples{
     x <- getDeconvoluteUI("batcheffect")

@@ -10,9 +10,6 @@
 #' @param conds, conditions
 #' @param params, de parameters
 #' @param parent_session parent session
-#' 
-#' @return DE panel 
-#' @export
 #'
 #' @examples
 #'     x <- dprofilerdeanalysis()
@@ -101,11 +98,9 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
 #' Creates a panel to visualize DE results
 #'
 #' @param id, namespace id
-#' @return panel
+#' 
 #' @examples
-#'     x <- getDEResultsUI("batcheffect")
-#'
-#' @export
+#'     x <- getDEResultsUI("deresults")
 #'
 getDEResultsUI<- function (id) {
     ns <- NS(id)
@@ -139,8 +134,6 @@ getDEResultsUI<- function (id) {
                                                                         styleclass = "primary", style = 'margin-top:21px')),
                                                 column(5,actionButtonDE("gotoprofile", "Go to Comparative Profiling", 
                                                                         styleclass = "primary", style = 'margin-top:21px')),
-                                                #column(4,uiOutput(ns("deconvolute_genes")))
-                                                
                             ),
                             uiOutput(ns("maininitialplot")),                                  
                             uiOutput(ns("mainoverlapplot")),
@@ -179,12 +172,10 @@ getDEResultsUI<- function (id) {
 #' Gathers the cut off selection for DE analysis
 #'
 #' @param id, namespace id
-#' @note \code{cutOffSelectionUI}
-#' @return returns the left menu according to the selected tab;
+#' 
 #' @examples
 #'     x <- cutOffSelectionUI("cutoff")
-#' @export
-#'
+#'     
 cutOffSelectionUI <- function(id){
     ns <- NS(id)
     list(
@@ -196,15 +187,13 @@ cutOffSelectionUI <- function(id){
 
 #' ScoreCutOffSelectionUI
 #'
-#' Gathers the cut off selection for Scoring 
+#' Gathers the cut off selection for scoring 
 #'
-#' @param id, namespace id
-#' @note \code{ScoreCutOffSelectionUI}
-#' @return returns the left menu according to the selected tab;
+#' @param id namespace id
+#' 
 #' @examples
 #'     x <- ScoreCutOffSelectionUI("cutoff")
-#' @export
-#'
+#'     
 ScoreCutOffSelectionUI <- function(id){
     ns <- NS(id)
     list(
@@ -222,11 +211,11 @@ ScoreCutOffSelectionUI <- function(id){
 #' @param DEgenes Initial DE genes
 #' @param IterDEgenes Final DE genes
 #'
-#' @return
-#' @export
-#'
 #' @examples
-getDEgenesDownloadButtons <- function(output, session,  DEgenes, IterDEgenes){
+#'     x <- getDEgenesDownloadButtons()
+#'     
+getDEgenesDownloadButtons <- function(output = NULL, session = NULL,  DEgenes = NULL, IterDEgenes = NULL){
+    if(is.null(DEgenes)) return(NULL)
     
     genes <- setdiff(DEgenes,IterDEgenes)
     if(length(genes) == 0) genes <- DEgenes
@@ -250,6 +239,19 @@ getDEgenesDownloadButtons <- function(output, session,  DEgenes, IterDEgenes){
     )
 }
 
+#' runDE
+#' 
+#' Run DE algorithms on the selected parameters. Output is to be used for the interactive display.
+#' Adapted from debrowser::runDE
+#'
+#' @param data A matrix that includes all the expression raw counts, rownames has to be the gene, isoform or region names/IDs.
+#' @param columns a vector that includes the columns that are going to be analyzed. These columns has to match with the given data.
+#' @param conds experimental conditions. The order has to match with the column order
+#' @param params all params for the DE methods
+#'
+#' @examples
+#'      x <- runDE()
+#'      
 runDE <- function (data = NULL, columns = NULL, conds = NULL, params = NULL) 
 {
     if (is.null(data)) 
@@ -264,6 +266,19 @@ runDE <- function (data = NULL, columns = NULL, conds = NULL, params = NULL)
     data.frame(de_res, gene = rownames(de_res))
 }
 
+#' runMultipleDE
+#' 
+#' Run DE algorithms on the selected parameters. Output is to be used for the interactive display.
+#' Multiple comparisons version of runDE. 
+#'
+#' @param data A matrix that includes all the expression raw counts, rownames has to be the gene, isoform or region names/IDs.
+#' @param columns a vector that includes the columns that are going to be analyzed. These columns has to match with the given data.
+#' @param conds Multiple experimental conditions. 
+#' @param params all params for the DE methods
+#'
+#' @examples
+#'      x <- runMultipleDE()
+#'      
 runMultipleDE <- function (data = NULL, columns = NULL, conds = NULL, params = NULL) 
 {
     if (is.null(data)) 
@@ -296,6 +311,19 @@ runMultipleDE <- function (data = NULL, columns = NULL, conds = NULL, params = N
     return(multiplede_res)
 }
 
+#' runLimma
+#' 
+#' Run Limma algorithm on the selected conditions. Output is to be used for the interactive display.
+#' Adapted from debrowser::runLimma(), a version for non-count RNA data (microarray)
+#' 
+#' @param data A matrix that includes all the expression raw counts, rownames has to be the gene, isoform or region names/IDs.
+#' @param columns is a vector that includes the columns that are going to be analyzed. These columns has to match with the given data.
+#' @param conds experimental conditions. The order has to match with the column order
+#' @param params normfact: Calculate normalization factors to scale the raw library sizes. Values can be "TMM","RLE","upperquartile","none". fitType, fitting method; "ls" for least squares or "robust" for robust regression normBet: Normalizes expression intensities so that the intensities or log-ratios have similar distributions across a set of arrays. datatype: suggest if the data is a count data or not. 
+#'
+#' @examples
+#'      x <- runLimma()
+#'      
 runLimma <- function (data = NULL, columns = NULL, conds = NULL, params = NULL) 
 {
     if (is.null(data)) 

@@ -14,17 +14,17 @@ dprofilerdeconvolute(
 )
 }
 \arguments{
-\item{input, }{input variables}
+\item{input}{input variables}
 
-\item{output, }{output objects}
+\item{output}{output objects}
 
-\item{session, }{session}
+\item{session}{session}
 
-\item{dc, }{de results}
+\item{dc}{de results}
 
-\item{scdata, }{single cell data}
+\item{scdata}{single cell data}
 
-\item{parent_session}{main session}
+\item{parent_session}{parent session}
 }
 \value{
 DE panel

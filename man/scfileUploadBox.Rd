@@ -9,15 +9,14 @@ scfileUploadBox(id = NULL, inputId = NULL, label = NULL)
 \arguments{
 \item{id}{namespace id}
 
+\item{inputId}{input data file ID}
+
 \item{label}{label}
-
-\item{inputId_count}{input data file ID}
-
-\item{inputId_meta}{input metadata file ID}
-}
-\value{
-
 }
 \description{
-file upload module for single cell ExpressionSet object
+file upload box for single cell ExpressionSet object.
+}
+\examples{
+      x <- fileUploadBox("meta", "metadata", "Metadata")
+      
 }

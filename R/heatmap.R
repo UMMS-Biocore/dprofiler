@@ -7,12 +7,9 @@
 #' @param output, output objects
 #' @param session, session 
 #' @param expdata, a matrix that includes expression values
-#' @return heatmapply plot
 #'
 #' @examples
 #'     x <- dprofilerheatmap()
-#'
-#' @export
 #'
 dprofilerheatmap <- function( input, output, session, expdata = NULL){
   if(is.null(expdata)) return(NULL)
@@ -90,15 +87,14 @@ dprofilerheatmap <- function( input, output, session, expdata = NULL){
 
 #' getPlotArea
 #'
-#' a version of debrowser's getPlotArea function with automatic width and length
+#' a version of debrowser::getPlotArea function with automatic width and length
 #' 
-#' @param input 
-#' @param session 
-#'
-#' @return
-#' @export
+#' @param input input variables
+#' @param session session
 #'
 #' @examples
+#'      x <- getPlotArea()
+#' 
 getPlotArea <- function (input = NULL, session = NULL) 
 {
   if (is.null(input)) 
@@ -115,11 +111,10 @@ getPlotArea <- function (input = NULL, session = NULL)
 
 #' heatmapJScode
 #'
-#' heatmap JS code for selection functionality
+#' heatmap JS code for selection functionality. Adapted from debrowser::heatmapJScode()
 #'
 #' @return JS Code
-#' @export
-#'
+#' 
 #' @examples
 #'     x <- heatmapJScode()
 #'
@@ -168,6 +163,15 @@ heatmapJScode <- function() {
     }'
 }
 
+#' getJSLine
+#'
+#' heatmap JS code for selection functionality. Adapted from debrowser::getJSLine()
+#'
+#' @return JS Code
+#' 
+#' @examples
+#'     x <- getJSLine()
+#'
 getJSLine <- function() 
 {
   list(shinyjs::useShinyjs(), shinyjs::extendShinyjs(text = heatmapJScode(), 

@@ -4,16 +4,14 @@
 #'
 #' @param dc reactive object of DE analysis
 #' @param scdata single cell ExpressionSet Object
-#' @param parent_session main session
-#'
-#' @return
-#' @export
+#' @param parent_session parent session
 #'
 #' @examples
+#'        x <- prepDeconvolute()
+#'        
 prepDeconvolute <- function(dc = NULL, scdata = NULL, parent_session = NULL){
   if (is.null(dc)) return(NULL)
-  
-  waiter_show(html = waiting_screen, color = transparent(.5))
+  waiter_show(html = spin_ring(), color = transparent(.5))
   withProgress(message = 'Running RNA Deconvolution', value = 0, {
     mixtures <- callModule(dprofilerdeconvolute, "deconvolute", dc, scdata, parent_session)
     mix <- mixtures()
@@ -28,12 +26,12 @@ prepDeconvolute <- function(dc = NULL, scdata = NULL, parent_session = NULL){
 #'
 #' Module to perform and visualize deconvolution results.
 #'
-#' @param input, input variables
-#' @param output, output objects
-#' @param session, session
-#' @param dc, de results
-#' @param scdata, single cell data
-#' @param parent_session main session
+#' @param input input variables
+#' @param output output objects
+#' @param session session
+#' @param dc de results
+#' @param scdata single cell data
+#' @param parent_session parent session
 #' 
 #' @return DE panel
 #' @export
@@ -119,14 +117,13 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
 }
 
 #' getDeconvoluteUI
-#' Creates a panel to visualize DE results
+#' 
+#' Creates a panel to visualize deconvolution results
 #'
 #' @param id, namespace id
 #' @return panel
 #' @examples
 #'     x <- getDeconvoluteUI("batcheffect")
-#'
-#' @export
 #'
 getDeconvoluteUI<- function (id) {
   ns <- NS(id)
@@ -161,12 +158,7 @@ getDeconvoluteUI<- function (id) {
 
 #' getDeconvoluteTableDetails
 #' 
-#' get table details
-#' To be able to put a table into two lines are necessary;
-#' into the server part;
-#' getDeconvoluteTableDetails(output, session, "dataname", data, modal=TRUE)
-#' into the ui part;
-#' uiOutput(ns("dataname"))
+#' get deconvolution table details
 #'   
 #' @param output, output
 #' @param session, session
@@ -177,8 +169,6 @@ getDeconvoluteUI<- function (id) {
 #' @return panel
 #' @examples
 #'     x <- getDeconvoluteTableDetails()
-#'
-#' @export
 #'
 getDeconvoluteTableDetails <- function(output  = NULL, session  = NULL, tablename  = NULL, data = NULL, 
                                  modal = NULL, highlight = FALSE){
@@ -225,11 +215,14 @@ getDeconvoluteTableDetails <- function(output  = NULL, session  = NULL, tablenam
 #' @param scdata single cell ExpressionSet Object
 #' @param input input
 #'
-#' @return
-#' @export
-#'
 #' @examples
-deconvolute <- function(data, DEgenes, columns, scdata, input){
+#'     x <- deconvolute()
+#'     
+deconvolute <- function(data = NULL, DEgenes = NULL, columns = NULL, scdata = NULL, input = NULL){
+  if (is.null(data)) return(NULL)
+  
+  # global variables 
+  utils::globalVariables(c("ExpressionSet","pData","exprs"))
   
   # parameters
   celltypes <- isolate(input$condition)
@@ -253,7 +246,7 @@ deconvolute <- function(data, DEgenes, columns, scdata, input){
   # normalized integrated library sizes
   exprs_srt <- exprs(scdata)
   metadata$nCount_integratedRNA_norm <- colSums(exprs_srt)
-  metadata <- as_tibble(metadata) %>% group_by(CellType) %>% mutate(nCount_integratedRNA_normmean = mean(nCount_integratedRNA_norm))
+  metadata <- as_tibble(metadata) %>% group_by(.data@CellType) %>% mutate(nCount_integratedRNA_normmean = mean(.data@nCount_integratedRNA_norm))
   exprs_srt <- apply(exprs_srt, 1,function(x){
     return((x/metadata$nCount_integratedRNA_normmean)*100)
   })
@@ -279,7 +272,10 @@ deconvolute <- function(data, DEgenes, columns, scdata, input){
 #' @param input input 
 #'
 #' @examples
-getMarkerGenes <- function(scdata, IterDEgenes, input){
+#'     x <- getMarkerGenes()
+#'     
+getMarkerGenes <- function(scdata = NULL, IterDEgenes = NULL, input = NULL){
+  if (is.null(scdata)) return(NULL)
   
   if(!is.null(IterDEgenes)){
     featuresData <- fData(scdata)[rownames(fData(scdata)) %in% IterDEgenes,]
@@ -302,7 +298,10 @@ getMarkerGenes <- function(scdata, IterDEgenes, input){
 #' @param input input 
 #'
 #' @examples
-getAllMarkerGenes <- function(scdata, data, input){
+#'     x <- getAllMarkerGenes()
+#'     
+getAllMarkerGenes <- function(scdata = NULL, data = NULL, input = NULL){
+  if (is.null(scdata)) return(NULL)
   
   # pull those genes that are in bulk data
   featuresData <- fData(scdata)

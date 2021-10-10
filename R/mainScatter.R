@@ -1,22 +1,18 @@
 #' dprofilermainplot
 #'
 #' Module for a scatter, volcano and ma plots that are going to be used 
-#' as a mainplot in dprofiler
+#' as a mainplot in dprofiler. Adapted from debrowser::debrowsermainplot()
 #' 
 #' @param input, input variables
 #' @param output, output objects
 #' @param session, session 
 #' @param data, a matrix that includes expression values
-#' @return main plot
-#'
-#' @return panel
-#' @export
 #'
 #' @examples
 #'     x <- dprofilermainplot()
 #'
 dprofilermainplot <- function(input = NULL, output = NULL, session = NULL, data = NULL) {
-  if (is.null(data$init_dedata)) return(NULL)
+  if (is.null(data)) return(NULL)
   
   # Heterogeneous conditions mainplot
   plotdata_de <-  reactive({
@@ -109,18 +105,18 @@ dprofilermainplot <- function(input = NULL, output = NULL, session = NULL, data 
 #' @param mainname main plot name
 #' @param width shiny box width
 #' @param plotdata plot data
-#' @param which_genes if it is true, DEgenes and IterDEgenes will be used for subseting
+#' @param which_genes if true, DEgenes and IterDEgenes will be used for subseting
 #' @param DEgenes list of initial DE genes
 #' @param IterDEgenes list of Final DE genes
 #'
-#' @return
-#' @export
-#'
 #' @examples
+#'      x <- getMainPlot()
+#'      
 getMainPlot <- function(input = NULL, output = NULL, session = NULL, mainname = NULL, 
                         width = NULL, plotdata = NULL,
                         which_genes = NULL, DEgenes = NULL, IterDEgenes = NULL){
- 
+  if (is.null(input)) return(NULL)
+  
   mainnameplot <- paste0(mainname, "plot")
   output[[mainnameplot]] <- renderUI({
     list(
@@ -164,13 +160,9 @@ getMainPlot <- function(input = NULL, output = NULL, session = NULL, mainname = 
 #' @param input, input params
 #' @param data, dataframe that has log2FoldChange and log10padj values
 #' @param source, for event triggering to select genes
-#' @return scatter, volcano or MA plot
 #'
 #' @examples
-#'     
 #'     x <- mainScatter()
-#'
-#' @export
 #'
 mainScatter <- function(input = NULL, data = NULL, source = NULL) {
   if ( is.null(data) ) return(NULL)
@@ -223,17 +215,16 @@ mainScatter <- function(input = NULL, data = NULL, source = NULL) {
 
 #' addDataCols
 #' 
-#' add data columns to de results
+#' add data columns to de results. Adapted from debrowser::addDataCols().
 #'
 #' @param data data 
 #' @param de_res DE results
 #' @param cols columns
 #' @param conds conditions
 #'
-#' @return
-#' @export
-#'
 #' @examples
+#'      x <- addDataCols()
+#'      
 addDataCols <- function (data = NULL, de_res = NULL, cols = NULL, conds = NULL) 
 {
   if (is.null(data) || (nrow(de_res) == 0 && ncol(de_res) == 
@@ -263,6 +254,15 @@ addDataCols <- function (data = NULL, de_res = NULL, cols = NULL, conds = NULL)
   m
 }
 
+#' mainPlotControlsUI
+#' 
+#' Generates the left menu to be used for main plots
+#'
+#' @param id id 
+#'
+#' @examples
+#'     x <- mainPlotControlsUI("PlotControls")
+#'     
 mainPlotControlsUI <- function (id)
 {
   ns <- NS(id)
@@ -279,6 +279,16 @@ mainPlotControlsUI <- function (id)
 }
 
 
+#' applyFiltersIter
+#' 
+#' Apply filter for Initial and Final DEgenes
+#'
+#' @param data loaded dataset
+#' @param input input parameters
+#'
+#' @examples
+#'      x <- applyFiltersIter()
+#' 
 applyFiltersIter <- function (data = NULL, input = NULL) 
 {
   if (is.null(data)) 
@@ -289,6 +299,15 @@ applyFiltersIter <- function (data = NULL, input = NULL)
   return(m)
 }
 
+#' getLegendColors
+#'
+#' Generates colors according to the data. Adapted from debrowser::getLegendColors().
+#' 
+#' @param Legend legend
+#'
+#' @examples
+#'       x <- getLegendColors()
+#' 
 getLegendColors <-  function(Legend = c("Up", "Down", "NS")) 
 {
   colors <- c()

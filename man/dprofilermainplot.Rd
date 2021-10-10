@@ -15,14 +15,9 @@ dprofilermainplot(input = NULL, output = NULL, session = NULL, data = NULL)
 
 \item{data, }{a matrix that includes expression values}
 }
-\value{
-main plot
-
-panel
-}
 \description{
 Module for a scatter, volcano and ma plots that are going to be used 
-as a mainplot in dprofiler
+as a mainplot in dprofiler. Adapted from debrowser::debrowsermainplot()
 }
 \examples{
     x <- dprofilermainplot()

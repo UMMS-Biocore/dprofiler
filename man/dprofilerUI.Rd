@@ -2,7 +2,7 @@
 % Please edit documentation in R/ui.R
 \name{dprofilerUI}
 \alias{dprofilerUI}
-\title{deUI}
+\title{dprofilerUI}
 \usage{
 dprofilerUI()
 }
@@ -13,9 +13,9 @@ the panel for main plots;
 Creates a shinyUI to be able to run DEBrowser interactively.
 }
 \note{
-\code{deUI}
+\code{dprofilerUI}
 }
 \examples{
-    x<-deUI()
+    x<-dprofilerUI()
 
 }

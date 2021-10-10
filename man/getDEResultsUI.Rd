@@ -9,13 +9,10 @@ getDEResultsUI(id)
 \arguments{
 \item{id, }{namespace id}
 }
-\value{
-panel
-}
 \description{
 Creates a panel to visualize DE results
 }
 \examples{
-    x <- getDEResultsUI("batcheffect")
+    x <- getDEResultsUI("deresults")
 
 }

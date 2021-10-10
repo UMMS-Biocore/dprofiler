@@ -29,15 +29,16 @@ getMainPlot(
 
 \item{plotdata}{plot data}
 
-\item{which_genes}{if it is true, DEgenes and IterDEgenes will be used for subseting}
+\item{which_genes}{if true, DEgenes and IterDEgenes will be used for subseting}
 
 \item{DEgenes}{list of initial DE genes}
 
 \item{IterDEgenes}{list of Final DE genes}
 }
-\value{
-
-}
 \description{
 a wrapper function for all main plots in Dprofiler
+}
+\examples{
+     x <- getMainPlot()
+     
 }

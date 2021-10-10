@@ -6,13 +6,6 @@
 \usage{
 getDprofilerText()
 }
-\value{
-the JS for tab updates
-}
 \description{
-Intro text
-}
-\examples{
-    x<- getDprofilerText()
-
+Dprofiler help text
 }

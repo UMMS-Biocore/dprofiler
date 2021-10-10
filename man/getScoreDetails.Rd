@@ -23,9 +23,10 @@ getScoreDetails(
 
 \item{IterDEscores}{Scores of pure conditions}
 }
-\value{
-
-}
 \description{
-get score details of columns
+get score details of Iterative DE analysis
+}
+\examples{
+     x <- getScoreDetails()
+     
 }

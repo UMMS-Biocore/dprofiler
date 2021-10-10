@@ -4,7 +4,13 @@
 \alias{deconvolute}
 \title{deconvolute}
 \usage{
-deconvolute(data, DEgenes, columns, scdata, input)
+deconvolute(
+  data = NULL,
+  DEgenes = NULL,
+  columns = NULL,
+  scdata = NULL,
+  input = NULL
+)
 }
 \arguments{
 \item{data}{Bulk expression data set}
@@ -17,9 +23,10 @@ deconvolute(data, DEgenes, columns, scdata, input)
 
 \item{input}{input}
 }
-\value{
-
-}
 \description{
 the deconvolution function based on MuSiC algorithm
+}
+\examples{
+    x <- deconvolute()
+    
 }

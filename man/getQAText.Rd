@@ -2,19 +2,10 @@
 % Please edit documentation in R/help.R
 \name{getQAText}
 \alias{getQAText}
-\title{getQAText
-Some questions and answers}
+\title{getQAText}
 \usage{
 getQAText()
 }
-\value{
-help text for QA
-}
 \description{
-getQAText
-Some questions and answers
-}
-\examples{
-    x<- getQAText()
-
+Dprofiler help text
 }

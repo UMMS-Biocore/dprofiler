@@ -5,11 +5,10 @@
 #' @param input, input variables
 #' @param output, output objects
 #' @param session, session
-#' @param data, a matrix that includes expression values
 #' @param dc, results of iterative DE Analysis
+#' @param profiledata expression matrix of profile data
+#' @param profilemetadata metadata of profile data
 #' @param parent_session parent session
-#' @return DE panel
-#' @export
 #'
 #' @examples
 #'     x <- dprofilerprofiling()
@@ -23,7 +22,7 @@ dprofilerprofiling <- function(input = NULL, output = NULL, session = NULL, dc =
   
   # DE Results
   deres <- reactive({
-    waiter_show(html = waiting_screen, color = transparent(.5))
+    waiter_show(html = spin_ring(), color = transparent(.5))
     withProgress(message = 'Running Profiling', value = 0, {
       deresults <- runMultipleDE(profiledata, prof_details$cols, prof_details$conds, prof_details$params)
     })
@@ -66,11 +65,9 @@ dprofilerprofiling <- function(input = NULL, output = NULL, session = NULL, dc =
 #' Creates a panel to visualize Profiling results
 #'
 #' @param id, namespace id
-#' @return panel
+#' 
 #' @examples
 #'     x <- getProfilingUI("profiling")
-#'
-#' @export
 #'
 getProfilingUI <- function (id) {
   ns <- NS(id)
@@ -109,8 +106,20 @@ getProfilingUI <- function (id) {
 }
 
 
+#' getProfileScoreDetails
+#' 
+#' Details and scores of the profiling analysis
+#'
+#' @param output output 
+#' @param session session
+#' @param plotname name of the plot
+#' @param scores profiling scores
+#'
+#' @examples
+#'     x <- getProfileScoreDetails()
+#'     
 getProfileScoreDetails <- function(output = NULL, session = NULL, plotname = NULL, scores = NULL) {
-  
+  if(is.null(output)) return(NULL)
   
   output[[plotname]] <- renderPlotly({
     p <- ggplot(data=scores, aes(x = reorder(Samples,Scores), y = Scores)) +
@@ -138,7 +147,20 @@ getProfileScoreDetails <- function(output = NULL, session = NULL, plotname = NUL
 }
 
 
-getProfileScores <- function(dc, dat, profiledata, profilemetadata){
+#' getProfileScores
+#' 
+#' Calculate the profiling scores
+#'
+#' @param dc DE results 
+#' @param dat expression matrix of the main data 
+#' @param profiledata expression matrix of the profiling data
+#' @param profilemetadata metadata of the profiling data
+#'
+#' @examples
+#'      x <- getProfileScores()
+#' 
+getProfileScores <- function(dc = NULL, dat = NULL, profiledata = NULL, profilemetadata = NULL){
+  if(is.null(dc)) return(NULL)
   
   # unique genes of profile data
   unique_genes <- unique(dat$ID)
@@ -175,20 +197,20 @@ getProfileScores <- function(dc, dat, profiledata, profilemetadata){
   return(scores)
 }
 
-#' Title
+#' getExpressionProfiles
 #'
 #' Given the gene expression matrix with multiple conditions, generate expression profiles.
 #' 
-#' @param deres 
-#' @param data 
-#' @param columns 
-#' @param conds 
-#'
-#' @return
-#' @export
+#' @param deres DE results
+#' @param data expression data
+#' @param columns columns
+#' @param conds conditions
 #'
 #' @examples
+#'      x <- getExpressionProfiles()
+#'      
 getExpressionProfiles <- function(deres = NULL, data = NULL, columns = NULL, conds = NULL){
+  if(is.null(deres)) return(NULL)
   
   # get remaining columns and data
   remaining_columns <- (columns != deres$cleaned_columns)
@@ -207,7 +229,20 @@ getExpressionProfiles <- function(deres = NULL, data = NULL, columns = NULL, con
   return(profiles)
 }
 
-external_silhouette <- function(cluster, dist2){
+
+#' external_silhouette
+#' 
+#' Calculate silhouette measure for non-symmetric distance matrices. 
+#' Suitable for comparison of expression profiles across different datasets and experiments 
+#'
+#' @param cluster cluster labels of profile data
+#' @param dist2 non-symmetric similarity matrix
+#'
+#' @examples
+#'      x <- external_silhouette()
+external_silhouette <- function(cluster = NULL, dist2 = NULL){
+  if(is.null(cluster)) return(NULL)
+  
   cls <- levels(cluster)
   allmeans <- apply(dist2,1,function(x){
     aggdata <- aggregate(x,list(cluster),mean)
@@ -227,6 +262,18 @@ external_silhouette <- function(cluster, dist2){
   return(allsil)
 }
 
+#' getProfilingDEparameter
+#' 
+#' Prepare DE analysis parameters for the profiling data
+#'
+#' @param data data
+#' @param metadata metadata
+#' @param session session
+#' @param input input 
+#'
+#' @examples
+#'      x <- getProfilingDEparameter()
+#'      
 getProfilingDEparameter <- function(data = NULL, metadata = NULL, session = NULL, input = NULL) {
   
     if (is.null(data)) return(NULL)

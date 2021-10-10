@@ -6,13 +6,6 @@
 \usage{
 getIntroText()
 }
-\value{
-the JS for tab updates
-}
 \description{
-Intro text
-}
-\examples{
-    x<- getIntroText()
-
+Dprofiler help text
 }

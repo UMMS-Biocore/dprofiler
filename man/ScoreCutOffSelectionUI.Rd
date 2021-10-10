@@ -7,17 +7,12 @@
 ScoreCutOffSelectionUI(id)
 }
 \arguments{
-\item{id, }{namespace id}
-}
-\value{
-returns the left menu according to the selected tab;
+\item{id}{namespace id}
 }
 \description{
-Gathers the cut off selection for Scoring
-}
-\note{
-\code{ScoreCutOffSelectionUI}
+Gathers the cut off selection for scoring
 }
 \examples{
     x <- ScoreCutOffSelectionUI("cutoff")
+    
 }

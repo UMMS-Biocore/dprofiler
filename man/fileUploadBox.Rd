@@ -20,9 +20,10 @@ fileUploadBox(
 
 \item{label}{label}
 }
-\value{
-
-}
 \description{
-file upload module for bulk data and metadata
+file upload box for bulk data and metadata. Adapted from debrowser::fileUploadBox()
+}
+\examples{
+      x <- fileUploadBox("meta", "count", "metadata", "Metadata")
+
 }

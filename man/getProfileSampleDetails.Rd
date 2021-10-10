@@ -20,12 +20,10 @@ getProfileSampleDetails(
 
 \item{data}{data}
 }
-\value{
-
-}
 \description{
-get single cell RNA samples details
+get Profile Data Sample Details
 }
 \examples{
-
+     x <- getProfileSampleDetails()
+     
 }

@@ -4,7 +4,12 @@
 \alias{getDEgenesDownloadButtons}
 \title{getDEgenesDownloadButtons}
 \usage{
-getDEgenesDownloadButtons(output, session, DEgenes, IterDEgenes)
+getDEgenesDownloadButtons(
+  output = NULL,
+  session = NULL,
+  DEgenes = NULL,
+  IterDEgenes = NULL
+)
 }
 \arguments{
 \item{output}{output}
@@ -15,9 +20,10 @@ getDEgenesDownloadButtons(output, session, DEgenes, IterDEgenes)
 
 \item{IterDEgenes}{Final DE genes}
 }
-\value{
-
-}
 \description{
 Buttons for downloading Initial, overlapping and DE genes
+}
+\examples{
+    x <- getDEgenesDownloadButtons()
+    
 }

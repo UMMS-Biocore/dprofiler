@@ -32,9 +32,6 @@ dprofilerdeanalysis(
 
 \item{parent_session}{parent session}
 }
-\value{
-DE panel
-}
 \description{
 Module to perform and visualize Iterative DE results.
 }

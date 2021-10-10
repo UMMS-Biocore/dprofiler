@@ -26,9 +26,10 @@ getIterDESummary(
 
 \item{params}{DE parameters}
 }
-\value{
-
-}
 \description{
 get summary of Iterative DE Analysis results and venn diagram
+}
+\examples{
+     x <- getIterDESummary()
+     
 }

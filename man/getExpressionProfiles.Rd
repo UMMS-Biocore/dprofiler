@@ -2,22 +2,23 @@
 % Please edit documentation in R/profiling.R
 \name{getExpressionProfiles}
 \alias{getExpressionProfiles}
-\title{Title}
+\title{getExpressionProfiles}
 \usage{
 getExpressionProfiles(deres = NULL, data = NULL, columns = NULL, conds = NULL)
 }
 \arguments{
-\item{deres}{}
+\item{deres}{DE results}
 
-\item{data}{}
+\item{data}{expression data}
 
-\item{columns}{}
+\item{columns}{columns}
 
-\item{conds}{}
-}
-\value{
-
+\item{conds}{conditions}
 }
 \description{
 Given the gene expression matrix with multiple conditions, generate expression profiles.
+}
+\examples{
+     x <- getExpressionProfiles()
+     
 }

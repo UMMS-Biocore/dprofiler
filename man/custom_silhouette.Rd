@@ -4,17 +4,18 @@
 \alias{custom_silhouette}
 \title{custom_silhouette}
 \usage{
-custom_silhouette(x, dist)
+custom_silhouette(x = NULL, dist = NULL)
 }
 \arguments{
-\item{x}{}
+\item{x}{conditions}
 
-\item{dist}{}
-}
-\value{
-
+\item{dist}{distance matrix}
 }
 \description{
-a custom silhouette function for calculating the silhouette measure of each point with respect
+A custom silhouette function for calculating the silhouette measure of each point with respect
 to each condition
+}
+\examples{
+     x <- custom_silhouette()
+     
 }

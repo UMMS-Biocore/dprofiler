@@ -1,13 +1,7 @@
 #' getDprofilerText
 #' 
-#' Intro text
+#' Dprofiler help text
 #'
-#' @return the JS for tab updates
-#'
-#' @examples
-#'     x<- getDprofilerText()
-#'
-#' @export
 getDprofilerText<-function(){
   
   list(
@@ -53,35 +47,12 @@ getDprofilerText<-function(){
 
 #' getIntroText
 #' 
-#' Intro text
+#' Dprofiler help text
 #'
-#' @return the JS for tab updates
-#'
-#' @examples
-#'     x<- getIntroText()
-#'
-#' @export
 getIntroText<-function(){
   
   list(
     column(8,
-           
-  #     ####
-  #     ## Introduction ####
-  #     ####
-  #          
-  #     h2("Quick Start Guide"),
-  #     p("Differential expression (DE) analysis has become an increasingly popular tool
-  # in determining and viewing up and/or down experssed genes between two sets of
-  # samples."),
-  #     p("However, there might exist some confounding samples within each condition of a differential 
-  #       expression analysis that hinders the significance of a function of a gene/protein"),
-  #     p("The goal of Dprofiler is to detect this confounding elements in the data set by:"),
-  #     tags$ul(
-  #       tags$li(strong("Aim 1:"), "Detecting and Scoring samples that consistitute some heterogeneity within each condition"),
-  #       tags$li(strong("Aim 2:"), "Validating the cellular composition of each scored sample with a reference scRNA data and estimate fractions of cellular compositions"),
-  #       tags$li(strong("Aim 3:"), "Scoring third party data sets with condition-specific expression profiles from Aim 1"),
-  #     ),
       
       ####
       ## Data input section ####
@@ -138,14 +109,8 @@ getIntroText<-function(){
 
 #' getDataAssesmentText
 #' 
-#' DataAssesment text
+#' Dprofiler help text
 #'
-#' @return help text for data assesment 
-#'
-#' @examples
-#'     x<- getDataAssesmentText()
-#'
-#' @export
 getDataAssesmentText<-function(){
   list(
     column(8,
@@ -223,9 +188,8 @@ getDataAssesmentText<-function(){
 
 #' getCompProfilingText
 #' 
-#' Quick start text for Computational Profiling Analysis
+#' Dprofiler help text
 #'
-#' @export
 getCompProfilingText <-function(){
   list(
     column(6,
@@ -363,9 +327,8 @@ getCompProfilingText <-function(){
 
 #' getCompCellularText
 #' 
-#' Quick start text for Cellular Composition Analysis
+#' Dprofiler help text
 #'
-#' @export
 getCompCellularText <-function(){
   list(
     column(6,
@@ -410,9 +373,8 @@ getCompCellularText <-function(){
 
 #' getComparativeProfText
 #' 
-#' Quick start text for Comparative Profiling Analysis
+#' Dprofiler help text
 #'
-#' @export
 getComparativeProfText <-function(){
   list(
     column(6,
@@ -452,16 +414,10 @@ getComparativeProfText <-function(){
   )
 }
 
-
 #' getQAText
-#' Some questions and answers
+#' 
+#' Dprofiler help text
 #'
-#' @return help text for QA
-#'
-#' @examples
-#'     x<- getQAText()
-#'
-#' @export
 getQAText<-function(){
   list(
     h3("5. Frequently asked questions (FAQ)"),

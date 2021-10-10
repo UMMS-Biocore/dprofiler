@@ -15,9 +15,6 @@ dprofilerheatmap(input, output, session, expdata = NULL)
 
 \item{expdata, }{a matrix that includes expression values}
 }
-\value{
-heatmapply plot
-}
 \description{
 Heatmap module to create interactive heatmaps and get selected list from
 a heatmap

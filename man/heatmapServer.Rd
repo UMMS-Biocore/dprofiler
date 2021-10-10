@@ -4,25 +4,20 @@
 \alias{heatmapServer}
 \title{heatmapServer}
 \usage{
-heatmapServer(input, output, session)
+heatmapServer(input = NULL, output = NULL, session = NULL)
 }
 \arguments{
-\item{input, }{input params from UI}
+\item{input}{input}
 
-\item{output, }{output params to UI}
+\item{output}{output}
 
-\item{session, }{session variable}
-}
-\value{
-the panel for main plots;
+\item{session}{session}
 }
 \description{
 Sets up shinyServer to be able to run heatmapServer interactively.
-}
-\note{
-\code{heatmapServer}
+Adapted from debrowser::heatmapServer()
 }
 \examples{
-    heatmapServer
+    x <- heatmapServer()
 
 }

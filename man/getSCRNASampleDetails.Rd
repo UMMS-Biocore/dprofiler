@@ -21,10 +21,15 @@ getSCRNASampleDetails(
 \item{details}{details output name}
 
 \item{data}{single cell ExpressionSet Object}
-}
-\value{
 
+\item{ident}{column in scRNA metadata to visualize}
+
+\item{UMI_column}{column in scRNA metadata with total UMI counts}
 }
 \description{
 get single cell RNA samples details
+}
+\examples{
+      x <- getSCRNASampleDetails()
+      
 }
