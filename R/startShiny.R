@@ -15,12 +15,12 @@ startDprofiler <- function(){
     #the upload file size limit is 30MB
     options( shiny.maxRequestSize = 30 * 1024 ^ 2, warn = -1,
              shiny.sanitize.errors = TRUE)
-    # addResourcePath(prefix = "demo", directoryPath =
-    #                   system.file("extdata", "demo", 
-    #                               package = "dprofiler"))
-    # addResourcePath(prefix = "www", directoryPath =
-    #                   system.file("extdata", "www", 
-    #                               package = "dprofiler"))
+    addResourcePath(prefix = "demo", directoryPath =
+                      system.file("extdata", "demo",
+                                  package = "dprofiler"))
+    addResourcePath(prefix = "www", directoryPath =
+                      system.file("extdata", "www",
+                                  package = "dprofiler"))
     environment(dprofilerServer) <- environment()
     
     app <- shinyApp( ui = shinyUI(dprofilerUI),

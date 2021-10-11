@@ -46,7 +46,9 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   
   # Event for uploading the demo file
   observeEvent(input$demo, {
-    load("demo/demodata_trimsc_integrated.Rda")
+    # load("demo/demodata_trimsc_integrated.Rda")
+    load(system.file("extdata", "demo", "demodata_trimsc_integrated.Rda",
+                     package = "dprofiler"))
     ldata$count <- demodata
     ldata$meta <- metadatatable
     ldata$sc_count <- demoscdata
@@ -57,7 +59,9 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   
   # Event for uploading the demo file with no single cell data
   observeEvent(input$demo_nosc, {
-    load("demo/demodata_nosc.Rda")
+    # load("demo/demodata_nosc.Rda")
+    load(system.file("extdata", "demo", "demodata_nosc.Rda",
+                     package = "dprofiler"))
     ldata$count <- demodata
     ldata$meta <- metadatatable
     ldata$prof_count <- demoprofdata
