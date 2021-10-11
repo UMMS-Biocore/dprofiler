@@ -13,8 +13,8 @@ dprofilerUI <- function() {
   dbHeader$children[[2]]$children <- tags$a(style='color: white;',
                                             id="top_logo" , "Dprofiler v1.0.0")
   # addResourcePath(prefix = "www", directoryPath = "www/")
-  # addResourcePath(prefix = "www", directoryPath = system.file("extdata",
-  #                                                             "www", package = "dprofiler"))
+  addResourcePath(prefix = "www", directoryPath = system.file("extdata",
+                                                              "www", package = "dprofiler"))
   dprofiler <- (fluidPage(
     shinyjs::useShinyjs(),
     tags$head(tags$title("Dprofiler v1.0.0"),
