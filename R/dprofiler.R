@@ -4,8 +4,7 @@
 #'
 #' @docType package
 #' @name dprofiler
-#' @importFrom dplyr %>%
-#' @importFrom purrr %||%
+#' 
 NULL
 
 utils::globalVariables(c("Conds", "ExpressionSet", "Samples","Scores", 'dc', 'demodata', 'demoprofdata',
