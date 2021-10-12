@@ -1,0 +1,23 @@
+Package: dprofiler
+Type: Package
+Title: Dprofiler: 
+Version: 1.0.0
+Author: Who wrote it
+Maintainer: Artur Manukyan <artur-man@hotmail.com>
+Description: Dprofiler computationally profiles a set of targeted samples by connecting them to reference expression datasets with phenotypic profiles of interest. 
+             Building on these reference profiles of phenotypic groups, Dprofiler evaluates bulk RNA samples, detect possibly existing anomalies and heterogeneities, and 
+             further explores causes and sources of distinct molecular patterns with the aid of single cell maps and other reference gene expression datasets.
+License: MIT + file LICENSE
+Imports:
+    AnnotationDbi, DESeq2, DOSE, DT, GenomicRanges, Harman,
+    IRanges, RColorBrewer, RCurl, S4Vectors,
+    SummarizedExperiment, VennDiagram, annotate, apeglm, ashr,
+    clusterProfiler, colourpicker, dplyr, edgeR, enrichplot,
+    ggplot2, gplots, heatmaply, igraph, jsonlite, limma,
+    methods, org.Hs.eg.db, org.Mm.eg.db, plotly, reshape2,
+    shiny, shinyBS, shinybusy, shinydashboard, shinyjs,
+    stringi, sva, waiter, debrowser, SignallingSingleCell, MuSiC, 
+    Biobase, rlang, cluster
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.2
