@@ -43,6 +43,8 @@
 #'             autoplot theme_minimal theme geom_density
 #'             geom_text element_blank margin scale_y_continuous xlab facet_grid
 #'             element_text
+#' @importFrom shinyjs show hide enable disable useShinyjs extendShinyjs
+#'             js inlineCSS onclick
 #' @importFrom plotly renderPlotly plotlyOutput plot_ly add_bars event_data
 #'             hide_legend %>% group_by ggplotly config
 #' @importFrom grDevices dev.off pdf colorRampPalette rainbow
@@ -56,6 +58,7 @@
 #'             download.file read.delim data install.packages
 #'             packageDescription installed.packages combn
 #' @importFrom jsonlite fromJSON
+#' @importFrom reshape2 melt
 #' @importFrom shinydashboard dashboardHeader dropdownMenu messageItem
 #'             dashboardPage dashboardSidebar sidebarMenu dashboardBody
 #'             updateTabItems menuItem tabItems tabItem menuSubItem tabBox
@@ -68,6 +71,7 @@
 #' @importFrom waiter spin_ring transparent use_waiter waiter_hide waiter_show
 #' @importFrom dplyr summarize group_by_at as_tibble group_by mutate
 #' @importFrom shinybusy add_busy_spinner
+#' @importFrom limma lmFit voom eBayes topTable
 
 dprofilerServer <- function(input = NULL, output = NULL, session = NULL) {
   options(warn = -1)
