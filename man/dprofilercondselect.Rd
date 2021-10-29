@@ -9,19 +9,22 @@ dprofilercondselect(
   output = NULL,
   session = NULL,
   data = NULL,
-  metadata = NULL
+  metadata = NULL,
+  profiling = FALSE
 )
 }
 \arguments{
-\item{input, }{input variables}
+\item{input}{input variables}
 
-\item{output, }{output objects}
+\item{output}{output objects}
 
-\item{session, }{session}
+\item{session}{session}
 
-\item{data, }{count or single cell data}
+\item{data}{count or single cell data}
 
-\item{metadata, }{metadata}
+\item{metadata}{metadata}
+
+\item{profiling}{if TRUE, condition selection is conducted for external data sets (default: FALSE)}
 }
 \description{
 Condition selection for DE analysis and reference single cell data. Adapted from debrowsercondselect().

@@ -60,6 +60,8 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
   # prepare heat data
   data_de_tmm <- reactive({
     marker_genes <- getMarkerGenes(scdata, dc()$IterDEgenes, input)
+    # heatdata <- getNormalizedMatrix(dc()$init_dedata[,dc()$cols], method = "TMM")
+    # heatdata <- prepHeatData(heatdata, input)
     heatdata <- prepHeatData(dc()$init_dedata[,dc()$cols], input)
     as.matrix(heatdata[marker_genes,])
   })
@@ -221,9 +223,6 @@ getDeconvoluteTableDetails <- function(output  = NULL, session  = NULL, tablenam
 deconvolute <- function(data = NULL, DEgenes = NULL, columns = NULL, scdata = NULL, input = NULL){
   if (is.null(data)) return(NULL)
   
-  # global variables 
-  utils::globalVariables(c("ExpressionSet","pData","exprs"))
-  
   # parameters
   celltypes <- isolate(input$condition)
   celltype_label <- isolate(input$conditions_from_meta0)
@@ -231,7 +230,7 @@ deconvolute <- function(data = NULL, DEgenes = NULL, columns = NULL, scdata = NU
   
   # Bulk Data
   data <- data[,columns]
-  data <- getNormalizedMatrix(data,method = "TMM")
+  # data <- getNormalizedMatrix(data,method = "TMM")
   genes_data <- rownames(data)
   DEgenes <- intersect(genes_data, DEgenes)
   data_de <- data[DEgenes,]
@@ -244,16 +243,16 @@ deconvolute <- function(data = NULL, DEgenes = NULL, columns = NULL, scdata = NU
   metadata <- metadata[metadata[,celltype_label] %in% celltypes,]
     
   # normalized integrated library sizes
-  exprs_srt <- exprs(scdata)
-  metadata$nCount_integratedRNA_norm <- colSums(exprs_srt)
-  metadata <- as_tibble(metadata) %>% group_by(.data@CellType) %>% mutate(nCount_integratedRNA_normmean = mean(.data@nCount_integratedRNA_norm))
-  exprs_srt <- apply(exprs_srt, 1,function(x){
-    return((x/metadata$nCount_integratedRNA_normmean)*100)
-  })
-  scdata <- ExpressionSet(assayData=t(exprs_srt))
-  pData(scdata) <- data.frame(metadata)
-  rownames(scdata) <- colnames(exprs_srt)
-  colnames(scdata) <- rownames(exprs_srt)
+  # exprs_srt <- exprs(scdata)
+  # metadata$nCount_integratedRNA_norm <- colSums(exprs_srt)
+  # metadata <- as_tibble(metadata) %>% group_by(CellType) %>% mutate(nCount_integratedRNA_normmean = mean(nCount_integratedRNA_norm))
+  # exprs_srt <- apply(exprs_srt, 1,function(x){
+  #   return((x/metadata$nCount_integratedRNA_normmean)*100)
+  # })
+  # scdata <- ExpressionSet(assayData=t(exprs_srt))
+  # pData(scdata) <- data.frame(metadata)
+  # rownames(scdata) <- colnames(exprs_srt)
+  # colnames(scdata) <- rownames(exprs_srt)
 
   # deconvolute
   NLandL.prop = music_prop(bulk.eset = Vit_BulkRNAseq, 

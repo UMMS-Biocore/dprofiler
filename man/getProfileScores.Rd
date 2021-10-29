@@ -6,19 +6,19 @@
 \usage{
 getProfileScores(
   dc = NULL,
-  dat = NULL,
   profiledata = NULL,
-  profilemetadata = NULL
+  profilemetadata = NULL,
+  params = NULL
 )
 }
 \arguments{
 \item{dc}{DE results}
 
-\item{dat}{expression matrix of the main data}
-
 \item{profiledata}{expression matrix of the profiling data}
 
 \item{profilemetadata}{metadata of the profiling data}
+
+\item{params}{profiling parameters}
 }
 \description{
 Calculate the profiling scores

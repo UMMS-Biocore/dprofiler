@@ -13,6 +13,6 @@ dataSummaryUI(id)
 Creates data table and figures to summarize uploaded data
 }
 \examples{
-    x <- dataLoadUI("load")
+    x <- dataSummaryUI("load")
 
 }
