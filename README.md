@@ -24,8 +24,12 @@ Users are allowed to use a variety of algorithms to calculate a **Membership Sco
 Dprofiler derives reference phenotypic profiles from submitted datasets, cell-types of single cell maps and conditions from external gene expression data sets.
 Membership scores are universally interpretable, and indicate the similarity of a sample to these reference profiles.
 
+<p align="center">
+  <img height="400" src="./inst/extdata/www/images/DprofilerWorkflow.png">
+</p>
+
 ![*Dprofiler Workflow*](./inst/extdata/www/images/DprofilerWorkflow.png =200x350)
-	
+
 Dprofiler offers multiple capabilities using these three components:
 
 - **Computational Profiling:** Scoring and Profiling submitted samples using homogeneouos subpopulations of phenotypic reference profiles within the same dataset.
