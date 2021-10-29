@@ -1,5 +1,5 @@
 
-# DEBrowser:
+# Dprofiler:
 Comparative Profiling Platform for Diseases, Phenotypes and Experimental Conditions
 
 # Introduction
@@ -24,6 +24,9 @@ Users are allowed to use a variety of algorithms to calculate a **Membership Sco
 Dprofiler derives reference phenotypic profiles from submitted datasets, cell-types of single cell maps and conditions from external gene expression data sets.
 Membership scores are universally interpretable, and indicate the similarity of a sample to these reference profiles.
 
+.. image:: ../inst/extdata/www/figures/DprofilerWorkflow.png
+	:align: center
+	
 Dprofiler offers multiple capabilities using these three components:
 
 - **Computational Profiling:** Scoring and Profiling submitted samples using homogeneouos subpopulations of phenotypic reference profiles within the same dataset.
