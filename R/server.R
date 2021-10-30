@@ -226,7 +226,7 @@ dprofilerServer <- function(input = NULL, output = NULL, session = NULL) {
         ## Profiling Events ####
         observeEvent (input$gotoprofile, {
           if(!is.null(dc())){
-            sel(callModule(dprofilercondselect, "profiling", uploadeddata()$load()$prof_count, uploadeddata()$load()$prof_meta))
+            sel(callModule(dprofilercondselect, "profiling", uploadeddata()$load()$prof_count, uploadeddata()$load()$prof_meta, profiling = TRUE))
             updateTabItems(session, "MenuItems", "Profile")
           }
         })

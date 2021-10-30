@@ -24,7 +24,6 @@ dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, dat
       selected <- selectScRNAConditions(data, session, input)
     } else if(profiling) {
       selected <- selectProfilingConditions(data, metadata, session, input)
-      # selected <- selectConditions(data, metadata, session, input)
     } else {
       selected <- selectConditions(data, metadata, session, input)
     }

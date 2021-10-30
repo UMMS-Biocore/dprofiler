@@ -95,6 +95,10 @@ dprofilerUI <- function() {
                                   tabPanel(title = "Upload Summary",
                                            dataSummaryUI("load"), 
                                            value = "uploadsummary"
+                                  ),
+                                  tabPanel(title = "Upload Summary (Reference Bulk)",
+                                           dataProfileSummaryUI("load"),
+                                           value = "uploadprofilesummary"
                                   )
                            )
                    ),
