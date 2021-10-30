@@ -2,7 +2,7 @@
 # Dprofiler:
 Comparative Profiling Platform for Diseases, Phenotypes and Experimental Conditions
 
-# Introduction
+## Introduction
 
 Biospecimen collected from multiple sources of experimental and technical conditions often exhibit
 **diverse molecular profiles and patterns.** Each individual sample presents an additional source of information towards elucidating
@@ -27,8 +27,6 @@ Membership scores are universally interpretable, and indicate the similarity of 
 <p align="center">
   <img height="400" src="./inst/extdata/www/images/DprofilerWorkflow.png">
 </p>
-
-![*Dprofiler Workflow*](./inst/extdata/www/images/DprofilerWorkflow.png =200x350)
 
 Dprofiler offers multiple capabilities using these three components:
 
