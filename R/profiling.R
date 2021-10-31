@@ -284,7 +284,7 @@ getExpressionProfiles <- function(deres = NULL, data = NULL, columns = NULL, con
 external_silhouette <- function(cluster = NULL, dist2 = NULL){
   if(is.null(cluster)) return(NULL)
   
-  cls <- levels(cluster)
+  cls <- unique(cluster)
   allmeans <- apply(dist2,1,function(x){
     aggdata <- aggregate(x,list(cluster),mean)
     temp <- aggdata[,1]
