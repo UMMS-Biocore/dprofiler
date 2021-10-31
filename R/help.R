@@ -35,7 +35,8 @@ getDprofilerText<-function(){
                     ),
                   p("Dprofiler is based on a recently developed Shiny (R) application, DEBrowser, an interactive tool for DE analysis and visualization. DEBrowser incorporates 
                   DESeq2, EdgeR, and Limma coupled with shiny to produce real-time changes within your plot queries and allows for interactive browsing of your DE results. 
-                  DEBrowser also manipulates your results in a way that allows for interactive plotting by which changing padj or fold change limits also changes the displayed graph(s).")
+                  DEBrowser also manipulates your results in a way that allows for interactive plotting by which changing padj or fold change limits also changes the displayed graph(s)."),
+                  p("For more information, please visit Dprofiler documentation from ",a("this link", href = "https://dprofiler-docs.readthedocs.io/en/latest/"),".")
                   ),
            column(4,
                   br(),
