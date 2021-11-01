@@ -8,6 +8,8 @@ Description: Dprofiler computationally profiles a set of targeted samples by con
              Building on these reference profiles of phenotypic groups, Dprofiler evaluates bulk RNA samples, detect possibly existing anomalies and heterogeneities, and 
              further explores causes and sources of distinct molecular patterns with the aid of single cell maps and other reference gene expression datasets.
 License: MIT + file LICENSE
+Depends: R (>= 3.5.0)
+biocViews:
 Imports:
     AnnotationDbi, DESeq2, DOSE, DT, GenomicRanges, Harman,
     IRanges, RColorBrewer, RCurl, S4Vectors,
@@ -19,5 +21,5 @@ Imports:
     stringi, sva, waiter, debrowser, SignallingSingleCell, MuSiC, 
     Biobase, rlang, cluster
 Encoding: UTF-8
-LazyData: true
 RoxygenNote: 7.1.2
+
