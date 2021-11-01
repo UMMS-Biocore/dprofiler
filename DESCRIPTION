@@ -13,11 +13,10 @@ Imports:
     VennDiagram, dplyr, shinybusy, waiter, 
     rlang, cluster, Biobase, MuSiC, SignallingSingleCell, debrowser, 
     ggplot2, jsonlite, limma, plotly, reshape2, shiny, shinydashboard, 
-    shinyjs, DT, colourpicker
+    shinyjs, DT, colourpicker, ggplot2
 biocViews:
     debrowser, AnnotationDbi, Biobase
 Remotes:
     garber-lab/SignallingSingleCell, xuranw/MuSiC
 Encoding: UTF-8
 RoxygenNote: 7.1.2
-

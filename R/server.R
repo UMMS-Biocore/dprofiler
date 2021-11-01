@@ -72,7 +72,24 @@
 #' @importFrom dplyr summarize group_by_at as_tibble group_by mutate
 #' @importFrom shinybusy add_busy_spinner
 #' @importFrom limma lmFit voom eBayes topTable
-
+#' @importFrom DT datatable dataTableOutput renderDataTable formatStyle
+#'             styleInterval formatRound
+#' @importFrom gplots heatmap.2 redblue bluered
+#' @importFrom sva ComBat
+#' @importFrom RCurl getURL
+#' @importFrom DESeq2 DESeq DESeqDataSetFromMatrix results estimateSizeFactors
+#'             counts lfcShrink
+#' @importFrom Harman harman reconstructData
+#' @importFrom edgeR calcNormFactors equalizeLibSizes DGEList glmLRT
+#'             exactTest estimateCommonDisp glmFit topTags
+#' @importMethodsFrom IRanges as.matrix "colnames<-" mean
+#'             nchar paste rownames toupper unique which
+#'             as.matrix lapply "rownames<-" gsub
+#' @importMethodsFrom S4Vectors eval grep grepl levels sapply t 
+#' @importMethodsFrom SummarizedExperiment cbind order rbind
+#' @importFrom methods new
+#' @import apeglm
+#' @import ashr
 dprofilerServer <- function(input = NULL, output = NULL, session = NULL) {
   options(warn = -1)
   tryCatch(
