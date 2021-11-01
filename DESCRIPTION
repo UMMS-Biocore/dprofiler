@@ -9,17 +9,15 @@ Description: Dprofiler computationally profiles a set of targeted samples by con
              further explores causes and sources of distinct molecular patterns with the aid of single cell maps and other reference gene expression datasets.
 License: MIT + file LICENSE
 Depends: R (>= 3.5.0)
-biocViews:
 Imports:
-    AnnotationDbi, DESeq2, DOSE, DT, GenomicRanges, Harman,
-    IRanges, RColorBrewer, RCurl, S4Vectors,
-    SummarizedExperiment, VennDiagram, annotate, apeglm, ashr,
-    clusterProfiler, colourpicker, dplyr, edgeR, enrichplot,
-    ggplot2, gplots, heatmaply, igraph, jsonlite, limma,
-    methods, org.Hs.eg.db, org.Mm.eg.db, plotly, reshape2,
-    shiny, shinyBS, shinybusy, shinydashboard, shinyjs,
-    stringi, sva, waiter, debrowser, SignallingSingleCell, MuSiC, 
-    Biobase, rlang, cluster
+    VennDiagram, dplyr, shinybusy, waiter, 
+    rlang, cluster, Biobase, MuSiC, SignallingSingleCell, debrowser, 
+    ggplot2, jsonlite, limma, plotly, reshape2, shiny, shinydashboard, 
+    shinyjs, DT, colourpicker
+biocViews:
+    debrowser, AnnotationDbi, Biobase
+Remotes:
+    garber-lab/SignallingSingleCell, xuranw/MuSiC
 Encoding: UTF-8
 RoxygenNote: 7.1.2
 
