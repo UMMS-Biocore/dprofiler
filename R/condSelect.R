@@ -2,16 +2,17 @@
 #'
 #' Condition selection for DE analysis and reference single cell data. Adapted from debrowsercondselect().
 #' 
-#' @param input, input variables
-#' @param output, output objects
-#' @param session, session 
-#' @param data, count or single cell data
-#' @param metadata, metadata
+#' @param input input variables
+#' @param output output objects
+#' @param session session 
+#' @param data count or single cell data
+#' @param metadata metadata
+#' @param profiling if TRUE, condition selection is conducted for external data sets (default: FALSE) 
 #'
 #' @examples
 #'     x <- dprofilercondselect()
 #'
-dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, data = NULL, metadata = NULL) {
+dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, data = NULL, metadata = NULL, profiling = FALSE) {
   if (is.null(data)) return(NULL)
   
   if(class(data) == "ExpressionSet"){
@@ -21,6 +22,8 @@ dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, dat
   output$conditionSelector <- renderUI({
     if(class(data) == "ExpressionSet"){
       selected <- selectScRNAConditions(data, session, input)
+    } else if(profiling) {
+      selected <- selectProfilingConditions(data, metadata, session, input)
     } else {
       selected <- selectConditions(data, metadata, session, input)
     }
@@ -36,6 +39,9 @@ dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, dat
         }
       }
     }
+    if(profiling){
+          
+    }
   })
   
   return(NULL)
@@ -50,15 +56,16 @@ dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, dat
 #'
 condSelectUI<- function(){
   list(
+    fluidRow(
       shinydashboard::box(title = "Comparison Selection",
-                          solidHeader = TRUE, status = "info",  width = NULL, height = NULL, collapsible = TRUE,
+                          solidHeader = TRUE, status = "info",  width = 10, height = NULL, collapsible = TRUE,
                           fluidRow(
                             uiOutput("conditionSelector"),
                             column(12,
                                    actionButtonDE("startDE", "Start", styleclass = "primary")
                                    )
                           ))
-  )
+  ))
 }
 
 
@@ -165,8 +172,8 @@ selectScRNAConditions<-function(scdata = NULL,
                               selected = colnames(metadata)[1])
                   ),
            column(3,
-                  selectInput(session$ns("deconvolute_genes"), "DE genes", selected = c("Homogeneous Conditions"),
-                              choices = c("Heterogeneous Conditions","Homogeneous Conditions","Marker Genes"))),
+                  selectInput(session$ns("deconvolute_genes"), "DE genes", selected = c("DE Genes (Homogeneous Conds.)"),
+                              choices = c("DE Genes (Heterogeneous Conds.)","DE Genes (Homogeneous Conds.)","Marker Genes"))),
            # conditionalPanel(
            #   (condition <- "input.deconvolute_genes == 'Marker Genes'"),
              column(3,
@@ -176,6 +183,80 @@ selectScRNAConditions<-function(scdata = NULL,
     
   )
   return(to_return)
+}
+
+#' selectProfilingConditions
+#'
+#' Select metadata field to use DE results from reference data
+#'
+#' @param Dataset, used dataset 
+#' @param metadata, metadatatable to select from metadata
+#' @param session, session
+#' @param input, input params
+#'
+#' @examples
+#'     x<- selectProfilingConditions()
+#'
+selectProfilingConditions<-function(Dataset = NULL,
+                           metadata = NULL,
+                           session = NULL,
+                           input = NULL) {
+  if (is.null(Dataset)) return(NULL)
+  
+  to_return <- list(
+    column(6,
+           getSeriesSelector(metadata, session, input)
+    ),
+    column(12, style='padding-bottom:25px;',
+           column(2,  
+                  strong(style ='border-bottom: 1px solid #000000; padding-bottom:5px', 
+                         "Scoring Parameters:"))
+    ),
+    column(12, 
+           getProfilingMethodDetails(1, session, input),
+    )
+  )
+  
+  return(to_return)
+}
+
+#' getSeriesSelector
+#'
+#' Return the series selection box using profiling meta data table.
+#' 
+#' @param metadata meta data table
+#' @param session session
+#' @param input input params 
+#' @param n the box number
+#'
+#' @examples
+#'      x <- getSeriesSelector()
+#'      
+getSeriesSelector <- function (metadata = NULL, session = NULL, input = NULL, n = 0) 
+{
+  if(!is.null(metadata)){
+    df <- metadata
+    col_count <- length(colnames(df))
+    series_column <- colnames(metadata)[grepl("Series|series",colnames(metadata))][1]
+    if(is.na(series_column)){
+      choices <- "Profiling Data"
+    } else {
+      choices <- unique(metadata[,series_column])
+    }
+    list(HTML("<hr style=\"color: white; border:solid 1px white;\">"), 
+         br(), column(12, 
+                      selectInput(paste0(session$ns("series_from_meta"), n), 
+                                  label = "Select Series", choices = choices, 
+                                  multiple = FALSE, 
+                                  selected = selectedInput(session$ns("series_from_meta"), n, choices[1], input))),
+         column(12, 
+                      selectInput(paste0(session$ns("conditions_from_meta"), n), 
+                                  label = "Select Meta", choices = as.list(c("No Selection", colnames(df)[2:col_count])), 
+                                  multiple = FALSE, 
+                                  selected = selectedInput(session$ns("conditions_from_meta"), n, "Selection 2", input)))
+         
+         )
+  }
 }
 
 #' getMetaSelector
@@ -196,7 +277,7 @@ getMetaSelector <- function (metadata = NULL, session = NULL, input = NULL, n = 
     df <- metadata
     col_count <- length(colnames(df))
     list(HTML("<hr style=\"color: white; border:solid 1px white;\">"), 
-         br(), column(10, 
+         br(), column(12, 
                       selectInput(paste0(session$ns("conditions_from_meta"), n), 
                                   label = "Select Meta", choices = as.list(c("No Selection", colnames(df)[2:col_count])), 
                                   multiple = FALSE, 
@@ -399,15 +480,36 @@ getIterMethodDetails <- function(num = 0, session = NULL, input = NULL) {
       conditionalPanel(
         (condition <- paste0("input.iterde",num," == 'Log2FC+Padj'")), 
         ns = session$ns,
-        column(1,textInput(paste0(session$ns("logfoldchange"), num),
+        column(2,textInput(paste0(session$ns("logfoldchange"), num),
                            getIconLabel("Log2FC", message = "Minimum log fold change"), 
                            value = isolate(selectedInput(session$ns("logfoldchange"),
                                                          num, "0.5", input) ))),
-        column(1,textInput(paste0(session$ns("padj"), num), 
+        column(2,textInput(paste0(session$ns("padj"), num), 
                            getIconLabel("P-adj value", message = "Maximum adjusted p-value"),
                            value = isolate(selectedInput(session$ns("padj"),
                                                          num, "0.05", input) )))
       )
+    )
+}
+
+#' getProfilingMethodDetails
+#'
+#' get the detail boxes after interative DE method selected 
+#'
+#' @param num panel that is going to be shown
+#' @param session session
+#' @param input user input
+#' 
+#' @examples
+#'     x <- getProfilingMethodDetails()
+#'
+getProfilingMethodDetails <- function(num = 0, session = NULL, input = NULL) {
+  if (num > 0)
+    list(
+      getSelectInputBox(session$ns("scoremethod"), 
+                        getIconLabel("Score Method", message = "Method for estimating Membership scores"), 
+                        num, c("Silhouette", "NNLS-based"),
+                        selectedInput(session$ns("scoremethod"), num, "Silhouette", input))
     )
 }
 

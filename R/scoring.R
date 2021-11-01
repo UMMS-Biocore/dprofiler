@@ -86,23 +86,20 @@ getIterDESummary <- function(output = NULL, session = NULL, vennname = NULL, sum
     
     style = "padding-right: 10px"
     if(params[9] == "Stat."){
-      additional_texts <- paste(p(strong("# of Top Statistics:"), params[12]), sep = " ")
+      additional_texts <- paste(p(strong("# of Top Statistics:"), params[11]), sep = " ")
     } else {
-      additional_texts <- paste(p(strong("Log2FC:"), params[10], strong("P-adj:"),  params[11]), sep = " ")
+      additional_texts <- paste(p(strong("Log2FC:"), params[9], strong("P-adj:"),  params[10]), sep = " ")
     }
     texts <- tags$div(
       h4("Scoring Parameters"),
       tags$table(
         tags$tr(
           tags$td(style = style, p(strong("Score Method:"), params[6])),
-          tags$td(style = style, p(strong("Selection Method:"),  params[9])),
+          tags$td(style = style, p(strong("Selection Method:"),  params[8])),
         ),
         tags$tr(
           tags$td(style = style, p(strong("Min. Score:"),  params[7])),
           tags$td(style = style, HTML(additional_texts))
-        ),
-        tags$tr(
-          tags$td(style = style, p(strong("Normalization:"),  params[8]))
         )
       )
     )

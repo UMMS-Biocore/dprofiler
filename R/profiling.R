@@ -17,43 +17,55 @@ dprofilerprofiling <- function(input = NULL, output = NULL, session = NULL, dc =
                                profilemetadata = NULL, parent_session = NULL) {
   if(is.null(dc)) return(NULL)
 
-  # get details
-  prof_details <- getProfilingDEparameter(profiledata, profilemetadata, session, input)
+  # # get details
+  prof_params <- getProfilingParameter(session, input)
   
-  # DE Results
-  deres <- reactive({
-    waiter_show(html = spin_ring(), color = transparent(.5))
-    withProgress(message = 'Running Profiling', value = 0, {
-      deresults <- runMultipleDE(profiledata, prof_details$cols, prof_details$conds, prof_details$params)
-    })
-    updateTabsetPanel(session = parent_session, "ProfilingResults", "profilingscores")
-    waiter_hide()
-    deresults
-  })
-  
-  # Apply Filters to DE Results
-  prepDat <- reactive({
-    applyFiltersNew(addDataCols(profiledata, deres(), prof_details$cols, prof_details$conds), input)
-  })
+  # # DE Results
+  # deres <- reactive({
+  #   waiter_show(html = spin_ring(), color = transparent(.5))
+  #   withProgress(message = 'Running Profiling', value = 0, {
+  #     deresults <- runMultipleDE(profiledata, prof_details$cols, prof_details$conds, prof_details$params)
+  #   })
+  #   updateTabsetPanel(session = parent_session, "ProfilingResults", "profilingscores")
+  #   waiter_hide()
+  #   deresults
+  # })
+  # 
+  # # Apply Filters to DE Results
+  # prepDat <- reactive({
+  #   applyFiltersNew(addDataCols(profiledata, deres(), prof_details$cols, prof_details$conds), input)
+  # })
   
   # # Membership Scores
   # scores <- reactive({
   #     getProfileScores(dc, profiledata[deres()$], profilemetadata)
   # })
   
+  # Membership Scores
+  scores <- reactive({
+     waiter_show(html = spin_ring(), color = transparent(.5))
+     withProgress(message = 'Running Profiling', value = 0, {
+       results <- getProfileScores(dc, profiledata, profilemetadata, prof_params)
+     })
+     waiter_hide()
+     updateTabsetPanel(session = parent_session, "ProfilingResults", "profilingscores")
+     results
+  })
+  
   # Observe for Tables and Plots
   observe({
     
-    # prepare DE tables
-    dat <-  prepDat()[prepDat()$padj < prof_details$params[11] & abs(prepDat()$log2FoldChange) > prof_details$params[10],]
-    dat2 <- removeCols(c("ID", "x", "y","Legend", "Size"), dat)
-    
-    # DE Results
-    getTableDetails(output, session, "DEResults", dat2, modal=FALSE)
+    # # prepare DE tables
+    # dat <-  prepDat()[prepDat()$padj < prof_details$params[11] & abs(prepDat()$log2FoldChange) > prof_details$params[10],]
+    # dat2 <- removeCols(c("ID", "x", "y","Legend", "Size"), dat)
+    # 
+    # # DE Results
+    # getTableDetails(output, session, "DEResults", dat2, modal=FALSE)
 
     # get scores
-    scores <- getProfileScores(dc, dat, profiledata, profilemetadata)
-    getProfileScoreDetails(output, session, "MembershipScores", scores)
+    # scores <- getProfileScores(dc, profiledata, profilemetadata)
+    score_results <- scores()
+    getProfileScoreDetails(output, session, "MembershipScores", score_results)
     
   })
   
@@ -84,14 +96,14 @@ getProfilingUI <- function (id) {
                                           )
                                         ))
            ),
-           tabPanel(title = "DE Analysis",
-                    fluidRow(
-                      shinydashboard::box(title = "Differentially Expressed Genes",
-                                          solidHeader = T, status = "info",  width = 9, collapsible = TRUE,
-                                          uiOutput(ns("DEResults"))
-                      ),
-                    )
-           ),
+           # tabPanel(title = "DE Analysis",
+           #          fluidRow(
+           #            shinydashboard::box(title = "Differentially Expressed Genes",
+           #                                solidHeader = T, status = "info",  width = 9, collapsible = TRUE,
+           #                                uiOutput(ns("DEResults"))
+           #            ),
+           #          )
+           # ),
            tabPanel(title = "Profiling Results",
                     fluidRow(
                       shinydashboard::box(title = "Membership Scores",
@@ -122,8 +134,8 @@ getProfileScoreDetails <- function(output = NULL, session = NULL, plotname = NUL
   if(is.null(output)) return(NULL)
   
   output[[plotname]] <- renderPlotly({
-    p <- ggplot(data=scores, aes(x = reorder(Samples,Scores), y = Scores)) +
-      geom_bar(aes(fill = profileConds), stat="identity") + 
+    p <- ggplot(data=scores, aes(x = Samples, y = Scores)) +
+      geom_bar(aes(fill = Condition), stat="identity") + 
       facet_grid(. ~ Conds) + 
       scale_y_continuous(limits=c(0, 1)) + 
       xlab("Samples") +
@@ -152,26 +164,33 @@ getProfileScoreDetails <- function(output = NULL, session = NULL, plotname = NUL
 #' Calculate the profiling scores
 #'
 #' @param dc DE results 
-#' @param dat expression matrix of the main data 
 #' @param profiledata expression matrix of the profiling data
 #' @param profilemetadata metadata of the profiling data
+#' @param params profiling parameters
 #'
 #' @examples
 #'      x <- getProfileScores()
 #' 
-getProfileScores <- function(dc = NULL, dat = NULL, profiledata = NULL, profilemetadata = NULL){
+getProfileScores <- function(dc = NULL, profiledata = NULL, profilemetadata = NULL, params = NULL){
   if(is.null(dc)) return(NULL)
   
-  # unique genes of profile data
-  unique_genes <- unique(dat$ID)
-  profiledata <- profiledata[unique_genes,]
+  # get params
+  params <- params$params
+  ScoreMethod = if (!is.null(params[1])) 
+    params[1]
     
   # get data 
   remaining_columns <- dc$cols[!dc$cols %in% dc$cleaned_columns]
-  conds <- dc$conds[!dc$cols %in% dc$cleaned_columns]
-  data <- dc$init_dedata[dc$IterDEgenes, remaining_columns]
+  # conds <- dc$conds[!dc$cols %in% dc$cleaned_columns]
+  # profileConds <- dc$conds[!dc$cols %in% dc$cleaned_columns] 
+  profileConds <- dc$conds
+  conds <- profilemetadata$treatment
+  profileConds <- profilemetadata$treatment
+  conds <- dc$conds
+  # data <- dc$init_dedata[dc$IterDEgenes, remaining_columns]
+  data <- dc$init_dedata[dc$IterDEgenes, dc$cols]
   data <- t(apply(data,1,scale))
-  colnames(data) <- remaining_columns
+  colnames(data) <- dc$cols
   
   # get overlapping genes
   genes <- intersect(rownames(data), rownames(profiledata))
@@ -182,17 +201,39 @@ getProfileScores <- function(dc = NULL, dat = NULL, profiledata = NULL, profilem
   colnames(profiledata) <- colnames_profiledata
   
   # get scores
-  datax_spear <- (cor(profiledata, data, method = "spearman") + 1)/2
-  rownames(datax_spear) <- colnames(profiledata)
-  colnames(datax_spear) <-  colnames(data)
-  datax_spear_sim <- 1- datax_spear
-  scores <- (external_silhouette(conds, datax_spear) + 1)/2
-  rownames(scores) <- unique(conds)
-  scores <- melt(scores)
+  if(ScoreMethod=="Silhouette"){
+    datax_spear <- (cor(profiledata, data, method = "spearman") + 1)/2
+    rownames(datax_spear) <- colnames(profiledata)
+    colnames(datax_spear) <-  colnames(data)
+    #datax_spear_sim <- 1- datax_spear
+    datax_spear <- t(datax_spear)
+    scores <- (external_silhouette(profileConds, datax_spear) + 1)/2
+    rownames(scores) <- unique(profileConds)
+    scores <- melt(scores)
+  }
+  if(ScoreMethod=="NNLS-based"){
+    
+    # Expression Profiles
+    profiles <- aggregate(t(profiledata),list(profileConds), mean)
+    profiles <- t(profiles[,-1])
+    
+    # Deconvulate points based on expression profiles of conditions
+    scores <- NULL
+    for(j in 1:ncol(data)){
+      samples_DCV <- nnls(profiles,data[,j])
+      norm_coef <- samples_DCV$x/sum(samples_DCV$x)
+      scores <- rbind(scores,norm_coef)
+    }
+    scores <- t(scores)
+    rownames(scores) <- unique(profileConds)
+    colnames(scores) <- colnames(data)
+    scores <- melt(scores)
+  }
+  
   
   # get score data frame
   scores <- data.frame(Conds = scores[,1], Samples = scores[,2], Scores = scores[,3],
-                       profileConds = rep(profilemetadata$treatment, each = 2))
+                       Condition = rep(conds, each = length(unique(profileConds))))
   
   return(scores)
 }
@@ -243,7 +284,7 @@ getExpressionProfiles <- function(deres = NULL, data = NULL, columns = NULL, con
 external_silhouette <- function(cluster = NULL, dist2 = NULL){
   if(is.null(cluster)) return(NULL)
   
-  cls <- levels(cluster)
+  cls <- unique(cluster)
   allmeans <- apply(dist2,1,function(x){
     aggdata <- aggregate(x,list(cluster),mean)
     temp <- aggdata[,1]
@@ -262,75 +303,29 @@ external_silhouette <- function(cluster = NULL, dist2 = NULL){
   return(allsil)
 }
 
-#' getProfilingDEparameter
+#' getProfilingParameter
 #' 
 #' Prepare DE analysis parameters for the profiling data
 #'
-#' @param data data
-#' @param metadata metadata
 #' @param session session
 #' @param input input 
 #'
 #' @examples
-#'      x <- getProfilingDEparameter()
+#'      x <- getProfilingParameter()
 #'      
-getProfilingDEparameter <- function(data = NULL, metadata = NULL, session = NULL, input = NULL) {
+getProfilingParameter <- function(session = NULL, input = NULL) {
   
     if (is.null(data)) return(NULL)
     
     inputconds <- reactiveValues(demethod_params = list(), conds = list(), dclist = list())
     cnt <- 1
-    # inputconds$conds <- list()
-    # inputconds$conds[[1]] <- isolate(input[[paste0("condition",1)]])
-    # inputconds$conds[[2]] <- isolate(input[[paste0("condition",2)]])
-
-    #Get parameters for each method
-    inputconds$demethod_params <- NULL
-    if (isolate(input[[paste0("demethod",cnt)]]) == "DESeq2"){
-      inputconds$demethod_params[cnt] <- paste(
-        isolate(input[[paste0("demethod",cnt)]]),
-        isolate(input[[paste0("fitType",cnt)]]),
-        isolate(input[[paste0("betaPrior",cnt)]]),
-        isolate(input[[paste0("testType",cnt)]]),
-        isolate(input[[paste0("shrinkage",cnt)]]), sep=",")
-    }
-    else if (isolate(input[[paste0("demethod",cnt)]]) == "EdgeR"){
-      inputconds$demethod_params[cnt]<- paste(
-        isolate(input[[paste0("demethod",cnt)]]),
-        isolate(input[[paste0("edgeR_normfact",cnt)]]),
-        isolate(input[[paste0("dispersion",cnt)]]),
-        isolate(input[[paste0("edgeR_testType",cnt)]]), 
-        "", sep=",")
-    }
-    else if (isolate(input[[paste0("demethod",cnt)]]) == "Limma"){
-      inputconds$demethod_params[cnt] <- paste(
-        isolate(input[[paste0("demethod",cnt)]]),
-        isolate(input[[paste0("limma_normfact",cnt)]]),
-        isolate(input[[paste0("limma_fitType",cnt)]]),
-        isolate(input[[paste0("normBetween",cnt)]]), 
-        "", sep=",")
-    }
     
-    # condition inputs for iterative de analysis
-    inputconds$demethod_params[cnt] <- paste(inputconds$demethod_params[cnt],
-                                             isolate(input[[paste0("scoremethod",cnt)]]),
-                                             isolate(input[[paste0("minscore",cnt)]]),
-                                             isolate(input[[paste0("iterde_norm",cnt)]]), 
-                                             isolate(input[[paste0("iterde",cnt)]]),
-                                             isolate(input[[paste0("logfoldchange",cnt)]]),
-                                             isolate(input[[paste0("padj",cnt)]]),
-                                             isolate(input[[paste0("topstat",cnt)]]), sep = ","
-    )
+    # # condition inputs for iterative de analysis
+    # inputconds$demethod_params[cnt] <- paste(inputconds$demethod_params[cnt],
+    #                                          isolate(input[[paste0("scoremethod",cnt)]]), sep = ","
+    # )
+    # 
+    params <- isolate(input[[paste0("scoremethod",cnt)]])
     
-    # conds <- c(rep(paste0("Cond", 1), 
-    #                length(inputconds$conds[[1]])), 
-    #            rep(paste0("Cond", 2), length(inputconds$conds[[2]])))
-    # cols <- c(paste(inputconds$conds[[1]]), 
-    #           paste(inputconds$conds[[2]]))
-    conds <- metadata[[input$conditions_from_meta1]]
-    cols <- colnames(data)
-    
-    params <- unlist(strsplit(inputconds$demethod_params[1], ","))
-    
-    return(list(conds = conds, cols = cols, params = params))
+    return(list(params = params))
 }
