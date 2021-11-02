@@ -8,16 +8,16 @@ Description: Dprofiler computationally profiles a set of targeted samples by con
              Building on these reference profiles of phenotypic groups, Dprofiler evaluates bulk RNA samples, detect possibly existing anomalies and heterogeneities, and 
              further explores causes and sources of distinct molecular patterns with the aid of single cell maps and other reference gene expression datasets.
 License: MIT + file LICENSE
+Depends: R (>= 3.5.0), Biobase, ggplot2, MuSiC, SignallingSingleCell
+biocViews:
 Imports:
-    AnnotationDbi, DESeq2, DOSE, DT, GenomicRanges, Harman,
-    IRanges, RColorBrewer, RCurl, S4Vectors,
-    SummarizedExperiment, VennDiagram, annotate, apeglm, ashr,
-    clusterProfiler, colourpicker, dplyr, edgeR, enrichplot,
-    ggplot2, gplots, heatmaply, igraph, jsonlite, limma,
-    methods, org.Hs.eg.db, org.Mm.eg.db, plotly, reshape2,
-    shiny, shinyBS, shinybusy, shinydashboard, shinyjs,
-    stringi, sva, waiter, debrowser, SignallingSingleCell, MuSiC, 
-    Biobase, rlang, cluster
+    VennDiagram, dplyr, shinybusy, waiter, 
+    rlang, cluster, Biobase, MuSiC, SignallingSingleCell, debrowser, 
+    ggplot2, jsonlite, limma, plotly, reshape2, shiny, shinydashboard, 
+    shinyjs, DT, colourpicker, ggplot2, AnnotationDbi, DESeq2, Harman,
+    IRanges, RCurl, S4Vectors, SummarizedExperiment, apeglm, ashr,
+    edgeR, gplots, methods, sva
+Remotes:
+    garber-lab/SignallingSingleCell, xuranw/MuSiC
 Encoding: UTF-8
-LazyData: true
 RoxygenNote: 7.1.2
