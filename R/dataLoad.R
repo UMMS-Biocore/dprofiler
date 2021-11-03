@@ -44,52 +44,12 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   # Event for uploading the demo file
   observeEvent(input$demovitiligo, {
     load("demo/demovitiligo.Rda")
-    ldata$sc_count <- readRDS("demo/demovitiligoscdata_trimmed.rds")
+    ldata$sc_count <- demovitiligoscdata
     ldata$count <- demodata
     ldata$meta <- metadatatable
     # rm(demoscdata)
     ldata$prof_count <- demoprofdata
     ldata$prof_meta <- profmetadatatable
-  })
-  
-  # Event for uploading the demo file
-  observeEvent(input$demo, {
-    load("demo/demodata_trimsc_integrated.Rda")
-    # load("demo/demodata_trimsc.Rda")
-    ldata$count <- demodata
-    ldata$meta <- metadatatable
-    ldata$sc_count <- demoscdata
-    rm(demoscdata)
-    ldata$prof_count <- demoprofdata
-    ldata$prof_meta <- profmetadatatable
-  })
-  
-  # Event for uploading the demo file with no single cell data
-  observeEvent(input$demo_nosc, {
-    load("demo/demodata_nosc.Rda")
-    ldata$count <- demodata
-    ldata$meta <- metadatatable
-    ldata$sc_count <- NULL
-    ldata$prof_count <- demoprofdata
-    ldata$prof_meta <- profmetadatatable
-  })
-  
-  # Event for uploading the demo file with no single cell data
-  observeEvent(input$demo_dmeta, {
-    # load("demo/demodata_nosc.Rda")
-    load("demo/demodata_trimsc_integrated.Rda")
-    ldata$count <- demodata
-    ldata$meta <- metadatatable
-    ldata$sc_count <- demoscdata
-    url <- "dmeta-skin.dolphinnext.com/api/v1/projects/skinrnaatlas/data/biosamples/format/biosamples_dprofiler "
-    key <-  "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwZDVmYTEwYi1mNTYzLTQ1MjctOTc2OS02Nzc1MDk5NDA5MmQiLCJzdWIiOiI1ZmUwZDhjOWJhYzZlNjEzZDgxMmZlZmEiLCJleHAiOjE2NjU4MDI5NzksImlhdCI6MTYyOTgwMjk3OX0.irTdQ4wri6q5BWjeskbu0oB5dzsWtiidiFaL18OyJd0qXb_Obb2CQ5FvFG0iYlNnibYd83pHWtPmWYwdyh_dKsw2YS56iSaqkKNkm54g6UlybLggM1eoYrN2vjyevDelfem_GqeDpzKWenQ3BZnvt6LDWwI72hINw24zRSoqjWBAHDcahCHxYDUPBWLZoep_vgEWQnmF3JSJAV_4NJnhSHbVKruyU4lepSfdHMHVVTZXx_e-fdPMzt5JRyLWRvHWKYtsAnk0PIzL50m0kFHlrpopUaivT7NPjVzpd-aQPZk9bsd5y1pA1r7nMlWie-5qVICWbkAZtHmyVPdZRcTodg"
-    data_get <- httr::GET(url, add_headers(Authorization = paste("Bearer", key, sep = " ")))
-    data_text <- httr::content(data_get, "text")
-    data_json <- jsonlite::fromJSON(data_text)
-    ldata$prof_meta <- data_json$data$data
-    non_grep_columns <- c("_id","lastUpdatedUser","owner","perms","id")
-    ldata$prof_meta <- ldata$prof_meta[,!colnames(ldata$prof_meta) %in% non_grep_columns]
-    ldata$prof_count <- readRDS("demo/skinrnaatlas.rds")
   })
   
   # Cell Type Selector Menu for single cell data
