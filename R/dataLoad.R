@@ -48,7 +48,6 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     ldata$sc_count <- demovitiligoscdata
     ldata$count <- demodata
     ldata$meta <- metadatatable
-    rm(demovitiligoscdata)
     ldata$prof_count <- demoprofdata
     ldata$prof_meta <- profmetadatatable
   })
@@ -59,6 +58,7 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     if(!is.null(ldata$sc_count)){
       numeric_columns <- colnames(pData(ldata$sc_count))[sapply(as.data.frame(pData(ldata$sc_count)),is.numeric)]
       character_columns <- colnames(pData(ldata$sc_count))[!sapply(as.data.frame(pData(ldata$sc_count)),is.numeric)]
+      print(numeric_columns)
       list(
         column(2,
                selectInput(session$ns("selectident"), label = "Select Identification", 
@@ -139,7 +139,7 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     
     # check if count table is null
     if(is.null(counttable)) 
-        stop("Please upload the count file")
+      stop("Please upload the count file")
     
   })
   
@@ -173,14 +173,14 @@ dataLoadUI<- function (id) {
     fluidRow(
       column(12,
              column(12,
-             actionButtonDE(ns("uploadFile"), label = "Upload", styleclass = "primary"), 
-             actionButtonDE(ns("demo"),  label = "Load Demo Vitiligo", styleclass = "primary")))
+                    actionButtonDE(ns("uploadFile"), label = "Upload", styleclass = "primary"), 
+                    actionButtonDE(ns("demo"),  label = "Load Demo Vitiligo", styleclass = "primary")))
     ),
     fluidRow(
       column(6,
              fileUploadBox(id, "countdata", "metadata", "Bulk Expression Data"),
              scfileUploadBox(id, "sccountdata", "scRNA Expression Data Object (Optional)"),
-             ),
+      ),
       column(6,
              profilefileUploadBox(id, "profilecountdata", "profilemetadata", 
                                   "profiledmeta", "profiledmetakey", "Reference Bulk Expression Data (Optional)")  
@@ -202,10 +202,7 @@ dataSummaryUI<- function(id) {
   ns <- NS(id)
   list(
     fluidRow(
-      column(12,uiOutput(ns("nextButton")),
-                p(strong("Note:")," We analyze ", strong("lesional (L) and non-lesional (NL) samples of 5 Vitiligo samples."), " We will analyze and score each sample of this dataset ", strong("to reveal critical phenotypic information"), 
-                " for each individual sample. For more information: ", a("PRJNA554241",href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA554241."), " Vitiligo is an autoimmune skin disease defined by T cell–mediated destruction of melanocytes.")
-             ),
+      column(12,uiOutput(ns("nextButton"))),
       shinydashboard::box(title = "Bulk Data Summary", solidHeader = TRUE, status = "info", height = 700,
                           width = 4, 
                           fluidRow(
@@ -345,14 +342,10 @@ getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL
   if (is.null(output)) 
     return(NULL)
   
-  if(is.null(ident) | is.null(UMI_column))
-    return(NULL)
+  # if(is.null(ident) | is.null(UMI_column))
+  #   return(NULL)
   
   if(!is.null(data)){
-    
-    if(any(!c(UMI_column,ident) %in% colnames(pData(data))))
-      return(NULL)
-    
     tsne_data <- pData(data)[,c(ident,"x","y")]
     tsne_data <- as_tibble(tsne_data) %>% group_by_at(1) %>% summarize(x = mean(x), y = mean(y))
     output[[summary]] <- renderTable({
@@ -412,7 +405,7 @@ fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL,
                       
                       helpText(paste0("Upload Data Table")), 
                       tags$div(style = "margin-bottom:-30px",
-                        fileInput(inputId = ns(inputId_count), label = NULL, accept = fileTypes())
+                               fileInput(inputId = ns(inputId_count), label = NULL, accept = fileTypes())
                       ),
                       tags$div(style = "margin-top:-30px;margin-bottom:30px",
                                sepRadio(id, paste0(inputId_count, "Sep"))
@@ -425,7 +418,7 @@ fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL,
                       tags$div(style = "margin-top:-30px",
                                sepRadio(id, paste0(inputId_meta, "Sep"))
                       ),
-                      )
+  )
 }
 
 #' profilefileUploadBox
