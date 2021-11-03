@@ -43,6 +43,8 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   
   # Event for uploading the demo file
   observeEvent(input$demo, {
+    print(system.file("extdata", "demo", "demovitiligo.Rda",
+                      package = "dprofiler"))
     load(system.file("extdata", "demo", "demovitiligo.Rda",
                      package = "dprofiler"))
     print(dim(demovitiligoscdata))
