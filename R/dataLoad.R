@@ -42,7 +42,7 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   })
   
   # Event for uploading the demo file
-  observeEvent(input$demovitiligo, {
+  observeEvent(input$demo, {
     load(system.file("extdata", "demo", "demovitiligo.Rda",
                      package = "dprofiler"))
     ldata$sc_count <- demovitiligoscdata
@@ -174,7 +174,7 @@ dataLoadUI<- function (id) {
       column(12,
              column(12,
              actionButtonDE(ns("uploadFile"), label = "Upload", styleclass = "primary"), 
-             actionButtonDE(ns("demovitiligo"),  label = "Load Demo Vitiligo", styleclass = "primary")))
+             actionButtonDE(ns("demo"),  label = "Load Demo Vitiligo", styleclass = "primary")))
     ),
     fluidRow(
       column(6,
