@@ -178,16 +178,22 @@ selectScRNAConditions<-function(scdata = NULL,
            getScRNAMetaSelector(metadata, session, input),
            getIdentSelectorFromMeta(metadata, session, input, choices = "No Selection"),
            column(3,
-                  selectInput(session$ns('deconvolute_samples'), "Samples", choices = colnames(metadata),
+                  selectInput(session$ns('deconvolute_samples'), 
+                              label = getIconLabel("Samples", message = "select metadata column with samples of origins of cells"),
+                              choices = colnames(metadata),
                               selected = colnames(metadata)[1])
                   ),
            column(3,
-                  selectInput(session$ns("deconvolute_genes"), "DE genes", selected = c("DE Genes Before Prof."),
+                  selectInput(session$ns("deconvolute_genes"), 
+                              label = getIconLabel("DE genes", message = "set of differentially expressed genes"),
+                              selected = c("DE Genes Before Prof."),
                               choices = c("DE Genes Before Prof.","DE Genes After Prof.","Cell Marker Genes"))),
            # conditionalPanel(
            #   (condition <- "input.deconvolute_genes == 'Marker Genes'"),
              column(3,
-                    textInput(session$ns("top_genes"), label = "Top N Markers", value = "1000"))
+                    textInput(session$ns("top_genes"), 
+                              label = getIconLabel("Top N Markers", message = "# of markers for each cel type, only for cell marker genes option"),
+                              value = "1000"))
            #)
     )
     
@@ -261,12 +267,14 @@ getSeriesSelector <- function (metadata = NULL, session = NULL, input = NULL, n 
     list(HTML("<hr style=\"color: white; border:solid 1px white;\">"), 
          br(), column(12, 
                       selectInput(paste0(session$ns("series_from_meta"), n), 
-                                  label = "Select Series", choices = choices, 
+                                  label = getIconLabel("Select Series", message = "dataset of choice"),
+                                  choices = choices, 
                                   multiple = FALSE, 
                                   selected = selectedInput(session$ns("series_from_meta"), n, choices[1], input))),
          column(12, 
                       selectInput(paste0(session$ns("conditions_from_meta"), n), 
-                                  label = "Select Meta", choices = as.list(c("No Selection", colnames(df)[2:col_count])), 
+                                  label = getIconLabel("Select Meta", message = "select metadata column with reference conditions"),
+                                  choices = as.list(c("No Selection", colnames(df)[2:col_count])), 
                                   multiple = FALSE, 
                                   selected = selectedInput(session$ns("conditions_from_meta"), n, default, input)))
          
@@ -321,7 +329,8 @@ getScRNAMetaSelector <- function (metadata = NULL, session = NULL, input = NULL,
     list(HTML("<hr style=\"color: white; border:solid 1px white;\">"), 
          br(), column(12, 
                       selectInput(paste0(session$ns("conditions_from_meta"), n), 
-                                  label = "Select Annotation", choices = as.list(c("No Selection", colnames(df)[2:col_count])), 
+                                  label = getIconLabel("Select Annotation", message = "select metadata columns with cell types or cell annotations"),
+                                  choices = as.list(c("No Selection", colnames(df)[2:col_count])), 
                                   multiple = FALSE, 
                                   selected = selectedInput(session$ns("conditions_from_meta"), n, default, input))))
   }
@@ -402,8 +411,8 @@ getIdentSelectorFromMeta <- function (metadata = NULL, session = NULL, input = N
       choices <- unique(metadata[,selected_meta])
     }
     a <- list(column(12, selectInput(session$ns("condition"), 
-                                    label = "Identifications", 
-                                    choices = choices, multiple = TRUE, selected = choices[1])))
+                                     label = getIconLabel("Identifications", message = "select cell types or cell annotations"),
+                                     choices = choices, multiple = TRUE, selected = choices[1])))
   }
 }
 
