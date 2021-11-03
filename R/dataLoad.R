@@ -43,15 +43,8 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   
   # Event for uploading the demo file
   observeEvent(input$demo, {
-    print(system.file("extdata", "demo", "demovitiligo.Rda",
-                      package = "dprofiler"))
     load(system.file("extdata", "demo", "demovitiligo.Rda",
                      package = "dprofiler"))
-    print(dim(demovitiligoscdata))
-    print(dim(demodata))
-    print(dim(metadatatable))
-    print(dim(demoprofdata))
-    print(dim(profmetadatatable))
     ldata$sc_count <- demovitiligoscdata
     ldata$count <- demodata
     ldata$meta <- metadatatable
@@ -209,7 +202,10 @@ dataSummaryUI<- function(id) {
   ns <- NS(id)
   list(
     fluidRow(
-      column(12,uiOutput(ns("nextButton"))),
+      column(12,uiOutput(ns("nextButton")),
+             p(strong("Note:")," We analyze ", strong("lesional (L) and non-lesional (NL) samples of 5 Vitiligo samples."), " We will analyze and score each sample of this dataset ", strong("to reveal critical phenotypic information"), 
+               " for each individual sample. For more information: ", a("PRJNA554241",href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA554241."), " Vitiligo is an autoimmune skin disease defined by T cell–mediated destruction of melanocytes.")
+      ),
       shinydashboard::box(title = "Bulk Data Summary", solidHeader = TRUE, status = "info", height = 700,
                           width = 4, 
                           fluidRow(
@@ -349,10 +345,14 @@ getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL
   if (is.null(output)) 
     return(NULL)
   
-  # if(is.null(ident) | is.null(UMI_column))
-  #   return(NULL)
+  if(is.null(ident) | is.null(UMI_column))
+    return(NULL)
   
   if(!is.null(data)){
+    
+    if(any(!c(UMI_column,ident) %in% colnames(pData(data))))
+      return(NULL)
+    
     tsne_data <- pData(data)[,c(ident,"x","y")]
     tsne_data <- as_tibble(tsne_data) %>% group_by_at(1) %>% summarize(x = mean(x), y = mean(y))
     output[[summary]] <- renderTable({
