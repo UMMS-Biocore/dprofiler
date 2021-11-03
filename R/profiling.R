@@ -105,6 +105,10 @@ getProfilingUI <- function (id) {
            #          )
            # ),
            tabPanel(title = "Profiling Results",
+                    column(12, 
+                           p(strong("Note:")," Here, we use similarity measures based on silhouette measure and non-negative least squares to calculate ", strong("the membership score of Vitiligo samples using another reference
+                             bulk Vitiligo dataset,"), " revealing similarities of lesional and non-lesional samples across datasets.")
+                    ),
                     fluidRow(
                       shinydashboard::box(title = "Membership Scores",
                                           solidHeader = T, status = "info",  width = 9, collapsible = TRUE,

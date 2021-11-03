@@ -24,6 +24,7 @@ dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, dat
       selected <- selectScRNAConditions(data, session, input)
     } else if(profiling) {
       selected <- selectProfilingConditions(data, metadata, session, input)
+      # selected <- selectConditions(data, metadata, session, input)
     } else {
       selected <- selectConditions(data, metadata, session, input)
     }
@@ -98,6 +99,11 @@ selectConditions<-function(Dataset = NULL,
   selected1 <- selectedSamples(1)
   selected2 <- selectedSamples(2)
   to_return <- list(
+    column(12, 
+           p(strong("Note:")," Differentially expressed genes and ", strong("Membership Scores")," of samples are calculated to iteratively remove samples with low membership scores. Press ", 
+             strong("Start"), " to score lesional and non-lesional samples which results in", strong("P65_NL being removed."), " Here, P65_NL is a non-lesional Vitiligo sample with a low score, suggesting 
+             that its expression profile may ", strong("not match with the phenotypic profile of a non-lesional Vitiligo sample."))
+    ),
     column(12, getMetaSelector(metadata = metadata, session = session, input=input, n = 1),
            getConditionSelectorFromMeta(metadata, session = session, input, 1,
                                         1, allsamples, selected1),
@@ -164,16 +170,20 @@ selectScRNAConditions<-function(scdata = NULL,
   
   # meta data selection pane
   to_return <- list(
+    column(12, 
+           p(strong("Note:")," Here, bulk RNA Deconvolution is used to profiling bulk lesional and non-lesional vitiligo samples with reference skin cell types of Vitiligo (Keratinocyte, Melanocyte, t-cells etc.). ",
+             strong("Membership scores"), " and estimated cell type proportions are concurrantly visualized.")
+    ),
     column(12,
-           getMetaSelector(metadata, session, input),
+           getScRNAMetaSelector(metadata, session, input),
            getIdentSelectorFromMeta(metadata, session, input, choices = "No Selection"),
            column(3,
                   selectInput(session$ns('deconvolute_samples'), "Samples", choices = colnames(metadata),
                               selected = colnames(metadata)[1])
                   ),
            column(3,
-                  selectInput(session$ns("deconvolute_genes"), "DE genes", selected = c("DE Genes (Homogeneous Conds.)"),
-                              choices = c("DE Genes (Heterogeneous Conds.)","DE Genes (Homogeneous Conds.)","Marker Genes"))),
+                  selectInput(session$ns("deconvolute_genes"), "DE genes", selected = c("DE Genes Before Prof."),
+                              choices = c("DE Genes Before Prof.","DE Genes After Prof.","Cell Marker Genes"))),
            # conditionalPanel(
            #   (condition <- "input.deconvolute_genes == 'Marker Genes'"),
              column(3,
@@ -204,6 +214,10 @@ selectProfilingConditions<-function(Dataset = NULL,
   if (is.null(Dataset)) return(NULL)
   
   to_return <- list(
+    column(12, 
+           p(strong("Note:")," Here, we use similarity measures based on silhouette measure and non-negative least squares to calculate ", strong("the membership score of Vitiligo samples using another reference
+             bulk Vitiligo dataset,"), " revealing similarities of lesional and non-lesional samples across datasets.")
+    ),
     column(6,
            getSeriesSelector(metadata, session, input)
     ),
@@ -243,6 +257,7 @@ getSeriesSelector <- function (metadata = NULL, session = NULL, input = NULL, n 
     } else {
       choices <- unique(metadata[,series_column])
     }
+    default <- ifelse("treatment" %in% colnames(df), "treatment", "Selection 2")
     list(HTML("<hr style=\"color: white; border:solid 1px white;\">"), 
          br(), column(12, 
                       selectInput(paste0(session$ns("series_from_meta"), n), 
@@ -253,7 +268,7 @@ getSeriesSelector <- function (metadata = NULL, session = NULL, input = NULL, n 
                       selectInput(paste0(session$ns("conditions_from_meta"), n), 
                                   label = "Select Meta", choices = as.list(c("No Selection", colnames(df)[2:col_count])), 
                                   multiple = FALSE, 
-                                  selected = selectedInput(session$ns("conditions_from_meta"), n, "Selection 2", input)))
+                                  selected = selectedInput(session$ns("conditions_from_meta"), n, default, input)))
          
          )
   }
@@ -282,6 +297,33 @@ getMetaSelector <- function (metadata = NULL, session = NULL, input = NULL, n = 
                                   label = "Select Meta", choices = as.list(c("No Selection", colnames(df)[2:col_count])), 
                                   multiple = FALSE, 
                                   selected = selectedInput(session$ns("conditions_from_meta"), n, "Selection 2", input))))
+  }
+}
+
+#' getScRNAMetaSelector
+#'
+#' Return the sample selection box using meta data table of scRNA data.
+#' 
+#' @param metadata meta data table
+#' @param session session
+#' @param input input params 
+#' @param n the box number
+#'
+#' @examples
+#'      x <- getScRNAMetaSelector()
+#'      
+getScRNAMetaSelector <- function (metadata = NULL, session = NULL, input = NULL, n = 0) 
+{
+  if (!is.null(metadata)) {
+    df <- metadata
+    col_count <- length(colnames(df))
+    default <- ifelse("CellType" %in% colnames(df), "CellType", "Selection 2")
+    list(HTML("<hr style=\"color: white; border:solid 1px white;\">"), 
+         br(), column(12, 
+                      selectInput(paste0(session$ns("conditions_from_meta"), n), 
+                                  label = "Select Annotation", choices = as.list(c("No Selection", colnames(df)[2:col_count])), 
+                                  multiple = FALSE, 
+                                  selected = selectedInput(session$ns("conditions_from_meta"), n, default, input))))
   }
 }
 
@@ -346,13 +388,12 @@ getConditionSelectorFromMeta <- function (metadata = NULL, session = NULL, input
 #' @param session session
 #' @param input input 
 #' @param choices choices
-#' @param selected selected
 #'
 #' @examples
 #'      x <- getIdentSelectorFromMeta()
 #'      
 getIdentSelectorFromMeta <- function (metadata = NULL, session = NULL, input = NULL, 
-                                      choices = NULL, selected = NULL){
+                                      choices = NULL){
   if (!is.null(metadata)) {
     selected_meta <- selectedInput(session$ns("conditions_from_meta"), 0, NULL, input)
     if (is.null(selected_meta)) 
@@ -363,7 +404,7 @@ getIdentSelectorFromMeta <- function (metadata = NULL, session = NULL, input = N
     a <- list(column(12, selectInput(session$ns("condition"), 
                                     label = "Identifications", 
                                     choices = choices, multiple = TRUE, selected = choices[1])))
-    }
+  }
 }
 
 #  getMethodDetails

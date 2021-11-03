@@ -17,8 +17,8 @@ getScoreDetails <- function(output = NULL, session = NULL,
   
   output[[plotname]] <- renderPlotly({
     dat <- rbind(
-      data.frame(IterDEscores, type = "Scores of Pure Conditions"),
-      data.frame(DEscores, type = "Scores of Impure Conditions")
+      data.frame(IterDEscores, type = "Scores Before Profiling"),
+      data.frame(DEscores, type = "Scores After Profiling")
     )
     dat$Scores <- as.numeric(dat$Scores)
     p <- ggplot(data=dat, aes(x = reorder(Samples,Scores), y = Scores)) +

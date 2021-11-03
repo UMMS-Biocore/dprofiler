@@ -8,8 +8,7 @@ getIdentSelectorFromMeta(
   metadata = NULL,
   session = NULL,
   input = NULL,
-  choices = NULL,
-  selected = NULL
+  choices = NULL
 )
 }
 \arguments{
@@ -20,8 +19,6 @@ getIdentSelectorFromMeta(
 \item{input}{input}
 
 \item{choices}{choices}
-
-\item{selected}{selected}
 }
 \description{
 Select identification from single cell metadata.

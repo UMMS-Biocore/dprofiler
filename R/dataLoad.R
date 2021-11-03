@@ -42,14 +42,54 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   })
   
   # Event for uploading the demo file
-  observeEvent(input$demo, {
-    load(system.file("extdata", "demo", "demovitiligo.Rda",
-                     package = "dprofiler"))
-    ldata$sc_count <- demovitiligoscdata
+  observeEvent(input$demovitiligo, {
+    load("demo/demovitiligo.Rda")
+    ldata$sc_count <- readRDS("demo/demovitiligoscdata_trimmed.rds")
     ldata$count <- demodata
     ldata$meta <- metadatatable
+    # rm(demoscdata)
     ldata$prof_count <- demoprofdata
     ldata$prof_meta <- profmetadatatable
+  })
+  
+  # Event for uploading the demo file
+  observeEvent(input$demo, {
+    load("demo/demodata_trimsc_integrated.Rda")
+    # load("demo/demodata_trimsc.Rda")
+    ldata$count <- demodata
+    ldata$meta <- metadatatable
+    ldata$sc_count <- demoscdata
+    rm(demoscdata)
+    ldata$prof_count <- demoprofdata
+    ldata$prof_meta <- profmetadatatable
+  })
+  
+  # Event for uploading the demo file with no single cell data
+  observeEvent(input$demo_nosc, {
+    load("demo/demodata_nosc.Rda")
+    ldata$count <- demodata
+    ldata$meta <- metadatatable
+    ldata$sc_count <- NULL
+    ldata$prof_count <- demoprofdata
+    ldata$prof_meta <- profmetadatatable
+  })
+  
+  # Event for uploading the demo file with no single cell data
+  observeEvent(input$demo_dmeta, {
+    # load("demo/demodata_nosc.Rda")
+    load("demo/demodata_trimsc_integrated.Rda")
+    ldata$count <- demodata
+    ldata$meta <- metadatatable
+    ldata$sc_count <- demoscdata
+    url <- "dmeta-skin.dolphinnext.com/api/v1/projects/skinrnaatlas/data/biosamples/format/biosamples_dprofiler "
+    key <-  "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwZDVmYTEwYi1mNTYzLTQ1MjctOTc2OS02Nzc1MDk5NDA5MmQiLCJzdWIiOiI1ZmUwZDhjOWJhYzZlNjEzZDgxMmZlZmEiLCJleHAiOjE2NjU4MDI5NzksImlhdCI6MTYyOTgwMjk3OX0.irTdQ4wri6q5BWjeskbu0oB5dzsWtiidiFaL18OyJd0qXb_Obb2CQ5FvFG0iYlNnibYd83pHWtPmWYwdyh_dKsw2YS56iSaqkKNkm54g6UlybLggM1eoYrN2vjyevDelfem_GqeDpzKWenQ3BZnvt6LDWwI72hINw24zRSoqjWBAHDcahCHxYDUPBWLZoep_vgEWQnmF3JSJAV_4NJnhSHbVKruyU4lepSfdHMHVVTZXx_e-fdPMzt5JRyLWRvHWKYtsAnk0PIzL50m0kFHlrpopUaivT7NPjVzpd-aQPZk9bsd5y1pA1r7nMlWie-5qVICWbkAZtHmyVPdZRcTodg"
+    data_get <- httr::GET(url, add_headers(Authorization = paste("Bearer", key, sep = " ")))
+    data_text <- httr::content(data_get, "text")
+    data_json <- jsonlite::fromJSON(data_text)
+    ldata$prof_meta <- data_json$data$data
+    non_grep_columns <- c("_id","lastUpdatedUser","owner","perms","id")
+    ldata$prof_meta <- ldata$prof_meta[,!colnames(ldata$prof_meta) %in% non_grep_columns]
+    ldata$prof_count <- readRDS("demo/skinrnaatlas.rds")
   })
   
   # Cell Type Selector Menu for single cell data
@@ -58,7 +98,6 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     if(!is.null(ldata$sc_count)){
       numeric_columns <- colnames(pData(ldata$sc_count))[sapply(as.data.frame(pData(ldata$sc_count)),is.numeric)]
       character_columns <- colnames(pData(ldata$sc_count))[!sapply(as.data.frame(pData(ldata$sc_count)),is.numeric)]
-      print(numeric_columns)
       list(
         column(2,
                selectInput(session$ns("selectident"), label = "Select Identification", 
@@ -174,7 +213,10 @@ dataLoadUI<- function (id) {
       column(12,
              column(12,
              actionButtonDE(ns("uploadFile"), label = "Upload", styleclass = "primary"), 
-             actionButtonDE(ns("demo"),  label = "Load Demo Vitiligo", styleclass = "primary")))
+             actionButtonDE(ns("demovitiligo"),  label = "Load Demo PRJNA554241 (package)", styleclass = "primary"),
+             actionButtonDE(ns("demo"),  label = "Load Demo PRJNA554241", styleclass = "primary"),
+             actionButtonDE(ns("demo_nosc"),  label = "Load Demo PRJNA554241 (no scRNA)", styleclass = "primary"),
+             actionButtonDE(ns("demo_dmeta"),  label = "Load Demo PRJNA554241 (Dmeta)", styleclass = "primary")))
     ),
     fluidRow(
       column(6,
@@ -202,7 +244,10 @@ dataSummaryUI<- function(id) {
   ns <- NS(id)
   list(
     fluidRow(
-      column(12,uiOutput(ns("nextButton"))),
+      column(12,uiOutput(ns("nextButton")),
+                p(strong("Note:")," We analyze ", strong("lesional (L) and non-lesional (NL) samples of 5 Vitiligo samples."), " We will analyze and score each sample of this dataset ", strong("to reveal critical phenotypic information"), 
+                " for each individual sample. For more information: ", a("PRJNA554241",href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA554241."), " Vitiligo is an autoimmune skin disease defined by T cell–mediated destruction of melanocytes.")
+             ),
       shinydashboard::box(title = "Bulk Data Summary", solidHeader = TRUE, status = "info", height = 700,
                           width = 4, 
                           fluidRow(
@@ -342,10 +387,14 @@ getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL
   if (is.null(output)) 
     return(NULL)
   
-  # if(is.null(ident) | is.null(UMI_column))
-  #   return(NULL)
+  if(is.null(ident) | is.null(UMI_column))
+    return(NULL)
   
   if(!is.null(data)){
+    
+    if(any(!c(UMI_column,ident) %in% colnames(pData(data))))
+      return(NULL)
+    
     tsne_data <- pData(data)[,c(ident,"x","y")]
     tsne_data <- as_tibble(tsne_data) %>% group_by_at(1) %>% summarize(x = mean(x), y = mean(y))
     output[[summary]] <- renderTable({

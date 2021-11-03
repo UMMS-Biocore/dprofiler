@@ -110,10 +110,15 @@ getDEResultsUI<- function (id) {
                tabPanel(title = "Conditions",
                    condSelectUI()
                ),
-               tabPanel(title = "Profiling Results",
+               tabPanel(title = "Profiling Summary",
                         fluidRow(
                             shinydashboard::box(title = "Summary",
                                                 solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
+                                                column(12, 
+                                                       p(strong("Note:")," Differentially expressed genes and ", strong("Membership Scores")," of samples are calculated to iteratively remove samples with low membership scores. Press ", 
+                                                         strong("Start"), " to score lesional and non-lesional samples which results in", strong("P65_NL being removed."), " Here, P65_NL is a non-lesional Vitiligo sample with a low score, suggesting 
+                                                         that its expression profile may ", strong("not match with the phenotypic profile of a non-lesional Vitiligo sample."))
+                                                ),
                                                 column(4,uiOutput(ns("HomogeneitySummary"))),
                                                 column(4,htmlOutput(ns("HomogeneitySummaryIter"))),
                                                 column(4,htmlOutput(ns("HomogeneitySummaryDE")))
@@ -122,9 +127,9 @@ getDEResultsUI<- function (id) {
                                                 solidHeader = T, status = "info",  width = 6, collapsible = TRUE,
                                                 plotOutput(ns("HomogeneityVenn")),
                                                 column(12,
-                                                       downloadButton(ns("downloadBeforeGenes"), label = "Initial DEgenes"),
-                                                       downloadButton(ns("downloadOverlapGenes"), label = "Overlapping DE genes"),
-                                                       downloadButton(ns("downloadAfterGenes"), label = "Final DE genes"),
+                                                       downloadButton(ns("downloadBeforeGenes"), label = "DEgenes before Prof."),
+                                                       downloadButton(ns("downloadOverlapGenes"), label = "DE genes (Overlapping)"),
+                                                       downloadButton(ns("downloadAfterGenes"), label = "DE genes after Prof."),
                                                 )
                             ),
                             shinydashboard::box(title = "Membership Scores",
@@ -144,7 +149,7 @@ getDEResultsUI<- function (id) {
                         ),
                         value = "heterogeneity"
                ),
-               tabPanel(title = "Impure (Heterogeneous) Conditions",
+               tabPanel(title = "Results before Profiling",
                         fluidRow(
                             shinydashboard::box(title = "Differentially Expressed Genes",
                                                 solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
@@ -154,7 +159,7 @@ getDEResultsUI<- function (id) {
                             uiOutput(ns("maindeplot"))
                         )               
                         ),
-               tabPanel(title = "Pure (Homogeneous) Conditions",
+               tabPanel(title = "Results before Profiling",
                         fluidRow(
                             shinydashboard::box(title = "Differentially Expressed Genes",
                                                 solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
