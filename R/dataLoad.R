@@ -58,7 +58,6 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     if(!is.null(ldata$sc_count)){
       numeric_columns <- colnames(pData(ldata$sc_count))[sapply(as.data.frame(pData(ldata$sc_count)),is.numeric)]
       character_columns <- colnames(pData(ldata$sc_count))[!sapply(as.data.frame(pData(ldata$sc_count)),is.numeric)]
-      print(numeric_columns)
       list(
         column(2,
                selectInput(session$ns("selectident"), label = "Select Identification", 
