@@ -41,7 +41,7 @@ dprofilerUI <- function() {
                                                   menuSubItem("Comparative Profiling", tabName = "comparativeanalysis"),
                                                   menuSubItem("FAQ", tabName ="FAQ")
                                          ),
-                                         menuItem("Data Upload", icon = icon("upload"), tabName = "Upload", selected = TRUE ),
+                                         menuItem("Data Upload", icon = icon("upload"), tabName = "Upload", selected = TRUE),
                                          menuItem("Data Processing", icon = icon("filter"), tabName = "DataProcessing"),
                                          menuItem("Computational Profiling", icon = icon("dna"), tabName = "DEAnalysis"),
                                          menuItem("Cellular Comp. Analysis", icon = icon("chart-bar"), tabName = "CellComp"),
