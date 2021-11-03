@@ -45,6 +45,11 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   observeEvent(input$demo, {
     load(system.file("extdata", "demo", "demovitiligo.Rda",
                      package = "dprofiler"))
+    print(dim(demovitiligoscdata))
+    print(dim(demodata))
+    print(dim(metadatatable))
+    print(dim(demoprofdata))
+    print(dim(profmetadatatable))
     ldata$sc_count <- demovitiligoscdata
     ldata$count <- demodata
     ldata$meta <- metadatatable
