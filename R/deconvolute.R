@@ -45,9 +45,9 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
 
   # Deconvolution
   mixtures <- reactive({
-      if(isolate(input$deconvolute_genes) == "DE Genes (Homogeneous Conds.)"){
+      if(isolate(input$deconvolute_genes) == "DE Genes After Prof."){
         degenes <- dc()$IterDEgenes
-      } else if(isolate(input$deconvolute_genes) == "DE Genes (Heterogeneous Conds.)"){
+      } else if(isolate(input$deconvolute_genes) == "DE Genes Before Prof."){
         degenes <- dc()$DEgenes
       } else {
         degenes <- getAllMarkerGenes(scdata, dc()$init_dedata, input)
@@ -60,6 +60,7 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
   # prepare heat data
   data_de_tmm <- reactive({
     marker_genes <- getMarkerGenes(scdata, dc()$IterDEgenes, input)
+    if(is.null(marker_genes)) return(NULL)
     # heatdata <- getNormalizedMatrix(dc()$init_dedata[,dc()$cols], method = "TMM")
     # heatdata <- prepHeatData(heatdata, input)
     heatdata <- prepHeatData(dc()$init_dedata[,dc()$cols], input)
@@ -68,17 +69,19 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
   
   output$heatmap <- renderPlotly({
     if(!is.null(data_de_tmm())){
-      withProgress(message = 'Drawing Heatmap', detail = "interactive", value = 0, {
-        runHeatmap(input, session, data_de_tmm())
-      })
+      if(nrow(data_de_tmm()) > 1 & ncol(data_de_tmm()) > 1)
+        withProgress(message = 'Drawing Heatmap', detail = "interactive", value = 0, {
+          runHeatmap(input, session, data_de_tmm())
+        })
     }
   })
   
   output$heatmap2 <- renderPlot({
     if(!is.null(data_de_tmm())){
-      withProgress(message = 'Drawing Heatmap', detail = "non-interactive", value = 0, {
-        runHeatmap2(input, session, data_de_tmm())
-      })
+      if(nrow(data_de_tmm()) > 1 & ncol(data_de_tmm()) > 1)
+        withProgress(message = 'Drawing Heatmap', detail = "non-interactive", value = 0, {
+          runHeatmap2(input, session, data_de_tmm())
+        })
     }
   })
   
@@ -132,9 +135,9 @@ getDeconvoluteUI<- function (id) {
   list(
     tabBox(id = "DeconvoluteBox",
            width = NULL,
-           tabPanel(title = "Conditions",
+           tabPanel(title = "Mixture Conditions",
                     fluidRow(
-                      shinydashboard::box(title = "Select Conditions",
+                      shinydashboard::box(title = "Select Annotations",
                                           solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
                                           uiOutput(ns("conditionSelector")),
                                           column(4,actionButtonDE("deconvolute", "Start", 
@@ -148,6 +151,8 @@ getDeconvoluteUI<- function (id) {
                     fluidRow(
                       shinydashboard::box(title = "RNA Deconvolution",
                                           solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
+                                          p(strong("Note:"), " P65_NL has a low membership score and ", strong("estimated melanocyte proportion of P65_NL is lower than other non-lesional samples"), 
+                                            " suggesting that profile of P65_NL might be similar to lesional samples due to ", strong("its melanocytes being low in number.")),
                                           DT::dataTableOutput(ns("MembershipScoresIterDE"))
                       ),
                       uiOutput(ns("heatmapUI"))
@@ -274,7 +279,9 @@ deconvolute <- function(data = NULL, DEgenes = NULL, columns = NULL, scdata = NU
 #'     x <- getMarkerGenes()
 #'     
 getMarkerGenes <- function(scdata = NULL, IterDEgenes = NULL, input = NULL){
-  if (is.null(scdata)) return(NULL)
+  
+  if (is.null(scdata) | is.null(input$select_celltype)) 
+    return(NULL)
   
   if(!is.null(IterDEgenes)){
     featuresData <- fData(scdata)[rownames(fData(scdata)) %in% IterDEgenes,]

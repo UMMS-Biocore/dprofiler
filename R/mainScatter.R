@@ -116,14 +116,15 @@ getMainPlot <- function(input = NULL, output = NULL, session = NULL, mainname = 
                         width = NULL, plotdata = NULL,
                         which_genes = NULL, DEgenes = NULL, IterDEgenes = NULL){
   if (is.null(input)) return(NULL)
-  
+  titles <- list(Final = "Genes (Only) After Profiling", Initial = "Genes (Only) Before Profiling", Overlap = "Overlapping Genes")
   mainnameplot <- paste0(mainname, "plot")
   output[[mainnameplot]] <- renderUI({
     list(
       column(width,
              shinydashboard::box(
                collapsible = TRUE, 
-               title = paste(which_genes, "Genes Main Plots", seo = " "), 
+               title = ifelse(is.null(which_genes),"Main Plots", titles[[which_genes]]),
+               #title = paste(which_genes, "Genes Main Plots", seo = " "), 
                status = "primary", 
                solidHeader = TRUE, width = NULL, draggable = TRUE, 
                column(12,

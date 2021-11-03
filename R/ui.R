@@ -12,7 +12,6 @@ dprofilerUI <- function() {
   dbHeader <- shinydashboard::dashboardHeader(titleWidth = 250)
   dbHeader$children[[2]]$children <- tags$a(style='color: white;',
                                             id="top_logo" , "Dprofiler v1.0.0")
-  # addResourcePath(prefix = "www", directoryPath = "www/")
   addResourcePath(prefix = "www", directoryPath = system.file("extdata",
                                                               "www", package = "dprofiler"))
   dprofiler <- (fluidPage(
@@ -42,7 +41,7 @@ dprofilerUI <- function() {
                                                   menuSubItem("Comparative Profiling", tabName = "comparativeanalysis"),
                                                   menuSubItem("FAQ", tabName ="FAQ")
                                          ),
-                                         menuItem("Data Upload", icon = icon("upload"), tabName = "Upload"),
+                                         menuItem("Data Upload", icon = icon("upload"), tabName = "Upload", selected = TRUE),
                                          menuItem("Data Processing", icon = icon("filter"), tabName = "DataProcessing"),
                                          menuItem("Computational Profiling", icon = icon("dna"), tabName = "DEAnalysis"),
                                          menuItem("Cellular Comp. Analysis", icon = icon("chart-bar"), tabName = "CellComp"),
