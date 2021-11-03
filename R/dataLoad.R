@@ -47,7 +47,7 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     ldata$sc_count <- demovitiligoscdata
     ldata$count <- demodata
     ldata$meta <- metadatatable
-    # rm(demoscdata)
+    rm(demovitiligoscdata)
     ldata$prof_count <- demoprofdata
     ldata$prof_meta <- profmetadatatable
   })
@@ -173,10 +173,7 @@ dataLoadUI<- function (id) {
       column(12,
              column(12,
              actionButtonDE(ns("uploadFile"), label = "Upload", styleclass = "primary"), 
-             actionButtonDE(ns("demovitiligo"),  label = "Load Demo PRJNA554241 (package)", styleclass = "primary"),
-             actionButtonDE(ns("demo"),  label = "Load Demo PRJNA554241", styleclass = "primary"),
-             actionButtonDE(ns("demo_nosc"),  label = "Load Demo PRJNA554241 (no scRNA)", styleclass = "primary"),
-             actionButtonDE(ns("demo_dmeta"),  label = "Load Demo PRJNA554241 (Dmeta)", styleclass = "primary")))
+             actionButtonDE(ns("demovitiligo"),  label = "Load Demo Vitiligo", styleclass = "primary")))
     ),
     fluidRow(
       column(6,
