@@ -12,7 +12,9 @@
 #'
 #' @examples
 #'     x <- dprofilerprofiling()
-#'
+#'     
+#' @export
+#' 
 dprofilerprofiling <- function(input = NULL, output = NULL, session = NULL, dc = NULL, profiledata = NULL,
                                profilemetadata = NULL, parent_session = NULL) {
   if(is.null(dc)) return(NULL)
@@ -80,7 +82,9 @@ dprofilerprofiling <- function(input = NULL, output = NULL, session = NULL, dc =
 #' 
 #' @examples
 #'     x <- getProfilingUI("profiling")
-#'
+#'     
+#' @export
+#' 
 getProfilingUI <- function (id) {
   ns <- NS(id)
   list(
@@ -134,6 +138,8 @@ getProfilingUI <- function (id) {
 #' @examples
 #'     x <- getProfileScoreDetails()
 #'     
+#' @export
+#'     
 getProfileScoreDetails <- function(output = NULL, session = NULL, plotname = NULL, scores = NULL) {
   if(is.null(output)) return(NULL)
   
@@ -174,6 +180,8 @@ getProfileScoreDetails <- function(output = NULL, session = NULL, plotname = NUL
 #'
 #' @examples
 #'      x <- getProfileScores()
+#'     
+#' @export
 #' 
 getProfileScores <- function(dc = NULL, profiledata = NULL, profilemetadata = NULL, params = NULL){
   if(is.null(dc)) return(NULL)
@@ -253,7 +261,9 @@ getProfileScores <- function(dc = NULL, profiledata = NULL, profilemetadata = NU
 #'
 #' @examples
 #'      x <- getExpressionProfiles()
-#'      
+#'     
+#' @export
+#'       
 getExpressionProfiles <- function(deres = NULL, data = NULL, columns = NULL, conds = NULL){
   if(is.null(deres)) return(NULL)
   
@@ -285,6 +295,9 @@ getExpressionProfiles <- function(deres = NULL, data = NULL, columns = NULL, con
 #'
 #' @examples
 #'      x <- external_silhouette()
+#'     
+#' @export
+#' 
 external_silhouette <- function(cluster = NULL, dist2 = NULL){
   if(is.null(cluster)) return(NULL)
   
@@ -316,7 +329,9 @@ external_silhouette <- function(cluster = NULL, dist2 = NULL){
 #'
 #' @examples
 #'      x <- getProfilingParameter()
-#'      
+#'     
+#' @export
+#' 
 getProfilingParameter <- function(session = NULL, input = NULL) {
   
     if (is.null(data)) return(NULL)

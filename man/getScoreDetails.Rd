@@ -28,5 +28,5 @@ get score details of Iterative DE analysis
 }
 \examples{
      x <- getScoreDetails()
-     
+    
 }

@@ -37,5 +37,5 @@ Module to perform and visualize Iterative DE results.
 }
 \examples{
     x <- dprofilerdeanalysis()
-
+    
 }

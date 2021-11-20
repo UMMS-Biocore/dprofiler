@@ -18,5 +18,5 @@ display venn diagram
 }
 \examples{
      x <- display_venn()
-     
+    
 }

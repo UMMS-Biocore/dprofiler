@@ -14,5 +14,5 @@ Creates panels to upload the data. Adapted from debrowser::dataLoadUI().
 }
 \examples{
     x <- dataLoadUI("load")
-
+    
 }

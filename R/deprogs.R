@@ -13,7 +13,9 @@
 #'
 #' @examples
 #'     x <- dprofilerdeanalysis()
-#'
+#'     
+#' @export
+#' 
 dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL, 
                                 data = NULL, columns = NULL, conds = NULL, params = NULL, 
                                 parent_session = NULL){
@@ -101,7 +103,9 @@ dprofilerdeanalysis <- function(input = NULL, output = NULL, session = NULL,
 #' 
 #' @examples
 #'     x <- getDEResultsUI("deresults")
-#'
+#'     
+#' @export
+#' 
 getDEResultsUI<- function (id) {
     ns <- NS(id)
     list(
@@ -181,6 +185,8 @@ getDEResultsUI<- function (id) {
 #' @examples
 #'     x <- cutOffSelectionUI("cutoff")
 #'     
+#' @export
+#' 
 cutOffSelectionUI <- function(id){
     ns <- NS(id)
     list(
@@ -199,6 +205,8 @@ cutOffSelectionUI <- function(id){
 #' @examples
 #'     x <- ScoreCutOffSelectionUI("cutoff")
 #'     
+#' @export
+#'   
 ScoreCutOffSelectionUI <- function(id){
     ns <- NS(id)
     list(
@@ -219,6 +227,8 @@ ScoreCutOffSelectionUI <- function(id){
 #' @examples
 #'     x <- getDEgenesDownloadButtons()
 #'     
+#' @export
+#'    
 getDEgenesDownloadButtons <- function(output = NULL, session = NULL,  DEgenes = NULL, IterDEgenes = NULL){
     if(is.null(DEgenes)) return(NULL)
     
@@ -256,7 +266,9 @@ getDEgenesDownloadButtons <- function(output = NULL, session = NULL,  DEgenes = 
 #'
 #' @examples
 #'      x <- runDE()
-#'      
+#'     
+#' @export
+#'     
 runDE <- function (data = NULL, columns = NULL, conds = NULL, params = NULL) 
 {
     if (is.null(data)) 
@@ -283,7 +295,9 @@ runDE <- function (data = NULL, columns = NULL, conds = NULL, params = NULL)
 #'
 #' @examples
 #'      x <- runMultipleDE()
-#'      
+#'     
+#' @export
+#'     
 runMultipleDE <- function (data = NULL, columns = NULL, conds = NULL, params = NULL) 
 {
     if (is.null(data)) 
@@ -328,7 +342,9 @@ runMultipleDE <- function (data = NULL, columns = NULL, conds = NULL, params = N
 #'
 #' @examples
 #'      x <- runLimma()
-#'      
+#'     
+#' @export
+#'     
 runLimma <- function (data = NULL, columns = NULL, conds = NULL, params = NULL) 
 {
     if (is.null(data)) 

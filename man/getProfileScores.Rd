@@ -25,5 +25,5 @@ Calculate the profiling scores
 }
 \examples{
      x <- getProfileScores()
-
+    
 }

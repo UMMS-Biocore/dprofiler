@@ -14,5 +14,5 @@ Creates data table and figures to summarize uploaded data
 }
 \examples{
     x <- dataProfileSummaryUI("load")
-
+    
 }

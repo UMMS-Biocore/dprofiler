@@ -21,5 +21,5 @@ as a mainplot in dprofiler. Adapted from debrowser::debrowsermainplot()
 }
 \examples{
     x <- dprofilermainplot()
-
+    
 }

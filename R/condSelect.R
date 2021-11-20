@@ -11,7 +11,9 @@
 #'
 #' @examples
 #'     x <- dprofilercondselect()
-#'
+#'     
+#' @export
+#' 
 dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, data = NULL, metadata = NULL, profiling = FALSE) {
   if (is.null(data)) return(NULL)
   
@@ -54,7 +56,9 @@ dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, dat
 #'
 #' @examples
 #'     x <- condSelectUI()
-#'
+#'     
+#' @export
+#' 
 condSelectUI<- function(){
   list(
     fluidRow(
@@ -81,7 +85,9 @@ condSelectUI<- function(){
 #'
 #' @examples
 #'     x<- selectConditions()
-#'
+#'     
+#' @export
+#' 
 selectConditions<-function(Dataset = NULL,
                            metadata = NULL,
                            session = NULL,
@@ -157,7 +163,9 @@ selectConditions<-function(Dataset = NULL,
 #'
 #' @examples
 #'     x<- selectScRNAConditions()
-#'
+#'     
+#' @export
+#' 
 selectScRNAConditions<-function(scdata = NULL,
                                 session = NULL,
                                 input = NULL) {
@@ -212,7 +220,9 @@ selectScRNAConditions<-function(scdata = NULL,
 #'
 #' @examples
 #'     x<- selectProfilingConditions()
-#'
+#'     
+#' @export
+#' 
 selectProfilingConditions<-function(Dataset = NULL,
                            metadata = NULL,
                            session = NULL,
@@ -251,7 +261,9 @@ selectProfilingConditions<-function(Dataset = NULL,
 #'
 #' @examples
 #'      x <- getSeriesSelector()
-#'      
+#'     
+#' @export
+#'     
 getSeriesSelector <- function (metadata = NULL, session = NULL, input = NULL, n = 0) 
 {
   if(!is.null(metadata)){
@@ -293,7 +305,9 @@ getSeriesSelector <- function (metadata = NULL, session = NULL, input = NULL, n 
 #'
 #' @examples
 #'      x <- getMetaSelector()
-#'      
+#'     
+#' @export
+#'    
 getMetaSelector <- function (metadata = NULL, session = NULL, input = NULL, n = 0) 
 {
   if (!is.null(metadata)) {
@@ -319,7 +333,9 @@ getMetaSelector <- function (metadata = NULL, session = NULL, input = NULL, n = 
 #'
 #' @examples
 #'      x <- getScRNAMetaSelector()
-#'      
+#'     
+#' @export
+#'    
 getScRNAMetaSelector <- function (metadata = NULL, session = NULL, input = NULL, n = 0) 
 {
   if (!is.null(metadata)) {
@@ -350,7 +366,9 @@ getScRNAMetaSelector <- function (metadata = NULL, session = NULL, input = NULL,
 #'
 #' @examples
 #'      x <- getConditionSelectorFromMeta()
-#'      
+#'     
+#' @export
+#'     
 getConditionSelectorFromMeta <- function (metadata = NULL, session = NULL, input = NULL, index = 1, num = 0, 
                                           choices = NULL, selected = NULL) 
 {
@@ -400,6 +418,8 @@ getConditionSelectorFromMeta <- function (metadata = NULL, session = NULL, input
 #'
 #' @examples
 #'      x <- getIdentSelectorFromMeta()
+#'     
+#' @export
 #'      
 getIdentSelectorFromMeta <- function (metadata = NULL, session = NULL, input = NULL, 
                                       choices = NULL){
@@ -426,7 +446,9 @@ getIdentSelectorFromMeta <- function (metadata = NULL, session = NULL, input = N
 #' 
 #' @examples
 #'     x <- getMethodDetails()
-#'
+#'     
+#' @export
+#' 
 getMethodDetails <- function(num = 0, session = NULL, input = NULL) {
   if (num > 0)
     list(
@@ -499,7 +521,9 @@ getMethodDetails <- function(num = 0, session = NULL, input = NULL) {
 #' 
 #' @examples
 #'     x <- getIterMethodDetails()
-#'
+#'     
+#' @export
+#' 
 getIterMethodDetails <- function(num = 0, session = NULL, input = NULL) {
   if (num > 0)
     list(
@@ -552,7 +576,9 @@ getIterMethodDetails <- function(num = 0, session = NULL, input = NULL) {
 #' 
 #' @examples
 #'     x <- getProfilingMethodDetails()
-#'
+#'     
+#' @export
+#' 
 getProfilingMethodDetails <- function(num = 0, session = NULL, input = NULL) {
   if (num > 0)
     list(
@@ -573,7 +599,9 @@ getProfilingMethodDetails <- function(num = 0, session = NULL, input = NULL) {
 #' 
 #' @examples
 #'     x <- prepDataContainer()
-#'
+#'     
+#' @export
+#' 
 prepDataContainer <- function(data = NULL, input = NULL, session = NULL) {
   if (is.null(data)) return(NULL)
   
@@ -660,7 +688,9 @@ prepDataContainer <- function(data = NULL, input = NULL, session = NULL) {
 #'
 #' @param label label
 #' @param message message
-#'
+#'     
+#' @export
+#' 
 getIconLabel <- function(label = NULL, message = NULL){
   
   icon_label <- tags$span(label, 

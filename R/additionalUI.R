@@ -146,6 +146,8 @@ dataLCFUI<- function (id) {
 #' @examples
 #'     x <- dprofilerboxmainplot()
 #'     
+#' @export
+#'     
 dprofilerboxmainplot <- function (input = NULL, output = NULL, session = NULL, data = NULL, 
                                   cols = NULL, conds = NULL, key = NULL) 
 {
@@ -179,7 +181,9 @@ dprofilerboxmainplot <- function (input = NULL, output = NULL, session = NULL, d
 #'
 #' @examples
 #'     x <- dprofilerbarmainplot()
-#'  
+#'     
+#' @export
+#' 
 dprofilerbarmainplot <- function (input = NULL, output = NULL, session = NULL, data = NULL, cols = NULL, conds = NULL, 
                                   key = NULL) 
 {

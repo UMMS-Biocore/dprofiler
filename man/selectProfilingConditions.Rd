@@ -25,5 +25,5 @@ Select metadata field to use DE results from reference data
 }
 \examples{
     x<- selectProfilingConditions()
-
+    
 }

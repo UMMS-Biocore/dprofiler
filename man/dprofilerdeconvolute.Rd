@@ -34,5 +34,5 @@ Module to perform and visualize deconvolution results.
 }
 \examples{
     x <- dprofilerdeconvolute()
-
+    
 }

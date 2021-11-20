@@ -18,5 +18,5 @@ Prepares the container for deconvolution methods
 }
 \examples{
        x <- prepDeconvolute()
-       
+    
 }

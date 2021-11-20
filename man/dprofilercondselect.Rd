@@ -31,5 +31,5 @@ Condition selection for DE analysis and reference single cell data. Adapted from
 }
 \examples{
     x <- dprofilercondselect()
-
+    
 }

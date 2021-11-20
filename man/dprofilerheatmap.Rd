@@ -21,5 +21,5 @@ a heatmap
 }
 \examples{
     x <- dprofilerheatmap()
-
+    
 }

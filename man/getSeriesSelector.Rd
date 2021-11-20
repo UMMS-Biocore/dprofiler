@@ -20,5 +20,5 @@ Return the series selection box using profiling meta data table.
 }
 \examples{
      x <- getSeriesSelector()
-     
+    
 }

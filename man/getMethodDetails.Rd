@@ -18,5 +18,5 @@ get the detail boxes after DE method selected
 }
 \examples{
     x <- getMethodDetails()
-
+    
 }

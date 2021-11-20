@@ -18,5 +18,5 @@ Prepares the data container that stores values used within DE analysis. Adapted 
 }
 \examples{
     x <- prepDataContainer()
-
+    
 }

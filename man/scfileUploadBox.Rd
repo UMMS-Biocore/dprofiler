@@ -18,5 +18,5 @@ file upload box for single cell ExpressionSet object.
 }
 \examples{
       x <- fileUploadBox("meta", "metadata", "Metadata")
-      
+    
 }

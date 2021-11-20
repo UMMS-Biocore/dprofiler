@@ -34,5 +34,5 @@ Selects user input conditions to run in DE analysis from metadata.
 }
 \examples{
      x <- getConditionSelectorFromMeta()
-     
+    
 }

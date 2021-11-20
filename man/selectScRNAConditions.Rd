@@ -18,5 +18,5 @@ Selects user input conditions used in bulk RNA deconvolution.
 }
 \examples{
     x<- selectScRNAConditions()
-
+    
 }

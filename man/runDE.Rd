@@ -21,5 +21,5 @@ Adapted from debrowser::runDE
 }
 \examples{
      x <- runDE()
-     
+    
 }

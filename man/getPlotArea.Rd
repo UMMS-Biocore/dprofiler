@@ -16,5 +16,5 @@ a version of debrowser::getPlotArea function with automatic width and length
 }
 \examples{
      x <- getPlotArea()
-
+    
 }

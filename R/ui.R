@@ -7,7 +7,9 @@
 #'
 #' @examples
 #'     x<-dprofilerUI()
-#'
+#'     
+#' @export
+#' 
 dprofilerUI <- function() {
   dbHeader <- shinydashboard::dashboardHeader(titleWidth = 250)
   dbHeader$children[[2]]$children <- tags$a(style='color: white;',

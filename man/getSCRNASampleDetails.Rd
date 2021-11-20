@@ -31,5 +31,5 @@ get single cell RNA samples details
 }
 \examples{
       x <- getSCRNASampleDetails()
-      
+    
 }

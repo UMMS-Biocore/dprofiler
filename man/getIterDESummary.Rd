@@ -31,5 +31,5 @@ get summary of Iterative DE Analysis results and venn diagram
 }
 \examples{
      x <- getIterDESummary()
-     
+    
 }

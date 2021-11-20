@@ -25,5 +25,5 @@ file upload box for bulk data and metadata. Adapted from debrowser::fileUploadBo
 }
 \examples{
       x <- fileUploadBox("meta", "count", "metadata", "Metadata")
-
+    
 }

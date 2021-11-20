@@ -16,5 +16,5 @@ Radio button for seperators: an inline version adapted from debrowser::sepRadio(
 }
 \examples{
       x <- sepRadio("meta", "metadata")
-      
+    
 }

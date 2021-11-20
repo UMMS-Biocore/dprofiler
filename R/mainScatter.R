@@ -10,7 +10,9 @@
 #'
 #' @examples
 #'     x <- dprofilermainplot()
-#'
+#'     
+#' @export
+#' 
 dprofilermainplot <- function(input = NULL, output = NULL, session = NULL, data = NULL) {
   if (is.null(data)) return(NULL)
   
@@ -111,7 +113,9 @@ dprofilermainplot <- function(input = NULL, output = NULL, session = NULL, data 
 #'
 #' @examples
 #'      x <- getMainPlot()
-#'      
+#'     
+#' @export
+#'    
 getMainPlot <- function(input = NULL, output = NULL, session = NULL, mainname = NULL, 
                         width = NULL, plotdata = NULL,
                         which_genes = NULL, DEgenes = NULL, IterDEgenes = NULL){
@@ -164,7 +168,9 @@ getMainPlot <- function(input = NULL, output = NULL, session = NULL, mainname = 
 #'
 #' @examples
 #'     x <- mainScatter()
-#'
+#'     
+#' @export
+#' 
 mainScatter <- function(input = NULL, data = NULL, source = NULL) {
   if ( is.null(data) ) return(NULL)
   
@@ -225,6 +231,8 @@ mainScatter <- function(input = NULL, data = NULL, source = NULL) {
 #'
 #' @examples
 #'      x <- addDataCols()
+#'     
+#' @export
 #'      
 addDataCols <- function (data = NULL, de_res = NULL, cols = NULL, conds = NULL) 
 {
@@ -264,6 +272,8 @@ addDataCols <- function (data = NULL, de_res = NULL, cols = NULL, conds = NULL)
 #' @examples
 #'     x <- mainPlotControlsUI("PlotControls")
 #'     
+#' @export
+#'    
 mainPlotControlsUI <- function (id)
 {
   ns <- NS(id)
@@ -289,6 +299,8 @@ mainPlotControlsUI <- function (id)
 #'
 #' @examples
 #'      x <- applyFiltersIter()
+#'     
+#' @export
 #' 
 applyFiltersIter <- function (data = NULL, input = NULL) 
 {
@@ -308,6 +320,8 @@ applyFiltersIter <- function (data = NULL, input = NULL)
 #'
 #' @examples
 #'       x <- getLegendColors()
+#'     
+#' @export
 #' 
 getLegendColors <-  function(Legend = c("Up", "Down", "NS")) 
 {

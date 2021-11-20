@@ -25,5 +25,5 @@ Select identification from single cell metadata.
 }
 \examples{
      x <- getIdentSelectorFromMeta()
-     
+    
 }

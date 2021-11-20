@@ -21,5 +21,5 @@ Creates a shinyUI to be able to run DEBrowser interactively.
 }
 \examples{
     x<-heatmapUI()
-
+    
 }

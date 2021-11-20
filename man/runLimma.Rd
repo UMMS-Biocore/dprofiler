@@ -21,5 +21,5 @@ Adapted from debrowser::runLimma(), a version for non-count RNA data (microarray
 }
 \examples{
      x <- runLimma()
-     
+    
 }

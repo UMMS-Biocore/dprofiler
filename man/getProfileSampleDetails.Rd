@@ -25,5 +25,5 @@ get Profile Data Sample Details
 }
 \examples{
      x <- getProfileSampleDetails()
-     
+    
 }

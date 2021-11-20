@@ -9,7 +9,9 @@
 #' @param parent_session the parent session
 #'
 #' @return panel
-#'
+#'     
+#' @export
+#' 
 dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpagebutton = NULL, parent_session = NULL) {
   if (is.null(input)) return(NULL)
   
@@ -165,7 +167,9 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
 #' 
 #' @examples
 #'     x <- dataLoadUI("load")
-#'
+#'     
+#' @export
+#' 
 dataLoadUI<- function (id) {
   ns <- NS(id)
   list(
@@ -196,14 +200,16 @@ dataLoadUI<- function (id) {
 #' 
 #' @examples
 #'     x <- dataSummaryUI("load")
-#'
+#'     
+#' @export
+#' 
 dataSummaryUI<- function(id) {
   ns <- NS(id)
   list(
     fluidRow(
       column(12,uiOutput(ns("nextButton")),
-             p(strong("Note:")," We analyze ", strong("lesional (L) and non-lesional (NL) samples of 5 Vitiligo samples."), " We will analyze and score each sample of this dataset ", strong("to reveal critical phenotypic information"), 
-               " for each individual sample. For more information: ", a("PRJNA554241",href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA554241."), " Vitiligo is an autoimmune skin disease defined by T cell–mediated destruction of melanocytes.")
+             # p(strong("Note:")," We analyze ", strong("lesional (L) and non-lesional (NL) samples of 5 Vitiligo samples."), " We will analyze and score each sample of this dataset ", strong("to reveal critical phenotypic information"), 
+             #   " for each individual sample. For more information: ", a("PRJNA554241",href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA554241."), " Vitiligo is an autoimmune skin disease defined by T cell–mediated destruction of melanocytes.")
       ),
       shinydashboard::box(title = "Bulk Data Summary", solidHeader = TRUE, status = "info", height = 700,
                           width = 4, 
@@ -258,7 +264,9 @@ dataSummaryUI<- function(id) {
 #' 
 #' @examples
 #'     x <- dataProfileSummaryUI("load")
-#'
+#'     
+#' @export
+#' 
 dataProfileSummaryUI<- function(id) {
   ns <- NS(id)
   list(
@@ -290,7 +298,9 @@ dataProfileSummaryUI<- function(id) {
 #'
 #' @examples
 #'      x <- getProfileSampleDetails()
-#'      
+#'     
+#' @export
+#'  
 getProfileSampleDetails <- function (output = NULL, summary = NULL, details = NULL, data = NULL) 
 {
   if (is.null(output)) 
@@ -337,7 +347,9 @@ getProfileSampleDetails <- function (output = NULL, summary = NULL, details = NU
 #'
 #' @examples
 #'       x <- getSCRNASampleDetails()
-#'       
+#'     
+#' @export
+#'    
 getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL, data = NULL, 
                                    ident = NULL, UMI_column = NULL) 
 {
@@ -402,6 +414,8 @@ getSCRNASampleDetails <- function (output = NULL, summary = NULL, details = NULL
 #'
 #' @examples
 #'       x <- fileUploadBox("meta", "count", "metadata", "Metadata")
+#'     
+#' @export
 #' 
 fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL, label = NULL) 
 {
@@ -440,6 +454,8 @@ fileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL,
 #'
 #' @examples
 #'       x <- profilefileUploadBox("meta", "count", "metadata", "Metadata")
+#'     
+#' @export
 #' 
 profilefileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta = NULL, inputId_dmeta = NULL, inputId_dmeta_key = NULL, label = NULL) 
 {
@@ -482,7 +498,9 @@ profilefileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta 
 #'
 #' @examples
 #'       x <- fileUploadBox("meta", "metadata", "Metadata")
-#'       
+#'     
+#' @export
+#'     
 scfileUploadBox <- function (id = NULL, inputId = NULL, label = NULL) 
 {
   ns <- NS(id)
@@ -503,7 +521,9 @@ scfileUploadBox <- function (id = NULL, inputId = NULL, label = NULL)
 #'
 #' @examples
 #'       x <- sepRadio("meta", "metadata")
-#'       
+#'     
+#' @export
+#'      
 sepRadio <- function (id, name) 
 {
   ns <- NS(id)

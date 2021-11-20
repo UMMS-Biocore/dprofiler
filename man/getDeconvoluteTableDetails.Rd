@@ -34,5 +34,5 @@ get deconvolution table details
 }
 \examples{
     x <- getDeconvoluteTableDetails()
-
+    
 }

@@ -10,7 +10,9 @@
 #'
 #' @examples
 #'      x <- getScoreDetails()
-#'      
+#'     
+#' @export
+#' 
 getScoreDetails <- function(output = NULL, session = NULL, 
                                  plotname = NULL, DEscores = NULL, IterDEscores = NULL) {
   if (is.null(DEscores)) return(NULL)
@@ -58,7 +60,9 @@ getScoreDetails <- function(output = NULL, session = NULL,
 #'
 #' @examples
 #'      x <- getIterDESummary()
-#'      
+#'     
+#' @export
+#'   
 getIterDESummary <- function(output = NULL, session = NULL, vennname = NULL, summaryname = NULL, 
                              deres = NULL, params = NULL){
   if (is.null(output)) return(NULL)
@@ -161,7 +165,9 @@ getIterDESummary <- function(output = NULL, session = NULL, vennname = NULL, sum
 #'
 #' @examples
 #'      x <- display_venn()
-#'      
+#'     
+#' @export
+#'    
 display_venn <- function(x = NULL, category.names = NULL, ...){
   if (is.null(x)) return(NULL)
   

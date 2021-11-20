@@ -11,5 +11,5 @@ Creates a panel to select samples for each condition
 }
 \examples{
     x <- condSelectUI()
-
+    
 }

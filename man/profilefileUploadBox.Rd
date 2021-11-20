@@ -31,5 +31,5 @@ file upload box for profile bulk data and metadata. Adapted from debrowser::file
 }
 \examples{
       x <- profilefileUploadBox("meta", "count", "metadata", "Metadata")
-
+    
 }

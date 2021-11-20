@@ -8,7 +8,9 @@
 #'
 #' @examples
 #'        x <- prepDeconvolute()
-#'        
+#'     
+#' @export
+#' 
 prepDeconvolute <- function(dc = NULL, scdata = NULL, parent_session = NULL){
   if (is.null(dc)) return(NULL)
   waiter_show(html = spin_ring(), color = transparent(.5))
@@ -34,11 +36,12 @@ prepDeconvolute <- function(dc = NULL, scdata = NULL, parent_session = NULL){
 #' @param parent_session parent session
 #' 
 #' @return DE panel
-#' @export
 #'
 #' @examples
 #'     x <- dprofilerdeconvolute()
-#'
+#'     
+#' @export
+#' 
 dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc = NULL, 
                                  scdata = NULL, parent_session = NULL) {
   if(is.null(dc)) return(NULL)
@@ -129,7 +132,9 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
 #' @return panel
 #' @examples
 #'     x <- getDeconvoluteUI("batcheffect")
-#'
+#'     
+#' @export
+#' 
 getDeconvoluteUI<- function (id) {
   ns <- NS(id)
   list(
@@ -176,7 +181,9 @@ getDeconvoluteUI<- function (id) {
 #' @return panel
 #' @examples
 #'     x <- getDeconvoluteTableDetails()
-#'
+#'     
+#' @export
+#' 
 getDeconvoluteTableDetails <- function(output  = NULL, session  = NULL, tablename  = NULL, data = NULL, 
                                  modal = NULL, highlight = FALSE){
   if (is.null(data)) return(NULL)
@@ -225,6 +232,8 @@ getDeconvoluteTableDetails <- function(output  = NULL, session  = NULL, tablenam
 #' @examples
 #'     x <- deconvolute()
 #'     
+#' @export
+#'  
 deconvolute <- function(data = NULL, DEgenes = NULL, columns = NULL, scdata = NULL, input = NULL){
   if (is.null(data)) return(NULL)
   
@@ -278,6 +287,8 @@ deconvolute <- function(data = NULL, DEgenes = NULL, columns = NULL, scdata = NU
 #' @examples
 #'     x <- getMarkerGenes()
 #'     
+#' @export
+#'     
 getMarkerGenes <- function(scdata = NULL, IterDEgenes = NULL, input = NULL){
   
   if (is.null(scdata) | is.null(input$select_celltype)) 
@@ -306,6 +317,8 @@ getMarkerGenes <- function(scdata = NULL, IterDEgenes = NULL, input = NULL){
 #' @examples
 #'     x <- getAllMarkerGenes()
 #'     
+#' @export
+#'  
 getAllMarkerGenes <- function(scdata = NULL, data = NULL, input = NULL){
   if (is.null(scdata)) return(NULL)
   

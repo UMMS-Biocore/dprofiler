@@ -15,6 +15,8 @@
 #' @examples
 #'     x <- runIterDE()
 #'     
+#' @export
+#' 
 runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, session = NULL){
   
   if (is.null(data)) return(NULL)
@@ -144,7 +146,9 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
 #'
 #' @examples
 #'      x <- getFinalScores()
-#' 
+#'     
+#' @export
+#'  
 getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NULL, params = NULL, 
                            ManualDEgenes = NULL, TopStat = NULL){
  
@@ -271,7 +275,9 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
 #'
 #' @examples
 #'      x <- custom_silhouette()
-#'      
+#'     
+#' @export
+#'       
 custom_silhouette <- function(x = NULL,dist = NULL){
   if (is.null(x)) return(NULL)
   

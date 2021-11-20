@@ -10,7 +10,9 @@
 #'
 #' @examples
 #'     x <- dprofilerheatmap()
-#'
+#'     
+#' @export
+#' 
 dprofilerheatmap <- function( input, output, session, expdata = NULL){
   if(is.null(expdata)) return(NULL)
   output$heatmap <- renderPlotly({
@@ -94,6 +96,8 @@ dprofilerheatmap <- function( input, output, session, expdata = NULL){
 #'
 #' @examples
 #'      x <- getPlotArea()
+#'     
+#' @export
 #' 
 getPlotArea <- function (input = NULL, session = NULL) 
 {
@@ -117,7 +121,9 @@ getPlotArea <- function (input = NULL, session = NULL)
 #' 
 #' @examples
 #'     x <- heatmapJScode()
-#'
+#'     
+#' @export
+#' 
 heatmapJScode <- function() {        
   'shinyjs.getHoverName = function(params){
     
@@ -171,7 +177,9 @@ heatmapJScode <- function() {
 #' 
 #' @examples
 #'     x <- getJSLine()
-#'
+#'     
+#' @export
+#' 
 getJSLine <- function() 
 {
   list(shinyjs::useShinyjs(), shinyjs::extendShinyjs(text = heatmapJScode(), 

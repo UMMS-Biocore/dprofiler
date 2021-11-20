@@ -19,5 +19,5 @@ Adapted from debrowser::heatmapServer()
 }
 \examples{
     x <- heatmapServer()
-
+    
 }

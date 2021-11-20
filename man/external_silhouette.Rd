@@ -17,4 +17,5 @@ Suitable for comparison of expression profiles across different datasets and exp
 }
 \examples{
      x <- external_silhouette()
+    
 }

@@ -16,5 +16,5 @@ Apply filter for Initial and Final DEgenes
 }
 \examples{
      x <- applyFiltersIter()
-
+    
 }
