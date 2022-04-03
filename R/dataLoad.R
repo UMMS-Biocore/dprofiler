@@ -45,7 +45,9 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   
   # Event for uploading the demo file
   observeEvent(input$demo, {
-    load(system.file("extdata", "demo", "demovitiligo.Rda",
+    # load(system.file("extdata", "demo", "demovitiligo.Rda",
+    #                  package = "dprofiler"))
+    load(system.file("extdata", "demo", "demoskin.Rda",
                      package = "dprofiler"))
     ldata$sc_count <- demovitiligoscdata
     ldata$count <- demodata

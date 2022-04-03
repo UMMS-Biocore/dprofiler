@@ -241,6 +241,7 @@ deconvolute <- function(data = NULL, DEgenes = NULL, columns = NULL, scdata = NU
   celltypes <- isolate(input$condition)
   celltype_label <- isolate(input$conditions_from_meta0)
   samples <- isolate(input$deconvolute_samples)
+  method <- isolate(input$deconvolute_methods)
   
   # Bulk Data
   data <- data[,columns]
@@ -255,7 +256,8 @@ deconvolute <- function(data = NULL, DEgenes = NULL, columns = NULL, scdata = NU
   metadata <- pData(scdata)
   scdata <- scdata[,metadata[,celltype_label] %in% celltypes] 
   metadata <- metadata[metadata[,celltype_label] %in% celltypes,]
-    
+  scdata <- scdata[rownames(scdata) %in% DEgenes,]
+     
   # normalized integrated library sizes
   # exprs_srt <- exprs(scdata)
   # metadata$nCount_integratedRNA_norm <- colSums(exprs_srt)
@@ -269,12 +271,31 @@ deconvolute <- function(data = NULL, DEgenes = NULL, columns = NULL, scdata = NU
   # colnames(scdata) <- rownames(exprs_srt)
 
   # deconvolute
-  NLandL.prop = music_prop(bulk.eset = Vit_BulkRNAseq, 
-                           sc.eset = scdata, 
-                           clusters = celltype_label,
-                           samples = samples, verbose = T)
+  if(method == "MuSIC"){
+    NLandL.prop = music_prop(bulk.eset = Vit_BulkRNAseq, 
+                             sc.eset = scdata, 
+                             clusters = celltype_label,
+                             samples = samples, 
+                             verbose = T)
+    res <- NLandL.prop$Est.prop.weighted
+  } else if(method =="BisqueRNA"){
+    res <- BisqueRNA::ReferenceBasedDecomposition(bulk.eset = Vit_BulkRNAseq, 
+                                                  sc.eset = scdata, 
+                                                  cell.types = celltype_label,
+                                                  subject.names = samples,
+                                                  use.overlap = FALSE, 
+                                                  markers = DEgenes)
+    res <- t(res$bulk.props)
+  } else if(method =="SCDC"){
+    res <- SCDC_prop(bulk.eset = Vit_BulkRNAseq, 
+                     sc.eset = scdata, 
+                     ct.varname = celltype_label,
+                     sample = samples,
+                     ct.sub = celltypes)
+    res <- res$prop.est.mvw
+  }
   
-  return(NLandL.prop$Est.prop.weighted)
+  return(res)
 }
 
 
