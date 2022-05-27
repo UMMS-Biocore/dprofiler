@@ -34,7 +34,7 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
       
       # collect data and metadata
       ret <- list(count = ldata$count, meta = ldata$meta, 
-                  sc_count = ldata$sc_count,
+                  sc_count = ldata$sc_count, sc_marker_table = ldata$sc_marker_table,
                   prof_count = ldata$prof_count, prof_meta = ldata$prof_meta)
       
       # switch to upload summary page
@@ -45,11 +45,22 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
   
   # Event for uploading the demo file
   observeEvent(input$demo, {
-    # load(system.file("extdata", "demo", "demovitiligo.Rda",
-    #                  package = "dprofiler"))
-    load(system.file("extdata", "demo", "demoskin.Rda",
+    load(system.file("extdata", "demo", "demovitiligo_withaging.Rda",
                      package = "dprofiler"))
     ldata$sc_count <- demovitiligoscdata
+    ldata$sc_marker_table <- markers
+    ldata$count <- demodata
+    ldata$meta <- metadatatable
+    ldata$prof_count <- demoprofdata
+    ldata$prof_meta <- profmetadatatable
+  })
+  
+  # Event for uploading the demo file
+  observeEvent(input$demopsoriasis, {
+    load(system.file("extdata", "demo", "demodatapsoriasis.Rda",
+                     package = "dprofiler"))
+    ldata$sc_count <- demoscdata
+    ldata$sc_marker_table <- markers
     ldata$count <- demodata
     ldata$meta <- metadatatable
     ldata$prof_count <- demoprofdata
@@ -64,11 +75,11 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
       character_columns <- colnames(pData(ldata$sc_count))[!sapply(as.data.frame(pData(ldata$sc_count)),is.numeric)]
       list(
         column(2,
-               selectInput(session$ns("selectident"), label = "Select Identification", 
-                           choices = character_columns, selected = "CellType")),
+               selectInput(session$ns("selectumi"), label = "Select Ridge Variable", 
+                           choices = numeric_columns, selected = numeric_columns[1])),
         column(2,
-               selectInput(session$ns("selectumi"), label = "Select UMI column", 
-                           choices = numeric_columns, selected = numeric_columns[1]))
+               selectInput(session$ns("selectident"), label = "Select Identification", 
+                           choices = character_columns, selected = "CellType"))
       )
     }
   })
@@ -106,10 +117,17 @@ dataLoadServer <- function(input = NULL, output = NULL, session = NULL, nextpage
     ldata$meta <- metadatatable
     
     ###
-    # check sc count data and import 
+    # check and import sc count data and markers
     ###
+    
     if(!is.null(input$sccountdata)){
       ldata$sc_count <- readRDS(input$sccountdata$datapath)
+    }
+    if(!is.null(input$scmarkertable)){
+      ldata$sc_marker_table <- as.data.frame(
+        try(
+          read.delim(input$scmarkertable$datapath,
+                     header=TRUE, sep=input$scmarkertableSep, strip.white=TRUE), TRUE))
     }
     
     ###
@@ -179,12 +197,13 @@ dataLoadUI<- function (id) {
       column(12,
              column(12,
                     actionButtonDE(ns("uploadFile"), label = "Upload", styleclass = "primary"), 
-                    actionButtonDE(ns("demo"),  label = "Load Demo Vitiligo", styleclass = "primary")))
+                    actionButtonDE(ns("demo"),  label = "Load Demo Vitiligo", styleclass = "primary"),
+                    actionButtonDE(ns("demopsoriasis"),  label = "Load Demo Psoriasis", styleclass = "primary")))
     ),
     fluidRow(
       column(6,
              fileUploadBox(id, "countdata", "metadata", "Bulk Expression Data"),
-             scfileUploadBox(id, "sccountdata", "scRNA Expression Data Object (Optional)"),
+             scfileUploadBox(id, "sccountdata", "scmarkertable", "scRNA Expression Data Object (Optional)"),
       ),
       column(6,
              profilefileUploadBox(id, "profilecountdata", "profilemetadata", 
@@ -472,21 +491,21 @@ profilefileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta 
                       tags$div(style = "margin-top:-30px;margin-bottom:30px",
                                sepRadio(id, paste0(inputId_count, "Sep"))
                       ),
-                      helpText(paste0("Upload MetaData Table (Optional)")), 
+                      helpText(paste0("Upload MetaData Table")), 
                       tags$div(style = "margin-bottom:-30px",
                                fileInput(inputId = ns(inputId_meta), label = NULL, accept = fileTypes())
                       ),
                       tags$div(style = "margin-top:-30px;margin-bottom:30px",
                                sepRadio(id, paste0(inputId_meta, "Sep"))
                       ),
-                      helpText(paste0("Dmeta API of Project and Series")),
-                      tags$div(style = "margin-bottom:30px",
-                               textInput(inputId = ns(inputId_dmeta), label = NULL)
-                      ),
-                      helpText(paste0("Dmeta API key")),
-                      tags$div(style = "margin-bottom:30px",
-                               textInput(inputId = ns(inputId_dmeta_key), label = NULL)
-                      )
+                      # helpText(paste0("Dmeta API of Project and Series")),
+                      # tags$div(style = "margin-bottom:30px",
+                      #          textInput(inputId = ns(inputId_dmeta), label = NULL)
+                      # ),
+                      # helpText(paste0("Dmeta API key")),
+                      # tags$div(style = "margin-bottom:30px",
+                      #          textInput(inputId = ns(inputId_dmeta_key), label = NULL)
+                      # )
   )
 }
 
@@ -495,7 +514,8 @@ profilefileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta 
 #' file upload box for single cell ExpressionSet object.
 #'
 #' @param id namespace id
-#' @param inputId input data file ID
+#' @param inputId_count input count data file ID
+#' @param inputId_markers input marker table file ID
 #' @param label label
 #'
 #' @examples
@@ -503,14 +523,19 @@ profilefileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_meta 
 #'     
 #' @export
 #'     
-scfileUploadBox <- function (id = NULL, inputId = NULL, label = NULL) 
+scfileUploadBox <- function (id = NULL, inputId_count = NULL, inputId_markers = NULL, label = NULL) 
 {
   ns <- NS(id)
   options(shiny.maxRequestSize=30*1024^2)
   shinydashboard::box(title = label, 
                       solidHeader = TRUE, status = "info", width = 12, 
                       helpText(paste0("Upload ExpressionSet Object (.rds)")),
-                      fileInput(inputId = ns(inputId), label = NULL, accept = fileTypes())
+                      fileInput(inputId = ns(inputId_count), label = NULL, accept = fileTypes()),
+                      helpText(paste0("Upload Markers Table (.rds,.csv,.txt)")),
+                      fileInput(inputId = ns(inputId_markers), label = NULL, accept = fileTypes()),
+                      tags$div(style = "margin-top:-30px",
+                               sepRadio(id, paste0(inputId_markers, "Sep"))
+                      ),
   )
 }
 

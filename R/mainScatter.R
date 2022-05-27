@@ -18,7 +18,7 @@ dprofilermainplot <- function(input = NULL, output = NULL, session = NULL, data 
   
   # Heterogeneous conditions mainplot
   plotdata_de <-  reactive({
-    plotData(data$init_dedata, input)
+    plotData(data$count, input)
   })
   
   # Homogeneous conditions mainplot  

@@ -4,6 +4,7 @@
 #'
 #' @param dc reactive object of DE analysis
 #' @param scdata single cell ExpressionSet Object
+#' @param sc_marker_table single cell markers table
 #' @param parent_session parent session
 #'
 #' @examples
@@ -11,18 +12,17 @@
 #'     
 #' @export
 #' 
-prepDeconvolute <- function(dc = NULL, scdata = NULL, parent_session = NULL){
+prepDeconvolute <- function(dc = NULL, scdata = NULL, sc_marker_table = NULL, parent_session = NULL){
   if (is.null(dc)) return(NULL)
   waiter_show(html = spin_ring(), color = transparent(.5))
   withProgress(message = 'Running RNA Deconvolution', value = 0, {
-    mixtures <- callModule(dprofilerdeconvolute, "deconvolute", dc, scdata, parent_session)
+    mixtures <- callModule(dprofilerdeconvolute, "deconvolute", dc, scdata, sc_marker_table, parent_session)
     mix <- mixtures()
   })
   waiter_hide()
   
   return(mix)
 }
-
 
 #' dprofilerdeconvolute
 #'
@@ -33,40 +33,43 @@ prepDeconvolute <- function(dc = NULL, scdata = NULL, parent_session = NULL){
 #' @param session session
 #' @param dc de results
 #' @param scdata single cell data
+#' @param sc_marker_table single cell marker table
 #' @param parent_session parent session
 #' 
 #' @return DE panel
 #'
 #' @examples
-#'     x <- dprofilerdeconvolute()
+#'     x <- dprofilerdeconvolute() 
 #'     
 #' @export
 #' 
 dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc = NULL, 
-                                 scdata = NULL, parent_session = NULL) {
+                                 scdata = NULL, sc_marker_table = NULL, parent_session = NULL) {
   if(is.null(dc)) return(NULL)
 
   # Deconvolution
   mixtures <- reactive({
-      if(isolate(input$deconvolute_genes) == "DE Genes After Prof."){
-        degenes <- dc()$IterDEgenes
-      } else if(isolate(input$deconvolute_genes) == "DE Genes Before Prof."){
-        degenes <- dc()$DEgenes
-      } else {
-        degenes <- getAllMarkerGenes(scdata, dc()$init_dedata, input)
-      }
-      mixture <- deconvolute(dc()$init_dedata, degenes, dc()$cols, scdata, input)
+    
+      # get columns
+      if(!is.null(dc()$cols)) columns <- dc()$cols
+      else columns <- colnames(dc()$count)
+      
+      # select genes
+      degenes <- getAllMarkerGenes(sc_marker_table, scdata, dc()$count, columns, input)
+
+      # deconvolute
+      mixture <- deconvolute(dc()$count, degenes, columns, scdata, input)
       updateTabsetPanel(session = parent_session, "DeconvoluteBox", "deconvoluteresults")
       mixture
   })
   
   # prepare heat data
   data_de_tmm <- reactive({
-    marker_genes <- getMarkerGenes(scdata, dc()$IterDEgenes, input)
+    marker_genes <- getHeatmapMarkerGenes(sc_marker_table, dc()$count, input)
     if(is.null(marker_genes)) return(NULL)
-    # heatdata <- getNormalizedMatrix(dc()$init_dedata[,dc()$cols], method = "TMM")
-    # heatdata <- prepHeatData(heatdata, input)
-    heatdata <- prepHeatData(dc()$init_dedata[,dc()$cols], input)
+    if(!is.null(dc()$cols)) columns <- dc()$cols
+    else columns <- colnames(dc()$count)
+    heatdata <- prepHeatData(dc()$count[,columns], input)
     as.matrix(heatdata[marker_genes,])
   })
   
@@ -114,8 +117,15 @@ dprofilerdeconvolute <- function(input = NULL, output = NULL, session = NULL, dc
   # Observe for Tables and Plots
   observe({
     
-    # Score and deconvolution paper 
-    ScoreTable <- cbind(dc()$score()$IterDEscore, mixtures())
+    # If the scores are not available, should be NULL
+    if(!is.null(dc()$CrossScore)){
+      ScoreTable <- MergeScoreTables(dc()$CrossScore()$IterDEscore, dc()$IntraScore()$Score)
+    } else {
+      ScoreTable <- NULL
+    } 
+    
+    # Score and deconvolution paper
+    ScoreTable <- cbind(ScoreTable, mixtures())
     getDeconvoluteTableDetails(output, session, "MembershipScoresIterDE", ScoreTable, 
                          modal = FALSE, highlight = TRUE)
     
@@ -140,7 +150,7 @@ getDeconvoluteUI<- function (id) {
   list(
     tabBox(id = "DeconvoluteBox",
            width = NULL,
-           tabPanel(title = "Mixture Conditions",
+           tabPanel(title = "Conditions",
                     fluidRow(
                       shinydashboard::box(title = "Select Annotations",
                                           solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
@@ -156,8 +166,8 @@ getDeconvoluteUI<- function (id) {
                     fluidRow(
                       shinydashboard::box(title = "RNA Deconvolution",
                                           solidHeader = T, status = "info",  width = 12, collapsible = TRUE,
-                                          p(strong("Note:"), " P65_NL has a low membership score and ", strong("estimated melanocyte proportion of P65_NL is lower than other non-lesional samples"), 
-                                            " suggesting that profile of P65_NL might be similar to lesional samples due to ", strong("its melanocytes being low in number.")),
+                                          #p(strong("Note:"), " P65_NL has a low membership score and ", strong("estimated melanocyte proportion of P65_NL is lower than other non-lesional samples"), 
+                                          #  " suggesting that profile of P65_NL might be similar to lesional samples due to ", strong("its melanocytes being low in number.")),
                                           DT::dataTableOutput(ns("MembershipScoresIterDE"))
                       ),
                       uiOutput(ns("heatmapUI"))
@@ -190,7 +200,7 @@ getDeconvoluteTableDetails <- function(output  = NULL, session  = NULL, tablenam
   output[[tablename]] <- DT::renderDataTable({
     if (!is.null(data)){
       dttable <- DT::datatable(data, extensions = 'Buttons',
-                               rownames = FALSE,
+                               rownames = TRUE,
                                options = list( server = TRUE,
                                                dom = "Blfrtip",
                                                buttons = 
@@ -203,9 +213,9 @@ getDeconvoluteTableDetails <- function(output  = NULL, session  = NULL, tablenam
                                                # customize the length menu
                                                lengthMenu = list( c(10, 20,  50, -1) # declare values
                                                                   , c(10, 20, 50, "All") # declare titles
-                                               ), # end of lengthMenu customization
+                                               ), # end of length Menu customization
                                                pageLength = 10))
-      numeric_names <- colnames(data[,sapply(data, is.numeric), drop = FALSE])
+      numeric_names <- colnames(data[,sapply(as.data.frame(data), is.numeric), drop = FALSE])
       dttable <- dttable %>% DT::formatRound(numeric_names, digits=3)
       if(highlight){
         colours <- rainbow(length(numeric_names))
@@ -245,7 +255,6 @@ deconvolute <- function(data = NULL, DEgenes = NULL, columns = NULL, scdata = NU
   
   # Bulk Data
   data <- data[,columns]
-  # data <- getNormalizedMatrix(data,method = "TMM")
   genes_data <- rownames(data)
   DEgenes <- intersect(genes_data, DEgenes)
   data_de <- data[DEgenes,]
@@ -299,40 +308,44 @@ deconvolute <- function(data = NULL, DEgenes = NULL, columns = NULL, scdata = NU
 }
 
 
-#' getMarkerGenes
+#' getHeatmapMarkerGenes
 #'
-#' @param scdata single cell data
-#' @param IterDEgenes DE genes from bulk data
+#' @param sc_marker_table single cell marker table
+#' @param data reference bulk data
 #' @param input input 
 #'
 #' @examples
-#'     x <- getMarkerGenes()
+#'     x <- getHeatmapMarkerGenes()
 #'     
 #' @export
 #'     
-getMarkerGenes <- function(scdata = NULL, IterDEgenes = NULL, input = NULL){
+getHeatmapMarkerGenes <- function(sc_marker_table = NULL, data = NULL, input = NULL){
+  if (is.null(sc_marker_table) || is.null(input$select_celltype)) return(NULL)
   
-  if (is.null(scdata) | is.null(input$select_celltype)) 
-    return(NULL)
+  # pull those genes that are in bulk data
+  marker_table_genes <- unique(sc_marker_table$gene)
+  common_genes <- intersect(marker_table_genes, rownames(data))
+  sc_marker_table <- sc_marker_table[sc_marker_table$gene %in% common_genes,]
   
-  if(!is.null(IterDEgenes)){
-    featuresData <- fData(scdata)[rownames(fData(scdata)) %in% IterDEgenes,]
-  } else {
-    featuresData <- fData(scdata)
-  }
-  gene_scores <- featuresData[,paste0(input$select_celltype,"_marker_score_CellType")]
+  # take out additional genes
+  sc_marker_table <- sc_marker_table[!grepl("^AC[0-9]|^AL[0-9]|^MT-", sc_marker_table$gene),]
+  
+  # grep cell type specific markers
+  sc_marker_table <- sc_marker_table[sc_marker_table$cluster %in% input$select_celltype,]
   top_n_markers <- as.numeric(input$select_top_markers)
-  top_n_markers <- ifelse(is.na(top_n_markers), length(gene_scores),
-                          ifelse(top_n_markers > length(gene_scores), length(gene_scores), top_n_markers))
-  marker_genes <- rownames(featuresData)[order(gene_scores, decreasing = FALSE)[1:top_n_markers]]
+  top_n_markers <- ifelse(is.na(top_n_markers), nrow(sc_marker_table),
+                          ifelse(top_n_markers > nrow(sc_marker_table), nrow(sc_marker_table), top_n_markers))
+  marker_genes <- sc_marker_table$gene[order(sc_marker_table$avg_log2FC, decreasing = TRUE)[1:top_n_markers]]
  
   return(marker_genes)
 }
 
 #' getAllMarkerGenes
 #'
-#' @param scdata single cell data
-#' @param data reference bulk data
+#' @param sc_marker_table single cell marker table
+#' @param scdata single cell data object
+#' @param data bulk data
+#' @param columns columns of the bulk data
 #' @param input input 
 #'
 #' @examples
@@ -340,31 +353,84 @@ getMarkerGenes <- function(scdata = NULL, IterDEgenes = NULL, input = NULL){
 #'     
 #' @export
 #'  
-getAllMarkerGenes <- function(scdata = NULL, data = NULL, input = NULL){
-  if (is.null(scdata)) return(NULL)
+getAllMarkerGenes <- function(sc_marker_table = NULL, scdata = NULL, data = NULL, columns = NULL, input = NULL){
+  if (is.null(sc_marker_table)) return(NULL)
+  data <- data[,columns]
+  
+  # if all genes are requested, return the intersecting genes
+  if(input$allgenes == "Yes"){
+    gene_list <- intersect(rownames(data),rownames(scdata))
+    return(gene_list)
+  }
+    
+  # select cell types, and other conditions
+  sc_marker_table <- sc_marker_table[sc_marker_table$Level %in% isolate(input$conditions_from_meta0),]
+  sc_marker_table <- sc_marker_table[sc_marker_table$cluster %in% isolate(input$condition),]
+  sc_marker_table <- sc_marker_table[sc_marker_table$pct.1 > as.numeric(isolate(input$pct1)) & 
+                                       sc_marker_table$pct.2 < as.numeric(isolate(input$pct2)) & 
+                                       sc_marker_table$avg_log2FC > as.numeric(isolate(input$logFC)) & 
+                                       sc_marker_table$p_val_adj < as.numeric(isolate(input$padj)),]
   
   # pull those genes that are in bulk data
-  featuresData <- fData(scdata)
-  rownames_fdata <- rownames(featuresData)
-  rownames_fdata <- intersect(rownames_fdata, rownames(data))
-  featuresData <- featuresData[rownames_fdata, ]
+  marker_table_genes <- unique(sc_marker_table$gene)
+  common_genes <- intersect(marker_table_genes, rownames(data))
+  sc_marker_table <- sc_marker_table[sc_marker_table$gene %in% common_genes,]
   
-  # select cell types and their ranks
-  gene_scores <- featuresData[,paste0(isolate(input$condition),"_marker_score_CellType"), drop = FALSE]
-  top_n_markers <- as.numeric(isolate(input$top_genes))
-  top_n_markers <- ifelse(is.na(top_n_markers), nrow(gene_scores),
-                          ifelse(top_n_markers > nrow(gene_scores), nrow(gene_scores), top_n_markers))
+  # delete duplicate genes
+  num_genes <- table(sc_marker_table$gene)
+  duplicates <- names(num_genes[num_genes>1])
+  sc_marker_table <- sc_marker_table[!sc_marker_table$gene %in% duplicates,]
   
-  # pull genes
-  gene_list <- c()
-  marker_genes <- list()
-  for(i in 1:ncol(gene_scores)){
-    marker_genes[[i]] <- rownames(featuresData)[order(gene_scores[,i], decreasing = FALSE)[1:top_n_markers]]
-  }
-  all_markers <- unlist(marker_genes)
-  duplicates <- names(table(all_markers)[table(all_markers) > 1])
-  gene_list <- unique(all_markers)
-  gene_list <- gene_list[!gene_list %in% duplicates]
+  # take out additional genes
+  sc_marker_table <- sc_marker_table[!grepl("^AC[0-9]|^AL[0-9]|^MT-", sc_marker_table$gene),]
+  
+  # Find mean gene abundance in bulk data
+  initial_markers <- unique(sc_marker_table$gene)
+  data_de <- data[rownames(data) %in% initial_markers,]
+  data_de <- as.data.frame(data_de)
+  data_de$gene <- rownames(data_de)
+  data_de$celltype_markers <- sapply(data_de$gene, function(x) sc_marker_table$cluster[which(x == initial_markers)[1]])
+  datax_de_mean_count <- data.frame(Count = rowMeans(data_de[,1:(ncol(data_de)-2)]), gene = data_de$gene, celltype = data_de$celltype_markers)
+  
+  # eliminate outlier gene
+  datax_de_mean_count <- datax_de_mean_count %>%
+    group_by(celltype) %>% 
+    mutate(Outlier = remove_outliers(Count))
+  outlier_genes <- datax_de_mean_count$gene[datax_de_mean_count$Outlier]
+  sc_marker_table <- sc_marker_table[!sc_marker_table$gene %in% outlier_genes,]
+  
+  # pick top genes
+  sc_marker_table %>%
+    group_by(cluster) %>%
+    top_n(n = as.numeric(isolate(input$top_genes)), wt = avg_log2FC) -> marker_table_topgenes 
+  gene_list <- unique(marker_table_topgenes$gene)
+    
   return(gene_list)
 }
+
+#' MergeScoreTables
+#'
+#' @param CrossScore Cross condition score tables
+#' @param IntraScore Intra condition score tables
+#'
+#' @examples
+#'     x <- MergeScoreTables()
+#'     
+#' @export
+#'  
+MergeScoreTables <- function(CrossScore = NULL, IntraScore = NULL){
+  if (is.null(CrossScore)) return(NULL)
   
+  ScoreTable <- data.frame(Conds = CrossScore$Conds,
+                           `Cross Score` = CrossScore$Score, 
+                           `Intra Score` = IntraScore$Score)
+  
+  return(ScoreTable)
+}
+
+remove_outliers <- function(x, na.rm = TRUE, probs=c(.25, .75), ...) {
+  qnt <- quantile(x, probs=probs, na.rm = na.rm, ...)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
+  y <- ifelse((x < (qnt[1] - H)) | (x > (qnt[2] + H)), TRUE, FALSE)
+  y
+}

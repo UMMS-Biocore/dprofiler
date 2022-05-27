@@ -5,8 +5,10 @@
 #' @param output output
 #' @param session session
 #' @param plotname the name of the plot
-#' @param DEscores Scores of impure conditions
-#' @param IterDEscores Scores of pure conditions
+#' @param DEscores Cross Condition Scores of impure conditions
+#' @param IterDEscores Cross Condition Scores of pure conditions
+#' @param OutlierDEscores Intra Condition Scores of impure conditions
+#' @param OutlierIterDEscores Intra Condition Scores of pure conditions
 #'
 #' @examples
 #'      x <- getScoreDetails()
@@ -14,18 +16,20 @@
 #' @export
 #' 
 getScoreDetails <- function(output = NULL, session = NULL, 
-                                 plotname = NULL, DEscores = NULL, IterDEscores = NULL) {
+                                 plotname = NULL, DEscores = NULL, IterDEscores = NULL, OutlierDEscores = NULL, OutlierIterDEscores = NULL) {
   if (is.null(DEscores)) return(NULL)
   
   output[[plotname]] <- renderPlotly({
     dat <- rbind(
-      data.frame(IterDEscores, type = "Scores Before Profiling"),
-      data.frame(DEscores, type = "Scores After Profiling")
+      data.frame(IterDEscores, beforeafter = "Before Profiling", type = "Cross Cond."),
+      data.frame(DEscores, beforeafter = "After Profiling", type = "Cross Cond."),
+      data.frame(OutlierIterDEscores, beforeafter = "Before Profiling", type = "Intra Cond."),
+      data.frame(OutlierDEscores, beforeafter = "After Profiling", type = "Intra Cond.")
     )
     dat$Scores <- as.numeric(dat$Scores)
     p <- ggplot(data=dat, aes(x = reorder(Samples,Scores), y = Scores)) +
       geom_bar(aes(fill = Conds), stat="identity") + 
-      facet_grid(. ~ type) + 
+      facet_grid(type ~ beforeafter) + 
       scale_y_continuous(limits=c(0, 1)) + 
       xlab("Samples") +
       theme(axis.text.x = element_text(angle = 45),

@@ -10,22 +10,23 @@
 #' @param conds, experimental conditions. The order has to match
 #'     with the column order
 #' @param params, all params for the DE methods
-#' @param session session
+#' @param session, the session
+#' @param verbose, TRUE if you want results to be printed
+#' @param visualize_prefix, the prefix of the PCA plot
 #' 
 #' @examples
 #'     x <- runIterDE()
 #'     
 #' @export
 #' 
-runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, session = NULL){
+runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, session = NULL, verbose = FALSE, visualize_prefix = "plot"){
   
   if (is.null(data)) return(NULL)
   data <- data[,columns]
   
   # parameters 
   ScoreMethod <- params[6]
-  threshold <- as.numeric(params[7])
-  # iterde_norm <- params[8]
+  threshold <- params[7]
   iterde <- params[8]
   log2FC <- as.numeric(params[9])
   padj <- as.numeric(params[10])
@@ -35,8 +36,24 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
   cleaned_columns <- NULL
   DEgenes_new <- NULL
   DEgenes <- NULL
-  # data_tmm <- getNormalizedMatrix(data, method=iterde_norm)
+  g <- NULL
   iter <- 100
+  
+  # check for initial set of cleaned columns using cooks distance
+  cur_columns <- setdiff(columns, cleaned_columns)
+  cur_data <- data[, columns %in% cur_columns]
+  cur_conds <- conds[columns %in% cur_columns]
+  outlier_analysis <- getOutlierScores(data = cur_data, columns = cur_columns, conds = cur_conds)
+  cleaned_columns <- outlier_analysis$cleaned_columns
+  remaining_columns <- columns[!columns %in% cleaned_columns]
+  outlier_scores <- outlier_analysis$Score
+  
+  # check iterations
+  if(!is.null(session)){
+    setProgress(value = (0 %% 11)/10,
+                message = paste("Computational Profiling:  Iteration", 0, sep = " "),
+                detail = paste("# of Removed Samples: ", length(cleaned_columns), sep = " "))
+  }
   
   # iteration until convergence
   for(i in 1:iter){
@@ -44,9 +61,16 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
     # select subset of genes and columns
     cur_columns <- setdiff(columns, cleaned_columns)
     cur_data <- data[, columns %in% cur_columns]
-    cur_data <- data[, columns %in% cur_columns]
     cur_conds <- conds[columns %in% cur_columns]
     
+    # adjust scoring threshold 
+    if(threshold == "auto"){
+      cut_threshold <- table(cur_conds)/length(cur_conds)
+      param_threshold <- cut_threshold[cur_conds]
+    } else{
+      param_threshold <- as.numeric(threshold)
+    }
+
     # DE analysis
     results <- runDE(data = cur_data, columns = cur_columns, conds = cur_conds, params = params)
     results$padj[is.na(results$padj)] <- 1
@@ -58,9 +82,11 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
     DEgenes <- rownames(Topresults)
     DEgenes_new <- union(DEgenes_new, DEgenes) 
 
-    # DEgenes of the current data
+    # DEgenes of the current data, and normalize
+    # data_de <- getNormalizedMatrix(cur_data, method = "TMM")
     data_de <- cur_data[rownames(cur_data) %in% DEgenes_new, ]
     
+    # score with silhouette method
     if(ScoreMethod == "Silhouette"){
       
       # Calculate silhouette with spearman
@@ -70,10 +96,11 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
       
       # detect impure columns
       score <- (sil_spear[,3] + 1)/2
-      exclude_list <- which(score < threshold) 
+      exclude_list <- which(score < param_threshold) 
       
     }
     
+    # score with NNLS method
     if(ScoreMethod == "NNLS-based"){
       
       # Expression Profiles
@@ -95,7 +122,7 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
       score_new <- NULL
       for(j in 1:nrow(score)){
         est_cond <- score[j,cur_conds[j]==unique(cur_conds)]
-        if(est_cond < threshold) exclude_list <- c(exclude_list,j)
+        if(est_cond < param_threshold) exclude_list <- c(exclude_list,j)
         score_new <- c(score_new, est_cond)
       }
       score <- score_new
@@ -104,7 +131,7 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
     # record the first score
     if(i == 1){
       score <- format(round(score, 3), nsmall = 3)
-      score <- data.frame(Samples = colnames(data), Conds = conds, Scores = score)
+      score <- data.frame(Samples = colnames(cur_data), Conds = cur_conds, Scores = score)
       DEResults <- results
       DEscore <- score
       NonIterDEgenes <- DEgenes
@@ -118,19 +145,80 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
     
     # update deleted columns
     cleaned_columns <- c(cleaned_columns, cur_columns[exclude_list])
+    remaining_columns <- columns[!columns %in% cleaned_columns]
+    
+    # if there are less than two samples on each side, stop
+    remaining_conds <- conds[!columns %in% cleaned_columns]
+    remaining_conds <- table(remaining_conds)
+    if(any(remaining_conds < 3)){
+      NumberofIters <- i
+      break
+    }
+    
+    # print iteration results
+    if(verbose){
+      cat("# of Removed Samples: ", length(cleaned_columns), "\n")
+      cat("# New DE genes:", length(DEgenes), "\n")
+    }
+    
+    # visualize PCA
+    if(!is.null(visualize_prefix)){
+      datax_pr <- apply(data_de,1,scale)
+      prtemp <- prcomp(datax_pr)
+      datax_pr <- prtemp$x
+      cur_cleaned <- ifelse(cur_columns %in% cur_columns[exclude_list], "remove", "keep")
+      ggplot(data.frame(datax_pr), 
+             ggplot2::aes(x = PC1, y = PC2, colour = cur_cleaned, shape = cur_conds), diag = "blank") + geom_point() + labs(title = paste0("# of Removed Samples: ", length(cleaned_columns)))
+      ggsave(paste0(visualize_prefix, i, ".jpeg"), device = "jpeg", width = 7, height = 5)
+    }
     
     # check iterations
-    setProgress(value = (i %% 11)/10,
-                message = paste("Computational Profiling:  Iteration", i, sep = " "),
-                detail = paste("# New DE genes:", length(DEgenes),
-                               "# of Removed Samples: ", length(cleaned_columns), sep = " "))
+    if(!is.null(session)){
+      setProgress(value = (i %% 11)/10,
+                  message = paste("Computational Profiling:  Iteration", i, sep = " "),
+                  detail = paste("# New DE genes:", length(DEgenes),
+                                 "# of Removed Samples: ", length(cleaned_columns), sep = " "))
+    }
   }
   IterDEgenes <- DEgenes
 
-  return(list(IterDEResults = results, DEResults = DEResults, IterDEgenes = IterDEgenes, 
-              DEgenes = NonIterDEgenes, cleaned_columns = cleaned_columns, NumberofIters = NumberofIters))
+  return(list(IterDEResults = results, DEResults = DEResults, IterDEgenes = IterDEgenes, DEgenes = NonIterDEgenes, 
+              cleaned_columns = cleaned_columns, remaining_columns = remaining_columns, NumberofIters = NumberofIters, g = g))
 }
 
+#' getOutlierScores
+#' 
+#' Calculate membership scores given the iterative DE results
+#'
+#' @param deres DE results
+#' @param data data
+#' @param columns samples 
+#' @param conds conditions
+#' @param threshold threshold for score
+#'
+#' @examples
+#'      x <- getOutlierScores()
+#'     
+#' @export
+#'  
+getOutlierScores <- function(data = NULL, columns = NULL, conds = NULL, threshold = 0.5){
+  
+  # set DESeq model
+  data <- data[,columns]
+  coldata <- prepGroup(conds, columns)
+  dds <- DESeq2::DESeqDataSetFromMatrix(countData = data,
+                                colData = coldata,
+                                design= ~ group)
+  dds <- DESeq2::DESeq(dds)
+  
+  # get outlier scores
+  cooks_dds <- apply(SummarizedExperiment::assays(dds)[["cooks"]], 2, function(x) quantile(x, probs = 0.75, na.rm = TRUE))
+  Score <- 1-pf(cooks_dds, 2, ncol(data) - 2)
+  cleaned_columns <- columns[Score < threshold]
+  Score <- data.frame(Samples = colnames(data), Conds = conds, Scores = Score)
+  
+  return(list(cleaned_columns = cleaned_columns, Score = Score))
+}
 
 #' getFinalScores
 #' 
@@ -157,7 +245,6 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
   
   # parameters
   ScoreMethod <- params[6]
-  #  <- params[8]
   TopStat <- as.numeric(TopStat)
   
   # DE genes
@@ -181,8 +268,7 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
   
   # set variables and cutoff values
   cleaned_columns <- deres$cleaned_columns
-  # data <- getNormalizedMatrix(data, method=iterde_norm)
-    
+
   # select subset of genes and columns
   cur_columns <- setdiff(columns, cleaned_columns)
   cur_data <- data[, columns %in% cur_columns]
@@ -190,7 +276,9 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
   cur_conds <- conds[columns %in% cur_columns]
   
   # Final Scores of Heterogeneous Groups
+  # data_de <- getNormalizedMatrix(data, method = "TMM")
   data_de <- data[rownames(data) %in% DEgenes, ]
+  
   if(ScoreMethod == "Silhouette"){
     
     # Spearman correlations
@@ -217,7 +305,7 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
     rownames(DEscore) <- columns
     
   }
-  # DEscore <- format(round(DEscore, 3), nsmall = 3)
+
   DEscore_new <- NULL
   for(i in 1:nrow(DEscore)){
     DEscore_new <- c(DEscore_new,
@@ -226,6 +314,7 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
   DEscore <- data.frame(Samples = colnames(data), Conds = conds, Scores = DEscore_new)
   
   # Final Scores of Heterogeneous groups
+  # data_de <- getNormalizedMatrix(data, method = "TMM")
   data_de <- data[rownames(data) %in% IterDEgenes, ]
   if(ScoreMethod == "Silhouette"){
     

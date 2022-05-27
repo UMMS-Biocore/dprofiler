@@ -38,7 +38,11 @@ batchEffectUI <- function (id) {
                             )
                           ),
                           conditionalPanel(condition = paste0("input['", ns("submitBatchEffect"),"']"),
-                                           actionButtonDE("goDE", "Go to Computational Profiling", styleclass = "primary"))),
+                                           actionButtonDE("goDE", "Go to Comp. Phenotypic Profiling", styleclass = "primary"),
+                                           actionButtonDE("gotodeconvoluteFromBatch", "Go to Compositional Profiling", styleclass = "primary"),
+                                           actionButtonDE("gotoprofilingFromBatch", "Go to Comparative Profiling", styleclass = "primary")
+                                           )
+                          ),
       shinydashboard::box(title = "Plots",
                           solidHeader = TRUE, status = "info",  width = 12, 
                           fluidRow(column(1, div()),
@@ -115,10 +119,16 @@ dataLCFUI<- function (id) {
                             )
                           ),
                           conditionalPanel(condition = paste0("input['", ns("submitLCF"),"']"),
-                                           actionButtonDE("Batch", label = "Batch Effect Correction", styleclass = "primary"),
-                                           conditionalPanel(condition = "!(input.Batch)",
-                                                            actionButtonDE("goDEFromFilter", "Go to Computational Profiling", styleclass = "primary"),
-                                           ))
+                                           column(12, 
+                                             fluidRow(
+                                               actionButtonDE("Batch", label = "Batch Effect Correction", styleclass = "primary"),
+                                               conditionalPanel(condition = "!(input.Batch)",
+                                                                actionButtonDE("goDEFromFilter", "Go to Comp. Pheno. Profiling", styleclass = "primary"),
+                                                                actionButtonDE("gotodeconvoluteFromFilter", "Go to Compositional Profiling", styleclass = "primary"),
+                                                                actionButtonDE("gotoprofilingFromFilter", "Go to Comparative Profiling", styleclass = "primary"))
+                                              )
+                                           )
+                          )
       ),
       shinydashboard::box(title = "Histograms",
                           solidHeader = TRUE, status = "info",  width = 12, 

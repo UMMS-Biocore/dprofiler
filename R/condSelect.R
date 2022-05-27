@@ -7,7 +7,7 @@
 #' @param session session 
 #' @param data count or single cell data
 #' @param metadata metadata
-#' @param profiling if TRUE, condition selection is conducted for external data sets (default: FALSE) 
+#' @param use_profiling if TRUE, condition selection is conducted for external data sets (default: FALSE) 
 #'
 #' @examples
 #'     x <- dprofilercondselect()
@@ -21,18 +21,22 @@ dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, dat
     metadata <- pData(data)
   }
   
+  # choicecounter for single cell
+  choicecounter <- reactiveVal(1)
+  
+  # Select Condition Selector UI based on data type
   output$conditionSelector <- renderUI({
     if(class(data) == "ExpressionSet"){
-      selected <- selectScRNAConditions(data, session, input)
+      selected <- selectScRNAConditions(data, session, choicecounter(), input)
     } else if(profiling) {
       selected <- selectProfilingConditions(data, metadata, session, input)
-      # selected <- selectConditions(data, metadata, session, input)
     } else {
       selected <- selectConditions(data, metadata, session, input)
     }
     selected
   })
   
+  # Update Cell Types based on selected Metadata column
   observeEvent(input[["conditions_from_meta0"]],{
     if(class(data) == "ExpressionSet"){
       if(!is.null(input[["conditions_from_meta0"]])){
@@ -42,12 +46,21 @@ dprofilercondselect <- function(input = NULL, output = NULL, session = NULL, dat
         }
       }
     }
-    if(profiling){
-          
+  })
+  
+  # add new single cell subsets to deconvolute distinct samples
+  observeEvent(input$add_btn, {
+    choicecounter(choicecounter() + 1)
+  })
+  observeEvent(input$rm_btn, {
+    if (choicecounter() > 0) {
+      choicecounter(choicecounter() - 1)
+    } else if((choicecounter() - 1) == 0){
+      choicecounter(1)
     }
   })
   
-  return(NULL)
+  list(cc = choicecounter)
 }
 
 #' condSelectUI
@@ -105,11 +118,11 @@ selectConditions<-function(Dataset = NULL,
   selected1 <- selectedSamples(1)
   selected2 <- selectedSamples(2)
   to_return <- list(
-    column(12, 
-           p(strong("Note:")," Differentially expressed genes and ", strong("Membership Scores")," of samples are calculated to iteratively remove samples with low membership scores. Press ", 
-             strong("Start"), " to score lesional and non-lesional samples which results in", strong("P65_NL being removed."), " Here, P65_NL is a non-lesional Vitiligo sample with a low score, suggesting 
-             that its expression profile may ", strong("not match with the phenotypic profile of a non-lesional Vitiligo sample."))
-    ),
+    # column(12, 
+    #        p(strong("Note:")," Differentially expressed genes and ", strong("Membership Scores")," of samples are calculated to iteratively remove samples with low membership scores. Press ", 
+    #          strong("Start"), " to score lesional and non-lesional samples which results in", strong("P65_NL being removed."), " Here, P65_NL is a non-lesional Vitiligo sample with a low score, suggesting 
+    #          that its expression profile may ", strong("not match with the phenotypic profile of a non-lesional Vitiligo sample."))
+    # ),
     column(12, getMetaSelector(metadata = metadata, session = session, input=input, n = 1),
            getConditionSelectorFromMeta(metadata, session = session, input, 1,
                                         1, allsamples, selected1),
@@ -159,6 +172,7 @@ selectConditions<-function(Dataset = NULL,
 #'
 #' @param scdata, used single cell dataset 
 #' @param session, session
+#' @param choicecounter, choicecounter to add multiple comparisons
 #' @param input, input params
 #'
 #' @examples
@@ -168,6 +182,7 @@ selectConditions<-function(Dataset = NULL,
 #' 
 selectScRNAConditions<-function(scdata = NULL,
                                 session = NULL,
+                                choicecounter = NULL,
                                 input = NULL) {
   if(is.null(scdata)) return(NULL)
   
@@ -176,42 +191,98 @@ selectScRNAConditions<-function(scdata = NULL,
   character_columns <- colnames(metadata)[!sapply(as.data.frame(metadata),is.numeric)]
   metadata <- metadata[,character_columns]
   
+  # add multiple phenotypes
+  nc <- choicecounter
+  if (nc >= 0) {
+    to_return_phenotype <- 
+      lapply(seq_len(nc), function(i) {
+        phenotype_pane_list <- list(
+          column(12,
+            column(3, getSampleSelector(metadata, session, input, i)),
+            column(3, getPhenotypeSelector(metadata, session, input, i)),
+            column(3, getPhenotypeCaseSelector(metadata, session, input, i))
+          )
+      )
+      return(phenotype_pane_list)
+    })
+  }
+  
   # meta data selection pane
   to_return <- list(
-    column(12, 
-           p(strong("Note:")," Here, bulk RNA Deconvolution is used to profiling bulk lesional and non-lesional vitiligo samples with reference skin cell types of Vitiligo (Keratinocyte, Melanocyte, t-cells etc.). ",
-             strong("Membership scores"), " and estimated cell type proportions are concurrantly visualized.")
-    ),
+    # column(12, 
+    #        p(strong("Note:")," Here, bulk RNA Deconvolution is used to profiling bulk lesional and non-lesional vitiligo samples with reference skin cell types of Vitiligo (Keratinocyte, Melanocyte, t-cells etc.). ",
+    #          strong("Membership scores"), " and estimated cell type proportions are concurrantly visualized.")
+    # ),
     column(12,
+           
+           # Select Cell Types that will be used to deconvolute samples
            getScRNAMetaSelector(metadata, session, input),
            getIdentSelectorFromMeta(metadata, session, input, choices = "No Selection"),
-           column(3,
+           
+           # subset single cells to deconvolute distinct samples
+           # to_return_phenotype,
+           # column(12,actionButtonDE(session$ns("add_btn"), "Add New Comparison",styleclass = "primary"),
+           #       actionButtonDE(session$ns("rm_btn"), "Remove", styleclass = "primary")),
+    ),
+    column(12,
+           column(2,
                   selectInput(session$ns('deconvolute_methods'), 
                               label = getIconLabel("Method", message = "select a deconvolution method"),
-                              choices = c("MuSIC","BisqueRNA","SCDC","DWLS"),
+                              choices = c("MuSIC","BisqueRNA","SCDC"),
                               selected = "MuSIC")
            ),
-           column(3,
+           column(2,
                   selectInput(session$ns('deconvolute_samples'), 
                               label = getIconLabel("Samples", message = "select metadata column with samples of origins of cells"),
                               choices = colnames(metadata),
                               selected = colnames(metadata)[1])
                   ),
-           column(3,
-                  selectInput(session$ns("deconvolute_genes"), 
-                              label = getIconLabel("DE genes", message = "set of differentially expressed genes"),
-                              selected = c("DE Genes Before Prof."),
-                              choices = c("DE Genes Before Prof.","DE Genes After Prof.","Cell Marker Genes"))),
-           # conditionalPanel(
-           #   (condition <- "input.deconvolute_genes == 'Marker Genes'"),
-             column(3,
+           column(2,
+                  selectInput(session$ns("allgenes"), 
+                            label = getIconLabel("Use All Genes ?", message = "Do you want to use all genes available for the analysis"),
+                            choices = c("Yes","No"),
+                            selected = "Yes"))
+    ), 
+    column(12,
+           conditionalPanel(
+             (condition <- "input.allgenes == 'No'"),
+               ns = session$ns,
+               column(2,
                     textInput(session$ns("top_genes"), 
                               label = getIconLabel("Top N Markers", message = "# of markers for each cel type, only for cell marker genes option"),
-                              value = "1000"))
-           #)
+                              value = "100")),
+               column(2,
+                      textInput(session$ns('logFC'), 
+                                label = getIconLabel("LogFC", message = "Minimum log2FC for a marker"),
+                                value = "1")
+               ),
+               column(2,
+                      textInput(session$ns('padj'), 
+                                label = getIconLabel("Padj-value", message = "Padj-value"),
+                                value = "0.05")
+               ),
+               column(2,
+                      textInput(session$ns('pct1'), 
+                                label = getIconLabel("Pct.1", message = "Min. Perc. of non-zero expressing cells of target cell type"),
+                                value = "0.5")
+               ),
+               column(2,
+                      textInput(session$ns('pct2'), 
+                                label = getIconLabel("Pct.2", message = "Max. Perc. of non-zero expressing cells in other cell types"),
+                                value = "1")
+               ),
+         )
     )
-    
   )
+  
+  # # Update Phenotypes
+  # for(i in 1:nc){
+  #   if (!is.null(selectedInput(session$ns("phenotype_from_meta"), i, NULL, input))){
+  #       updateSelectInput(session, paste0(session$ns("phenotypecase_from_meta"), 1), 
+  #                         choices=unique(metadata[,selectedInput(session$ns("phenotype_from_meta"), i, NULL, input)]))
+  #     }
+  # }
+  
   return(to_return)
 }
 
@@ -358,6 +429,98 @@ getScRNAMetaSelector <- function (metadata = NULL, session = NULL, input = NULL,
   }
 }
 
+#' getIdentSelectorFromMeta
+#' 
+#' Select identification from single cell metadata.
+#'
+#' @param metadata meta data table
+#' @param session session
+#' @param input input 
+#' @param choices choices
+#'
+#' @examples
+#'      x <- getIdentSelectorFromMeta()
+#'     
+#' @export
+#'      
+getIdentSelectorFromMeta <- function (metadata = NULL, session = NULL, input = NULL, 
+                                      choices = NULL){
+  if (!is.null(metadata)) {
+    selected_meta <- selectedInput(session$ns("conditions_from_meta"), 0, NULL, input)
+    if (is.null(selected_meta)) 
+      selected_meta <- "No Selection"
+    if(selected_meta != "No Selection"){
+      choices <- unique(metadata[,selected_meta])
+    }
+    a <- list(column(12, selectInput(session$ns("condition"), 
+                                     label = getIconLabel("Identifications", message = "select cell types or cell annotations"),
+                                     choices = choices, multiple = TRUE, selected = choices[1])))
+  }
+}
+
+#' getSampleSelector
+#' 
+#' Select Samples to be deconvolute for each phenotype
+#'
+#' @param metadata meta data table
+#' @param session session
+#' @param input input 
+#' @param n the box number
+#'
+#' @examples
+#'      x <- getSampleSelector()
+#'     
+#' @export
+#'      
+getSampleSelector <- function (metadata = NULL, session = NULL, input = NULL, 
+                                      n = NULL){
+  textInput(paste0(session$ns("sample_from_meta"), n), label = "Sample Set 1", value = "text")
+}
+
+#' getPhenotypeSelector
+#' 
+#' Select Samples to be deconvolute for each phenotype
+#'
+#' @param metadata meta data table
+#' @param session session
+#' @param input input 
+#' @param n the box number
+#'
+#' @examples
+#'      x <- getPhenotypeSelector()
+#'     
+#' @export
+#'      
+getPhenotypeSelector <- function (metadata = NULL, session = NULL, input = NULL, n = NULL){
+  selectInput(paste0(session$ns("phenotype_from_meta"), n), label = paste0("Phenotype ", n), choices = colnames(metadata), 
+              multiple = FALSE, selected = debrowser::selectedInput(session$ns("phenotype_from_meta"), n, NULL, input))
+}
+
+#' getPhenotypeCaseSelector
+#' 
+#' Select Samples to be deconvolute for each phenotype
+#'
+#' @param metadata meta data table
+#' @param session session
+#' @param input input 
+#' @param n the box number
+#'
+#' @examples
+#'      x <- getPhenotypeCaseSelector()
+#'     
+#' @export
+#'      
+getPhenotypeCaseSelector <- function (metadata = NULL, session = NULL, input = NULL, n = NULL){
+  if(is.null(debrowser::selectedInput(session$ns("phenotype_from_meta"), n, NULL, input))){
+    choices <- "No Selection"
+  } else {
+    choices <- unique(metadata[,debrowser::selectedInput(session$ns("phenotype_from_meta"), n, NULL, input)])
+  }
+  selectInput(paste0(session$ns("phenotypecase_from_meta"), n), label = paste0("Case ", n), 
+              choices = choices,
+              multiple = TRUE, selected = debrowser::selectedInput(session$ns("phenotypecase_from_meta"), n, choices[1], input))
+}
+
 #' getConditionSelectorFromMeta
 #' 
 #' Selects user input conditions to run in DE analysis from metadata.
@@ -411,35 +574,6 @@ getConditionSelectorFromMeta <- function (metadata = NULL, session = NULL, input
     }
   }
   return(a)
-}
-
-#' getIdentSelectorFromMeta
-#' 
-#' Select identification from single cell metadata.
-#'
-#' @param metadata meta data table
-#' @param session session
-#' @param input input 
-#' @param choices choices
-#'
-#' @examples
-#'      x <- getIdentSelectorFromMeta()
-#'     
-#' @export
-#'      
-getIdentSelectorFromMeta <- function (metadata = NULL, session = NULL, input = NULL, 
-                                      choices = NULL){
-  if (!is.null(metadata)) {
-    selected_meta <- selectedInput(session$ns("conditions_from_meta"), 0, NULL, input)
-    if (is.null(selected_meta)) 
-      selected_meta <- "No Selection"
-    if(selected_meta != "No Selection"){
-      choices <- unique(metadata[,selected_meta])
-    }
-    a <- list(column(12, selectInput(session$ns("condition"), 
-                                     label = getIconLabel("Identifications", message = "select cell types or cell annotations"),
-                                     choices = choices, multiple = TRUE, selected = choices[1])))
-  }
 }
 
 #  getMethodDetails
@@ -538,13 +672,9 @@ getIterMethodDetails <- function(num = 0, session = NULL, input = NULL) {
                         num, c("Silhouette", "NNLS-based"),
                         selectedInput(session$ns("scoremethod"), num, "Silhouette", input)),
       column(2,textInput(paste0(session$ns("minscore"), num), 
-                         getIconLabel("Min. Score", message = "Threshold for acceptable self-membership scores. Score < Min.Score indicates dismemberment of the sample"), 
+                         getIconLabel("Min. Score", message = "Threshold for acceptable self-membership scores. Score < Min.Score indicates dismemberment of the sample, if 'auto' then threshold is set automatically (with respect to condition imbalance)"), 
                          value = isolate(selectedInput(session$ns("minscore"), 
                                                        num, "0.5", input)))),
-      # getSelectInputBox(session$ns("iterde_norm"), 
-      #                   getIconLabel("Normalization", message = "Normalization method prior to scoring"), 
-      #                   num, c("TMM","RLE","upperquartile","none"), 
-      #                   selectedInput(session$ns("iterde_norm"), num, "TMM", input), 2),
       getSelectInputBox(session$ns("iterde"),
                         getIconLabel("DE Selection Method", message = "Set of conditions for selecting DE genes on each iteration"), 
                         num, c("Top n Stat.", "Log2FC+Padj"),
@@ -667,13 +797,14 @@ prepDataContainer <- function(data = NULL, input = NULL, session = NULL) {
     initd <- callModule(dprofilerdeanalysis, "deresults", data = data, 
                         columns = cols, conds = conds, params = params, parent_session = session)
     if (!is.null(initd$dat()) && nrow(initd$dat()) > 1){
-      inputconds$dclist[[1]] <- list(conds = conds, cols = cols, 
-                                     init_dedata=initd$dat(),
+      inputconds$dclist[[1]] <- list(conds = conds, 
+                                     cols = cols, 
+                                     count=initd$dat(),
                                      DEgenes = initd$DEgenes,
-                                     init_iterdedata = initd$iterdat(),
+                                     count_iter = initd$iterdat(),
                                      IterDEgenes = initd$IterDEgenes,
-                                     score = initd$score,
-                                     # deconvolute_genes= initd$deconvolute_genes,
+                                     CrossScore = initd$CrossScore, 
+                                     IntraScore = initd$IntraScore,
                                      cleaned_columns = initd$cleaned_columns,
                                      demethod_params = inputconds$demethod_params[1])
     } else {

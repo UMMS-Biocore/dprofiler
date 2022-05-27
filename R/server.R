@@ -11,7 +11,6 @@
 #' @export
 #' @importFrom debrowser actionButtonDE applyFiltersNew batchMethod changeClusterOrder 
 #'             checkMetaData debrowserdataload fileTypes getAfterLoadMsg
-#'             getBarMainPlot getBoxMainPlot getDensityPlotUI getHeatmapUI
 #'             getHistogramUI getIQRPlotUI getLegendRadio getLevelOrder getLogo
 #'             getMean getMostVariedList getNormalizedMatrix getPCAPlotUI
 #'             getPCAcontolUpdatesJS getSampleDetails getSampleNames
@@ -69,7 +68,7 @@
 #' @importFrom MuSiC music_prop 
 #' @importFrom VennDiagram draw.pairwise.venn
 #' @importFrom waiter spin_ring transparent use_waiter waiter_hide waiter_show
-#' @importFrom dplyr summarize group_by_at as_tibble group_by mutate
+#' @importFrom dplyr summarize group_by_at as_tibble group_by mutate top_n
 #' @importFrom shinybusy add_busy_spinner
 #' @importFrom limma lmFit voom eBayes topTable
 #' @importFrom DT datatable dataTableOutput renderDataTable formatStyle
@@ -90,6 +89,8 @@
 #' @importFrom methods new
 #' @import apeglm
 #' @import ashr
+#' @import BisqueRNA
+#' @import SCDC
 dprofilerServer <- function(input = NULL, output = NULL, session = NULL) {
   options(warn = -1)
   tryCatch(
@@ -106,7 +107,6 @@ dprofilerServer <- function(input = NULL, output = NULL, session = NULL) {
       filtd <- reactiveVal()
       batch <- reactiveVal()
       sel <- reactiveVal()
-      sel_prof <- reactiveVal()
       dc <- reactiveVal()
       dec <- reactiveVal()
       
@@ -148,9 +148,7 @@ dprofilerServer <- function(input = NULL, output = NULL, session = NULL) {
           sel(dprofilercondselect(input, output, session,
                                   batch()$BatchEffect()$count, batch()$BatchEffect()$meta))
           updateTabItems(session, "MenuItems", "DEAnalysis")
-          
         })
-        
         
         observeEvent(input$startDE, {
           if(!is.null(batch()$BatchEffect()$count)){
@@ -187,7 +185,7 @@ dprofilerServer <- function(input = NULL, output = NULL, session = NULL) {
         observe({
           if (!is.null(selectedMain()) && !is.null(selectedMain()$selGenes())) {
             withProgress(message = 'Creating plot', style = "notification", value = 0.1, {
-              selectedHeat(callModule(dprofilerheatmap, "deresults", dc()$init_dedata[selectedMain()$selGenes(), dc()$cols]))
+              selectedHeat(callModule(dprofilerheatmap, "deresults", dc()$count[selectedMain()$selGenes(), dc()$cols]))
             })
           }
         })
@@ -214,15 +212,19 @@ dprofilerServer <- function(input = NULL, output = NULL, session = NULL) {
         observe({
           if (!is.null(selgenename()) && selgenename()!=""){
             withProgress(message = 'Creating Bar/Box plots', style = "notification", value = 0.1, {
-              callModule(dprofilerbarmainplot, "deresults", dc()$init_dedata, 
+              callModule(dprofilerbarmainplot, "deresults", dc()$count, 
                          dc()$cols, dc()$conds, selgenename())
-              callModule(dprofilerboxmainplot, "deresults", dc()$init_dedata, 
+              callModule(dprofilerboxmainplot, "deresults", dc()$count, 
                          dc()$cols, dc()$conds, selgenename())
             })
           }
         })
         
+        ####
         ## Cellular Heterogeneity Events ####
+        ####
+        
+        # deconvolute after iterative DE analysis
         observeEvent (input$gotodeconvolute, {
           if(!is.null(dc())){
             sel(callModule(dprofilercondselect, "deconvolute", uploadeddata()$load()$sc_count))
@@ -230,24 +232,51 @@ dprofilerServer <- function(input = NULL, output = NULL, session = NULL) {
           }
         })
         
-        observeEvent(input$deconvolute, {
-          if(!is.null(dc())){
-            deconvolute <- prepDeconvolute(dc, uploadeddata()$load()$sc_count, session)
-          } 
+        # deconvolute after filtering
+        observeEvent (input$gotodeconvoluteFromFilter, {
+          if(!is.null(filtd()$filter())){
+            sel(callModule(dprofilercondselect, "deconvolute", uploadeddata()$load()$sc_count))
+            updateTabItems(session, "MenuItems", "CellComp")
+          }
         })
         
+        # devconvolute
+        observeEvent(input$deconvolute, {
+          if(!is.null(dc())){
+            deconvolute <- prepDeconvolute(dc, uploadeddata()$load()$sc_count, uploadeddata()$load()$sc_marker_table, session)
+          } else if(!is.null(filtd()$filter())){
+            deconvolute <- prepDeconvolute(filtd()$filter, uploadeddata()$load()$sc_count, uploadeddata()$load()$sc_marker_table, session)
+          }
+        })
+        
+        # set deconvolution UI
         output$cellcompUI <- renderUI({
           getDeconvoluteUI("deconvolute")
         })
         
+        ####
         ## Profiling Events ####
+        ####
+        
+        # profile after Iterative DE analysis
         observeEvent (input$gotoprofile, {
           if(!is.null(dc())){
-            sel(callModule(dprofilercondselect, "profiling", uploadeddata()$load()$prof_count, uploadeddata()$load()$prof_meta, profiling = TRUE))
+            sel(callModule(dprofilercondselect, "profiling", uploadeddata()$load()$prof_count, uploadeddata()$load()$prof_meta, use_profiling = TRUE))
             updateTabItems(session, "MenuItems", "Profile")
           }
         })
         
+        # profile after Filtering
+        observeEvent (input$gotoprofileFromFilter, {
+          if(!is.null(dc())){
+            sel(callModule(dprofilercondselect, "profiling", uploadeddata()$load()$prof_count, uploadeddata()$load()$prof_meta, use_profiling = TRUE))
+            updateTabItems(session, "MenuItems", "Profile")
+          } else if(!is.null(filtd()$filter())){
+            deconvolute <- prepDeconvolute(filtd()$filter, uploadeddata()$load()$sc_count, uploadeddata()$load()$sc_marker_table, session)
+          }
+        })
+        
+        # profile
         observeEvent(input$startprofiling, {
           if(!is.null(dc())){
             waiter_show(html = spin_ring(), color = transparent(.5))
@@ -257,6 +286,7 @@ dprofilerServer <- function(input = NULL, output = NULL, session = NULL) {
           }
         })
         
+        # set profiling UI
         output$ProfilingUI <- renderUI({
           getProfilingUI("profiling")
         })
@@ -272,11 +302,11 @@ dprofilerServer <- function(input = NULL, output = NULL, session = NULL) {
       # count data and metadata files for help section
       output$metaFile <-  renderTable({
         read.delim(system.file("extdata", "www", "metaFile.txt",
-                               package = "debrowser"), header=TRUE, skipNul = TRUE)
+                               package = "dprofiler"), header=TRUE, sep = " ", skipNul = TRUE)
       })
       output$countFile <-  renderTable({
         read.delim(system.file("extdata", "www", "countFile.txt",
-                               package = "debrowser"), header=TRUE, skipNul = TRUE)
+                               package = "dprofiler"), header=TRUE, sep = " ", skipNul = TRUE)
       })
 
       output$logo <- renderUI({

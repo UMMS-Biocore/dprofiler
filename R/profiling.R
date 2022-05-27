@@ -193,14 +193,11 @@ getProfileScores <- function(dc = NULL, profiledata = NULL, profilemetadata = NU
     
   # get data 
   remaining_columns <- dc$cols[!dc$cols %in% dc$cleaned_columns]
-  # conds <- dc$conds[!dc$cols %in% dc$cleaned_columns]
-  # profileConds <- dc$conds[!dc$cols %in% dc$cleaned_columns] 
   profileConds <- dc$conds
   conds <- profilemetadata$treatment
   profileConds <- profilemetadata$treatment
   conds <- dc$conds
-  # data <- dc$init_dedata[dc$IterDEgenes, remaining_columns]
-  data <- dc$init_dedata[dc$IterDEgenes, dc$cols]
+  data <- dc$count[dc$IterDEgenes, dc$cols]
   data <- t(apply(data,1,scale))
   colnames(data) <- dc$cols
   
