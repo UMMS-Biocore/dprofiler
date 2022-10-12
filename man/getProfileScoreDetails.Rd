@@ -7,18 +7,24 @@
 getProfileScoreDetails(
   output = NULL,
   session = NULL,
-  plotname = NULL,
-  scores = NULL
+  tablename = NULL,
+  data = NULL,
+  modal = NULL,
+  highlight = FALSE
 )
 }
 \arguments{
-\item{output}{output}
+\item{output, }{output}
 
-\item{session}{session}
+\item{session, }{session}
 
-\item{plotname}{name of the plot}
+\item{tablename, }{table name}
 
-\item{scores}{profiling scores}
+\item{data, }{matrix data}
+
+\item{modal, }{if it is true, the matrix is going to be in a modal}
+
+\item{highlight}{if it is true, numerical columns are highlighted}
 }
 \description{
 Details and scores of the profiling analysis

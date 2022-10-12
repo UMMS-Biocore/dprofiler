@@ -16,14 +16,19 @@
 dprofilermainplot <- function(input = NULL, output = NULL, session = NULL, data = NULL) {
   if (is.null(data)) return(NULL)
   
+  count <- data$count
+  count_iter <- data$count_iter
+  DEResults <- data$DEresults
+  data <- data$CountData
+  
   # Heterogeneous conditions mainplot
   plotdata_de <-  reactive({
-    plotData(data$count, input)
+    plotData(count(), input)
   })
   
   # Homogeneous conditions mainplot  
   plotdata_iterde <-  reactive({
-    plotData(data$init_iterdedata, input)
+    plotData(count_iter(), input)
   })
   
   observe({
@@ -44,11 +49,11 @@ dprofilermainplot <- function(input = NULL, output = NULL, session = NULL, data 
     
     # Initial, Overlapping, and Final Genes main plots 
     getMainPlot(input, output, session, "maininitial", 4, de_data_foriter, 
-                which_genes = "Initial", DEgenes = data$DEgenes, IterDEgenes = data$IterDEgenes)
+                which_genes = "Initial", DEgenes = DEResults()$DEgenes, IterDEgenes = DEResults()$IterDEgenes)
     getMainPlot(input, output, session, "mainoverlap", 4, iterde_data_foriter, 
-                which_genes = "Overlap", DEgenes = data$DEgenes, IterDEgenes = data$IterDEgenes)
+                which_genes = "Overlap", DEgenes = DEResults()$DEgenes, IterDEgenes = DEResults()$IterDEgenes)
     getMainPlot(input, output, session, "mainfinal", 4, iterde_data_foriter, 
-                which_genes = "Final", DEgenes = data$DEgenes, IterDEgenes = data$IterDEgenes)
+                which_genes = "Final", DEgenes = DEResults()$DEgenes, IterDEgenes = DEResults()$IterDEgenes)
     
   })
   
@@ -132,7 +137,7 @@ getMainPlot <- function(input = NULL, output = NULL, session = NULL, mainname = 
                status = "primary", 
                solidHeader = TRUE, width = NULL, draggable = TRUE, 
                column(12,
-                plotlyOutput(session$ns(mainname))
+                      plotlyOutput(session$ns(mainname))
                )
              ))
     )
@@ -277,11 +282,11 @@ addDataCols <- function (data = NULL, de_res = NULL, cols = NULL, conds = NULL)
 mainPlotControlsUI <- function (id)
 {
   ns <- NS(id)
-  list(shinydashboard::menuItem(" Plot Type", startExpanded = TRUE,
+  list(shinydashboard::menuItem(" Plot Type", startExpanded = FALSE,
                                 radioButtons(ns("mainplot"), "Main Plots:",
                                              c(Scatter = "scatter", VolcanoPlot = "volcano",
                                                MAPlot = "maplot"))),
-       shinydashboard::menuItem("Main Options", startExpanded = TRUE,
+       shinydashboard::menuItem("Main Options", startExpanded = FALSE,
                                 sliderInput(ns("backperc"), "Background Data(%):", min = 10, max = 100, value = 100, sep = "", animate = FALSE),
                                 conditionalPanel(condition <- paste0("input['", ns("mainplot"), "'] == 'volcano'"),
                                                  sliderInput(ns("log10padjCutoff"),"Log10 padj value cutoff:",

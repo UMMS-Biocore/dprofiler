@@ -8,11 +8,8 @@ dprofilerdeanalysis(
   input = NULL,
   output = NULL,
   session = NULL,
-  data = NULL,
-  columns = NULL,
-  conds = NULL,
-  params = NULL,
-  parent_session = NULL
+  parent_session = NULL,
+  cond_dc = NULL
 )
 }
 \arguments{
@@ -22,15 +19,9 @@ dprofilerdeanalysis(
 
 \item{session, }{session}
 
-\item{data, }{a matrix that includes expression values}
-
-\item{columns, }{columns}
-
-\item{conds, }{conditions}
-
-\item{params, }{de parameters}
-
 \item{parent_session}{parent session}
+
+\item{cond_dc}{data and DE parameters}
 }
 \description{
 Module to perform and visualize Iterative DE results.

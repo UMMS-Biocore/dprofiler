@@ -4,14 +4,23 @@
 \alias{getAllMarkerGenes}
 \title{getAllMarkerGenes}
 \usage{
-getAllMarkerGenes(scdata = NULL, data = NULL, input = NULL)
+getAllMarkerGenes(
+  sc_marker_table = NULL,
+  scdata = NULL,
+  data = NULL,
+  input = NULL
+)
 }
 \arguments{
-\item{scdata}{single cell data}
+\item{sc_marker_table}{single cell marker table}
 
-\item{data}{reference bulk data}
+\item{scdata}{single cell data object}
+
+\item{data}{bulk data}
 
 \item{input}{input}
+
+\item{columns}{columns of the bulk data}
 }
 \description{
 getAllMarkerGenes

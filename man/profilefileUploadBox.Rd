@@ -6,23 +6,23 @@
 \usage{
 profilefileUploadBox(
   id = NULL,
-  inputId_count = NULL,
-  inputId_meta = NULL,
-  inputId_dmeta = NULL,
-  inputId_dmeta_key = NULL,
+  inputId_select = NULL,
+  inputId_external = NULL,
+  inputId_button = NULL,
+  inputId_dirbutton = NULL,
   label = NULL
 )
 }
 \arguments{
 \item{id}{namespace id}
 
-\item{inputId_count}{input data file ID}
+\item{inputId_select}{input ID for selecting references}
 
-\item{inputId_meta}{input metadata file ID}
+\item{inputId_external}{input ID for custom external reference}
 
-\item{inputId_dmeta}{dmeta API URL}
+\item{inputId_button}{input ID for import button}
 
-\item{inputId_dmeta_key}{dmeta token}
+\item{inputId_dirbutton}{input ID for directory select button}
 
 \item{label}{label}
 }

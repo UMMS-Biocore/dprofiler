@@ -7,6 +7,7 @@
 selectProfilingConditions(
   Dataset = NULL,
   metadata = NULL,
+  marker_table = NULL,
   session = NULL,
   input = NULL
 )
@@ -15,6 +16,8 @@ selectProfilingConditions(
 \item{Dataset, }{used dataset}
 
 \item{metadata, }{metadatatable to select from metadata}
+
+\item{marker_table, }{the marker table of the profile data}
 
 \item{session, }{session}
 

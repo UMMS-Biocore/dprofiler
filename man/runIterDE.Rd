@@ -6,15 +6,20 @@
 \usage{
 runIterDE(
   data = NULL,
+  metadata = NULL,
   columns = NULL,
   conds = NULL,
   params = NULL,
-  session = NULL
+  session = NULL,
+  verbose = FALSE,
+  visualize_prefix = "plot"
 )
 }
 \arguments{
 \item{data, }{A matrix that includes all the expression raw counts,
 rownames has to be the gene, isoform or region names/IDs}
+
+\item{metadata, }{metadata}
 
 \item{columns, }{is a vector that includes the columns that are going
 to be analyzed. These columns has to match with the given data.}
@@ -24,7 +29,11 @@ with the column order}
 
 \item{params, }{all params for the DE methods}
 
-\item{session}{session}
+\item{session, }{the session}
+
+\item{verbose, }{TRUE if you want results to be printed}
+
+\item{visualize_prefix, }{the prefix of the PCA plot}
 }
 \description{
 Run Iterative DE algorithms on the selected parameters.  Output is

@@ -4,12 +4,25 @@
 \alias{scfileUploadBox}
 \title{scfileUploadBox}
 \usage{
-scfileUploadBox(id = NULL, inputId = NULL, label = NULL)
+scfileUploadBox(
+  id = NULL,
+  inputId_select = NULL,
+  inputId_external = NULL,
+  inputId_button = NULL,
+  inputId_dirbutton = NULL,
+  label = NULL
+)
 }
 \arguments{
 \item{id}{namespace id}
 
-\item{inputId}{input data file ID}
+\item{inputId_select}{input ID for selecting references}
+
+\item{inputId_external}{input ID for custom external reference}
+
+\item{inputId_button}{input ID for import button}
+
+\item{inputId_dirbutton}{input ID for directory select button}
 
 \item{label}{label}
 }
@@ -17,6 +30,6 @@ scfileUploadBox(id = NULL, inputId = NULL, label = NULL)
 file upload box for single cell ExpressionSet object.
 }
 \examples{
-      x <- fileUploadBox("meta", "metadata", "Metadata")
+      x <- scfileUploadBox("meta", "metadata", "Metadata")
     
 }

@@ -10,7 +10,6 @@
 #'
 batchEffectUI <- function (id) {
   ns <- NS(id)
-  
   list(
     fluidRow(
       shinydashboard::box(title = "Batch Effect Correction and Normalization",
@@ -37,19 +36,16 @@ batchEffectUI <- function (id) {
                                    uiOutput(ns("afterbatchtable"))
                             )
                           ),
-                          conditionalPanel(condition = paste0("input['", ns("submitBatchEffect"),"']"),
-                                           actionButtonDE("goDE", "Go to Comp. Phenotypic Profiling", styleclass = "primary"),
-                                           actionButtonDE("gotodeconvoluteFromBatch", "Go to Compositional Profiling", styleclass = "primary"),
-                                           actionButtonDE("gotoprofilingFromBatch", "Go to Comparative Profiling", styleclass = "primary")
-                                           )
+                          actionButtonDE(ns("goDE"), "Go to Comp. Phenotypic Profiling", styleclass = "primary"),
+                          actionButtonDE(ns("gotodeconvolute"), "Go to Compositional Profiling", styleclass = "primary"),
+                          actionButtonDE(ns("gotoprofile"), "Go to Comparative Profiling", styleclass = "primary")
                           ),
       shinydashboard::box(title = "Plots",
                           solidHeader = TRUE, status = "info",  width = 12, 
                           fluidRow(column(1, div()),
                                    tabsetPanel( id = ns("batchTabs"),
                                                 tabPanel(id = ns("PCA"), "PCA",
-                                                         column(5,
-                                                                getPCAPlotUI(ns("beforeCorrectionPCA"))),
+                                                         column(5, debrowser::getPCAPlotUI(ns("beforeCorrectionPCA"))),
                                                          column(2,  
                                                                 shinydashboard::box(title = "PCA Controls",
                                                                                     solidHeader = T, status = "info",  width = 12, 
@@ -58,22 +54,17 @@ batchEffectUI <- function (id) {
                                                                                                            pcaPlotControlsUI(ns("beforeCorrectionPCA"))),
                                                                                                  tabPanel ( "After",
                                                                                                             pcaPlotControlsUI(ns("afterCorrectionPCA")))))),
-                                                         column(5,
-                                                                getPCAPlotUI(ns("afterCorrectionPCA")))
+                                                         column(5, debrowser::getPCAPlotUI(ns("afterCorrectionPCA")))
                                                 ),
                                                 tabPanel(id = ns("IQR"), "IQR",
-                                                         column(5,
-                                                                getIQRPlotUI(ns("beforeCorrectionIQR"))),
+                                                         column(5, debrowser::getIQRPlotUI(ns("beforeCorrectionIQR"))),
                                                          column(2, div()),
-                                                         column(5,
-                                                                getIQRPlotUI(ns("afterCorrectionIQR")))
+                                                         column(5, debrowser::getIQRPlotUI(ns("afterCorrectionIQR")))
                                                 ),
                                                 tabPanel(id = ns("Density"), "Density",
-                                                         column(5,
-                                                                getDensityPlotUI(ns("beforeCorrectionDensity"))),
+                                                         column(5, debrowser::getDensityPlotUI(ns("beforeCorrectionDensity"))),
                                                          column(2, div()),
-                                                         column(5,
-                                                                getDensityPlotUI(ns("afterCorrectionDensity")))
+                                                         column(5, debrowser::getDensityPlotUI(ns("afterCorrectionDensity")))
                                                 )
                                    )
                           )
@@ -118,25 +109,22 @@ dataLCFUI<- function (id) {
                                    uiOutput(ns("filteredtable"))
                             )
                           ),
-                          conditionalPanel(condition = paste0("input['", ns("submitLCF"),"']"),
-                                           column(12, 
-                                             fluidRow(
-                                               actionButtonDE("Batch", label = "Batch Effect Correction", styleclass = "primary"),
-                                               conditionalPanel(condition = "!(input.Batch)",
-                                                                actionButtonDE("goDEFromFilter", "Go to Comp. Pheno. Profiling", styleclass = "primary"),
-                                                                actionButtonDE("gotodeconvoluteFromFilter", "Go to Compositional Profiling", styleclass = "primary"),
-                                                                actionButtonDE("gotoprofilingFromFilter", "Go to Comparative Profiling", styleclass = "primary"))
-                                              )
-                                           )
+                          column(12, 
+                                 fluidRow(
+                                   actionButtonDE(ns("Batch"), label = "Batch Effect Correction", styleclass = "primary"),
+                                   actionButtonDE(ns("goDE"), "Go to Comp. Pheno. Profiling", styleclass = "primary"),
+                                   actionButtonDE(ns("gotodeconvolute"), "Go to Compositional Profiling", styleclass = "primary"),
+                                   actionButtonDE(ns("gotoprofile"), "Go to Comparative Profiling", styleclass = "primary")
+                                 )
                           )
       ),
       shinydashboard::box(title = "Histograms",
                           solidHeader = TRUE, status = "info",  width = 12, 
                           fluidRow(
-                            column(6,histogramControlsUI(ns("beforeFiltering")),
-                                   getHistogramUI(ns("beforeFiltering"))),
-                            column(6,histogramControlsUI(ns("afterFiltering")),
-                                   getHistogramUI(ns("afterFiltering")))
+                            column(6,debrowser::histogramControlsUI(ns("beforeFiltering")),
+                                   debrowser::getHistogramUI(ns("beforeFiltering"))),
+                            column(6,debrowser::histogramControlsUI(ns("afterFiltering")),
+                                   debrowser::getHistogramUI(ns("afterFiltering")))
                           ))
     ))
 }
@@ -164,7 +152,7 @@ dprofilerboxmainplot <- function (input = NULL, output = NULL, session = NULL, d
   if (is.null(data)) 
     return(NULL)
   output$BoxMain <- renderPlotly({
-    getBoxMainPlot(data, cols, conds, key, title = "", 
+    debrowser::getBoxMainPlot(data, cols, conds, key, title = "", 
                    input)
   })
   output$BoxMainUI <- renderUI({
@@ -207,7 +195,7 @@ dprofilerbarmainplot <- function (input = NULL, output = NULL, session = NULL, d
     )
   })
   output$BarMain <- renderPlotly({
-    getBarMainPlot(data, cols, conds, key, title = "", 
+    debrowser::getBarMainPlot(data, cols, conds, key, title = "", 
                    input = input)
   })
 }

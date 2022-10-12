@@ -16,8 +16,8 @@ Imports:
     ggplot2, jsonlite, limma, plotly, reshape2, shiny, shinydashboard, 
     shinyjs, DT, colourpicker, ggplot2, AnnotationDbi, DESeq2, Harman,
     IRanges, RCurl, S4Vectors, SummarizedExperiment, apeglm, ashr,
-    edgeR, gplots, methods, sva
+    edgeR, gplots, methods, sva, BisqueRNA
 Remotes:
-    garber-lab/SignallingSingleCell, xuranw/MuSiC
+    garber-lab/SignallingSingleCell, renozao/xbioc, xuranw/MuSiC, meichendong/SCDC, 
 Encoding: UTF-8
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1

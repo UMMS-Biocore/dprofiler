@@ -5,6 +5,7 @@
 #' 
 #' @param data, A matrix that includes all the expression raw counts,
 #'     rownames has to be the gene, isoform or region names/IDs
+#' @param metadata, metadata
 #' @param columns, is a vector that includes the columns that are going
 #'     to be analyzed. These columns has to match with the given data.
 #' @param conds, experimental conditions. The order has to match
@@ -19,24 +20,24 @@
 #'     
 #' @export
 #' 
-runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, session = NULL, verbose = FALSE, visualize_prefix = "plot"){
+runIterDE <- function(data = NULL, metadata = NULL, columns = NULL, conds = NULL, params = NULL, session = NULL, verbose = FALSE, visualize_prefix = "plot"){
   
   if (is.null(data)) return(NULL)
+  if (is.null(columns)) return(NULL)
   data <- data[,columns]
   
   # parameters 
-  ScoreMethod <- params[6]
-  threshold <- params[7]
-  iterde <- params[8]
-  log2FC <- as.numeric(params[9])
-  padj <- as.numeric(params[10])
-  topstat <- as.numeric(params[11])
-
+  ScoreMethod <- params[7]
+  threshold <- params[8]
+  iterde <- params[9]
+  log2FC <- as.numeric(params[10])
+  padj <- as.numeric(params[11])
+  topstat <- as.numeric(params[12])
+  
   # set variables and cutoff values
   cleaned_columns <- NULL
   DEgenes_new <- NULL
   DEgenes <- NULL
-  g <- NULL
   iter <- 100
   
   # check for initial set of cleaned columns using cooks distance
@@ -55,6 +56,11 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
                 detail = paste("# of Removed Samples: ", length(cleaned_columns), sep = " "))
   }
   
+  # print iteration results
+  if(verbose){
+    cat("# of Removed Samples: ", length(cleaned_columns), "\n")
+  }
+  
   # iteration until convergence
   for(i in 1:iter){
     
@@ -70,9 +76,9 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
     } else{
       param_threshold <- as.numeric(threshold)
     }
-
+    
     # DE analysis
-    results <- runDE(data = cur_data, columns = cur_columns, conds = cur_conds, params = params)
+    results <- runDE(data = cur_data, metadata = metadata, columns = cur_columns, conds = cur_conds, params = params)
     results$padj[is.na(results$padj)] <- 1
     if(iterde == "Stat."){
       Topresults <- results[order(results$stat,decreasing = TRUE)[1:topstat],]
@@ -81,7 +87,7 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
     }
     DEgenes <- rownames(Topresults)
     DEgenes_new <- union(DEgenes_new, DEgenes) 
-
+    
     # DEgenes of the current data, and normalize
     # data_de <- getNormalizedMatrix(cur_data, method = "TMM")
     data_de <- cur_data[rownames(cur_data) %in% DEgenes_new, ]
@@ -181,12 +187,12 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
     }
   }
   IterDEgenes <- DEgenes
-
+  
   return(list(IterDEResults = results, DEResults = DEResults, IterDEgenes = IterDEgenes, DEgenes = NonIterDEgenes, 
-              cleaned_columns = cleaned_columns, remaining_columns = remaining_columns, NumberofIters = NumberofIters, g = g))
+              cleaned_columns = cleaned_columns, remaining_columns = remaining_columns, NumberofIters = NumberofIters))
 }
 
-#' getOutlierScores
+#' getOutlierScores.old
 #' 
 #' Calculate membership scores given the iterative DE results
 #'
@@ -201,14 +207,14 @@ runIterDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL, 
 #'     
 #' @export
 #'  
-getOutlierScores <- function(data = NULL, columns = NULL, conds = NULL, threshold = 0.5){
+getOutlierScores.old <- function(data = NULL, columns = NULL, conds = NULL, threshold = 0.5){
   
   # set DESeq model
   data <- data[,columns]
   coldata <- prepGroup(conds, columns)
   dds <- DESeq2::DESeqDataSetFromMatrix(countData = data,
-                                colData = coldata,
-                                design= ~ group)
+                                        colData = coldata,
+                                        design= ~ group)
   dds <- DESeq2::DESeq(dds)
   
   # get outlier scores
@@ -218,6 +224,65 @@ getOutlierScores <- function(data = NULL, columns = NULL, conds = NULL, threshol
   Score <- data.frame(Samples = colnames(data), Conds = conds, Scores = Score)
   
   return(list(cleaned_columns = cleaned_columns, Score = Score))
+}
+
+#' getOutlierScores
+#' 
+#' Calculate membership scores given the iterative DE results
+#'
+#' @param deres DE results
+#' @param data data
+#' @param columns samples 
+#' @param conds conditions
+#' @param threshold threshold for score
+#' @param pcs number of PCs
+#' @param ntopgenes number of top genes 
+#'
+#' @examples
+#'      x <- getOutlierScores()
+#'     
+#' @export
+#'  
+getOutlierScores <- function(data = NULL, columns = NULL, conds = NULL, threshold = 0.5, pcs = 3, top = 2){
+  
+  if (is.null(data)) return(NULL)
+  if (is.null(columns)) return(NULL)
+  
+  # set DESeq model
+  data <- data[,columns]
+  coldata <- prepGroup(conds, columns)
+  
+  # get cooks distances
+  coldata <- prepGroup(conds, columns)
+  dds <- DESeq2::DESeqDataSetFromMatrix(countData = data, colData = coldata, design= ~ group)
+  dds <- estimateSizeFactors(dds, type = "ratio")
+  dds <- estimateDispersions(dds, fitType = "parametric", minmu = 0.5)
+  dds <- DESeq2::nbinomWaldTest(dds, quiet = quiet, betaPrior = FALSE, useT = TRUE, minmu = 0.5)
+  
+  # get cooks distances
+  cooks_dds <- SummarizedExperiment::assays(dds)[["cooks"]]
+  
+  # max filter and get TMM
+  max_count <- apply(data,1,max)
+  data_filtered <- data[which(max_count > 10),]
+  data_tmm <- getNormalizedMatrix(data_filtered, method="TMM")
+  data_tmm <- apply(data_tmm,1,scale)
+  
+  # pca and choose top genes
+  prtemp <- prcomp(data_tmm)
+  top_genes <- apply(prtemp$rotation[,1:pcs], 2, function(x){
+    sorted_loadings <- sort(x, decreasing = TRUE)
+    return(c(names(head(sorted_loadings,top)),names(tail(sorted_loadings,top))))
+  })
+  all_top_genes <- as.vector(top_genes)
+  
+  # calculate scores
+  Score <- t(apply(cooks_dds[all_top_genes,], 1, function(x) 1-pf(x, 2, ncol(data) - 2)))
+  Score <- apply(Score, 2, function(x) 1 - pchisq(-2 * sum(log(x)), df = 2*length(x)))
+  cleaned_columns <- columns[Score < threshold]
+  Score <- data.frame(Samples = colnames(data), Conds = conds, Scores = Score)
+  
+  return(list(cooks_data = cooks_dds, cleaned_columns = cleaned_columns, Score = Score))
 }
 
 #' getFinalScores
@@ -239,12 +304,12 @@ getOutlierScores <- function(data = NULL, columns = NULL, conds = NULL, threshol
 #'  
 getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NULL, params = NULL, 
                            ManualDEgenes = NULL, TopStat = NULL){
- 
-  if (is.null(data)) return(NULL)
+  
+  if (is.null(deres)) return(NULL)
   data <- data[,columns]
   
   # parameters
-  ScoreMethod <- params[6]
+  ScoreMethod <- params[7]
   TopStat <- as.numeric(TopStat)
   
   # DE genes
@@ -268,7 +333,7 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
   
   # set variables and cutoff values
   cleaned_columns <- deres$cleaned_columns
-
+  
   # select subset of genes and columns
   cur_columns <- setdiff(columns, cleaned_columns)
   cur_data <- data[, columns %in% cur_columns]
@@ -305,7 +370,7 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
     rownames(DEscore) <- columns
     
   }
-
+  
   DEscore_new <- NULL
   for(i in 1:nrow(DEscore)){
     DEscore_new <- c(DEscore_new,
@@ -350,7 +415,7 @@ getFinalScores <- function(deres = NULL, data = NULL, columns = NULL, conds = NU
                          IterDEscore[i,conds[i]==unique(conds)])
   }
   IterDEscore <- data.frame(Samples = colnames(data), Conds = conds, Scores = IterDEscore_new)
-
+  
   return(list(IterDEscore = IterDEscore, DEscore = DEscore))
 }
 
@@ -391,4 +456,210 @@ custom_silhouette <- function(x = NULL,dist = NULL){
   membership <- (membership+1)/2
   colnames(membership) <- unique_class
   return(membership)
+}
+
+#' getScoreDetails
+#'
+#' get score details of Iterative DE analysis
+#' 
+#' @param output output
+#' @param session session
+#' @param plotname the name of the plot
+#' @param DEscores Cross Condition Scores of impure conditions
+#' @param IterDEscores Cross Condition Scores of pure conditions
+#' @param OutlierDEscores Intra Condition Scores of impure conditions
+#' @param OutlierIterDEscores Intra Condition Scores of pure conditions
+#'
+#' @examples
+#'      x <- getScoreDetails()
+#'     
+#' @export
+#' 
+getScoreDetails <- function(output = NULL, session = NULL, 
+                            plotname = NULL, DEscores = NULL, OutlierDEscores = NULL) {
+  if (is.null(DEscores)) return(NULL)
+  
+  output[[plotname]] <- renderPlotly({
+    dat <- rbind(
+      data.frame(DEscores$DEscore, beforeafter = "Before Profiling", type = "Cross Cond."),
+      data.frame(DEscores$IterDEscore, beforeafter = "After Profiling", type = "Cross Cond."),
+      data.frame(OutlierDEscores$Score, beforeafter = "Before Profiling", type = "Intra Cond."),
+      data.frame(OutlierDEscores$Score, beforeafter = "After Profiling", type = "Intra Cond.")
+    )
+    dat$Scores <- as.numeric(dat$Scores)
+    p <- ggplot(data=dat, aes(x = reorder(Samples,Scores), y = Scores)) +
+      geom_bar(aes(fill = Conds), stat="identity") + 
+      facet_grid(type ~ beforeafter) + 
+      scale_y_continuous(limits=c(0, 1)) + 
+      xlab("Samples") +
+      theme(axis.text.x = element_text(angle = 45),
+            axis.title.x=element_blank(),
+            axis.title.y=element_blank()) 
+    
+    p <- ggplotly(p)
+    
+    # Manage plotly labels
+    for(i in 1:length(p$x$data)){
+      temp <- p$x$data[[i]]$text
+      temp <- gsub("Conds: ", "", temp)
+      temp <- gsub("reorder\\(Samples, Scores\\):", "Sample:", temp)
+      temp <- gsub("Scores:", "Score:", temp)
+      p$x$data[[i]]$text <- temp
+    }
+    
+    p
+  })
+}
+
+#' MergeScoreTables
+#'
+#' @param CrossScore Cross condition score tables
+#' @param IntraScore Intra condition score tables
+#'
+#' @examples
+#'     x <- MergeScoreTables()
+#'     
+#' @export
+#'  
+MergeScoreTables <- function(CrossScore = NULL, IntraScore = NULL){
+  if (is.null(CrossScore)) return(NULL)
+  
+  ScoreTable <- data.frame(Sample = CrossScore$Sample,
+                           CrossScore = CrossScore$Score, 
+                           IntraScore = IntraScore$Score)
+  
+  return(ScoreTable)
+}
+
+#' getIterDESummary
+#' 
+#' get summary of Iterative DE Analysis results and venn diagram
+#'
+#' @param output output 
+#' @param session session
+#' @param vennname venn diagram name
+#' @param summaryname summary table name
+#' @param deres DE results
+#' @param params DE parameters
+#'
+#' @examples
+#'      x <- getIterDESummary()
+#'     
+#' @export
+#'   
+getIterDESummary <- function(output = NULL, session = NULL, vennname = NULL, summaryname = NULL, 
+                             deres = NULL, params = NULL){
+  if (is.null(output)) return(NULL)
+  
+  output[[summaryname]] <- renderUI({
+    style = "padding-right: 10px"
+    texts <- tags$div(
+      h4("Summary"),
+      tags$table(
+        tags$tr(
+          tags$td(style = style, p(strong("# of Iterations:"), deres$NumberofIters)),
+          tags$td(style = style, p(strong("# of Initial DE genes:"), length(deres$DEgenes)))
+        ),
+        tags$tr(
+          tags$td(style = style, p(strong("# of Removed Samples:"), length(deres$cleaned_columns))),
+          tags$td(style = style, p(strong("# of Final DE genes:"), length(deres$IterDEgenes)))
+        )
+      )
+    )
+  })
+  
+  # Scoring parameters 
+  scoresummaryname <- paste0(summaryname,"Iter")
+  output[[scoresummaryname]] <- renderUI({
+    
+    style = "padding-right: 10px"
+    if(params[9] == "Stat."){
+      additional_texts <- paste(p(strong("# of Top Statistics:"), params[12]), sep = " ")
+    } else {
+      additional_texts <- paste(p(strong("Log2FC:"), params[10], strong("P-adj:"),  params[11]), sep = " ")
+    }
+    texts <- tags$div(
+      h4("Scoring Parameters"),
+      tags$table(
+        tags$tr(
+          tags$td(style = style, p(strong("Score Method:"), params[7])),
+          tags$td(style = style, p(strong("Selection Method:"),  params[9])),
+        ),
+        tags$tr(
+          tags$td(style = style, p(strong("Min. Score:"),  params[8])),
+          tags$td(style = style, HTML(additional_texts))
+        )
+      )
+    )
+    texts
+  })
+  
+  # DE parameters
+  desummaryname <- paste0(summaryname,"DE")
+  
+  output[[desummaryname]] <- renderUI({
+    
+    style = "padding-right: 10px"
+    if(params[1] == "DESeq2"){
+      param_text <- c("DE method:", "Fit Type:", "Beta Prior:", "Test Type:", "Shrinkage:")
+    } else if(params[1] == "EdgeR") {
+      param_text <- c("DE method:", "Normalization:", "Dispersion:", "Test Type:", "")
+    } else{
+      param_text <- c("DE method:", "Normalization:", "Fit Type:", "Norm.Bet.Arrays:", "")
+    }
+    
+    texts <- tags$div(
+      h4("DE parameters"),
+      tags$table(
+        tags$tr(
+          tags$td(style = style, p(strong(param_text[1]), params[1])),
+          tags$td(style = style, p(strong(param_text[3]),  params[3])),
+        ),
+        tags$tr(
+          tags$td(style = style, p(strong(param_text[2]),  params[2])),
+          tags$td(style = style, p(strong(param_text[4]),  params[4])),
+        ),
+        if(params[1] == "DESeq2"){
+          tags$tr(
+            tags$td(style = style, p(strong("Normalization:"),  params[5]))
+          )
+        }
+      )
+    )
+    texts
+  })
+  
+  x <- list(
+    A = deres$DEgenes, 
+    B = deres$IterDEgenes
+  )
+  output[[vennname]] <- renderPlot({
+    display_venn(x, category.names = c("Init. DE genes" , "Final DE genes"),
+                 fill = c("#999999", "#E69F00"))
+  })
+}
+
+#' display_venn
+#' 
+#' display venn diagram
+#'
+#' @param x a list of elements for each groups
+#' @param category.names names of venn diagram categories
+#' @param ... addtional parameters passed to draw.pairwise.venn function. 
+#'
+#' @examples
+#'      x <- display_venn()
+#'     
+#' @export
+#'    
+display_venn <- function(x = NULL, category.names = NULL, ...){
+  if (is.null(x)) return(NULL)
+  
+  grid.newpage()
+  venn_object <- draw.pairwise.venn(area1 = length(x[[1]]), 
+                                    area2 = length(x[[2]]), 
+                                    cross.area = length(intersect(x[[1]], x[[2]])), 
+                                    category = category.names, 
+                                    ind = FALSE, ...)
+  grid.draw(venn_object)
 }

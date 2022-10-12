@@ -13,7 +13,9 @@ dprofilerheatmap(input, output, session, expdata = NULL)
 
 \item{session, }{session}
 
-\item{expdata, }{a matrix that includes expression values}
+\item{dc}{differential analysis data}
+
+\item{selected_genes}{selected genes in the main plot}
 }
 \description{
 Heatmap module to create interactive heatmaps and get selected list from

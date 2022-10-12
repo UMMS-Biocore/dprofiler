@@ -4,20 +4,12 @@
 \alias{deconvolute}
 \title{deconvolute}
 \usage{
-deconvolute(
-  data = NULL,
-  DEgenes = NULL,
-  columns = NULL,
-  scdata = NULL,
-  input = NULL
-)
+deconvolute(data = NULL, DEgenes = NULLL, scdata = NULL, input = NULL)
 }
 \arguments{
 \item{data}{Bulk expression data set}
 
 \item{DEgenes}{DE genes for limiting the genes of scRNA and Bulk RNA data sets}
-
-\item{columns}{samples that are deconvoluted}
 
 \item{scdata}{single cell ExpressionSet Object}
 

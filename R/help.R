@@ -115,6 +115,9 @@ getIntroText<-function(){
         tags$li(strong("cluster: "), "a column with cluster names"),
         tags$li(strong("Level: "), "a column that points to the metadata column in scRNA ExpressionSet object including the cluster names"),
       ),
+      p(style="text-align: justify;",
+        "Users can employ the ", strong("getReferenceSingleCellRNA"), " function in Dprofiler to generate all files necessary for Compositional Profiling. 
+        The input should be a Seurat Object."),
       
       h4("1.4 Start using Dprofiler"),
       
