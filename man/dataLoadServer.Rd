@@ -8,8 +8,8 @@ dataLoadServer(
   input = NULL,
   output = NULL,
   session = NULL,
-  nextpagebutton = NULL,
-  parent_session = NULL
+  parent_session = NULL,
+  mongo = NULL
 )
 }
 \arguments{
@@ -19,9 +19,9 @@ dataLoadServer(
 
 \item{session}{session}
 
-\item{nextpagebutton}{the name of the next page button after loading the data}
-
 \item{parent_session}{the parent session}
+
+\item{mongo}{the data provided by mongo server module}
 }
 \value{
 panel

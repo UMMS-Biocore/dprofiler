@@ -4,19 +4,19 @@
 \alias{getIterMethodDetails}
 \title{getIterMethodDetails}
 \usage{
-getIterMethodDetails(num = 0, session = NULL, input = NULL)
+getIterMethodDetails(num = 0, input = NULL)
 }
 \arguments{
 \item{num}{panel that is going to be shown}
 
-\item{session}{session}
-
 \item{input}{user input}
+
+\item{session}{session}
 }
 \description{
 get the detail boxes after interative DE method selected
 }
 \examples{
     x <- getIterMethodDetails()
-
+    
 }

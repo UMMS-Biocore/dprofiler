@@ -8,10 +8,8 @@ dprofilerprofiling(
   input = NULL,
   output = NULL,
   session = NULL,
-  dc = NULL,
-  profiledata = NULL,
-  profilemetadata = NULL,
-  parent_session = NULL
+  parent_session = NULL,
+  data = NULL
 )
 }
 \arguments{
@@ -21,18 +19,22 @@ dprofilerprofiling(
 
 \item{session, }{session}
 
+\item{parent_session}{parent session}
+
 \item{dc, }{results of iterative DE Analysis}
+
+\item{metadatatable, }{the meta data table}
 
 \item{profiledata}{expression matrix of profile data}
 
 \item{profilemetadata}{metadata of profile data}
 
-\item{parent_session}{parent session}
+\item{profmarkertable}{profiling DE genes table}
 }
 \description{
 Module to perform and visualize deconvolution results.
 }
 \examples{
     x <- dprofilerprofiling()
-
+    
 }

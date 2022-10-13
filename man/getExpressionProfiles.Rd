@@ -20,5 +20,5 @@ Given the gene expression matrix with multiple conditions, generate expression p
 }
 \examples{
      x <- getExpressionProfiles()
-     
+    
 }

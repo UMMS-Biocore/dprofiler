@@ -17,5 +17,5 @@ Creates a panel to visualize deconvolution results
 }
 \examples{
     x <- getDeconvoluteUI("batcheffect")
-
+    
 }

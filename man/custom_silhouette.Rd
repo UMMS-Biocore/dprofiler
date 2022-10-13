@@ -17,5 +17,5 @@ to each condition
 }
 \examples{
      x <- custom_silhouette()
-     
+    
 }

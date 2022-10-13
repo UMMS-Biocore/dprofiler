@@ -14,5 +14,5 @@ Creates a panel to visualize Profiling results
 }
 \examples{
     x <- getProfilingUI("profiling")
-
+    
 }

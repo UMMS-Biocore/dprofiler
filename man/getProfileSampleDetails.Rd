@@ -8,7 +8,9 @@ getProfileSampleDetails(
   output = NULL,
   summary = NULL,
   details = NULL,
-  data = NULL
+  data = NULL,
+  ident1 = NULL,
+  ident2 = NULL
 )
 }
 \arguments{
@@ -19,11 +21,15 @@ getProfileSampleDetails(
 \item{details}{details output name}
 
 \item{data}{data}
+
+\item{ident1}{column in profile metadata for PCA plot 1}
+
+\item{ident2}{column in profile metadata for PCA plot 2}
 }
 \description{
 get Profile Data Sample Details
 }
 \examples{
      x <- getProfileSampleDetails()
-     
+    
 }

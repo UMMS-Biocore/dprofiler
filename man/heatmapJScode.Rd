@@ -14,5 +14,5 @@ heatmap JS code for selection functionality. Adapted from debrowser::heatmapJSco
 }
 \examples{
     x <- heatmapJScode()
-
+    
 }

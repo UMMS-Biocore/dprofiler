@@ -35,5 +35,5 @@ Adapted from dprofilerbarmainplot().
 }
 \examples{
     x <- dprofilerbarmainplot()
- 
+    
 }

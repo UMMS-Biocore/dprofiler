@@ -8,9 +8,8 @@ dprofilercondselect(
   input = NULL,
   output = NULL,
   session = NULL,
-  data = NULL,
-  metadata = NULL,
-  profiling = FALSE
+  parent_session = NULL,
+  data = NULL
 )
 }
 \arguments{
@@ -20,9 +19,9 @@ dprofilercondselect(
 
 \item{session}{session}
 
-\item{data}{count or single cell data}
+\item{datax}{bulk or single cell data}
 
-\item{metadata}{metadata}
+\item{marker_table}{marker table of either reference scRNA or bulk RNA data}
 
 \item{profiling}{if TRUE, condition selection is conducted for external data sets (default: FALSE)}
 }
@@ -31,5 +30,5 @@ Condition selection for DE analysis and reference single cell data. Adapted from
 }
 \examples{
     x <- dprofilercondselect()
-
+    
 }

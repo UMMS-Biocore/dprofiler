@@ -5,20 +5,24 @@
 \title{getProfileScores}
 \usage{
 getProfileScores(
-  dc = NULL,
+  data = NULL,
+  metadata = NULL,
+  degenes = NULL,
   profiledata = NULL,
   profilemetadata = NULL,
-  params = NULL
+  input = NULL
 )
 }
 \arguments{
-\item{dc}{DE results}
+\item{data}{Bulk data}
+
+\item{degenes}{DE genes}
 
 \item{profiledata}{expression matrix of the profiling data}
 
 \item{profilemetadata}{metadata of the profiling data}
 
-\item{params}{profiling parameters}
+\item{input}{input}
 }
 \description{
 Calculate the profiling scores

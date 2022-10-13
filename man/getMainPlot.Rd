@@ -40,5 +40,5 @@ a wrapper function for all main plots in Dprofiler
 }
 \examples{
      x <- getMainPlot()
-     
+    
 }

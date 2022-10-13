@@ -20,5 +20,5 @@ add data columns to de results. Adapted from debrowser::addDataCols().
 }
 \examples{
      x <- addDataCols()
-     
+    
 }

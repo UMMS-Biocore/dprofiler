@@ -12,11 +12,13 @@ selectScRNAConditions(scdata = NULL, session = NULL, input = NULL)
 \item{session, }{session}
 
 \item{input, }{input params}
+
+\item{choicecounter, }{choicecounter to add multiple comparisons}
 }
 \description{
 Selects user input conditions used in bulk RNA deconvolution.
 }
 \examples{
     x<- selectScRNAConditions()
-
+    
 }

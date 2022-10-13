@@ -9,7 +9,9 @@
 #'
 #' @examples
 #'     x <- heatmapServer()
-#'
+#'     
+#' @export
+#' 
 heatmapServer <- function(input = NULL, output = NULL, session = NULL) {
   if (is.null(input)) return(NULL)
   
@@ -73,7 +75,9 @@ heatmapServer <- function(input = NULL, output = NULL, session = NULL) {
 #'
 #' @examples
 #'     x<-heatmapUI()
-#'
+#'     
+#' @export
+#' 
 heatmapUI <- function(input = NULL, output = NULL, session = NULL) {
   header <- dashboardHeader(
     title = "DEBrowser Heatmap"

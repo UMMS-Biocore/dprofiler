@@ -20,5 +20,5 @@ Selects user input conditions, multiple if present, to be used in DE analysis.
 }
 \examples{
     x<- selectConditions()
-
+    
 }

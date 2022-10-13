@@ -20,5 +20,5 @@ Return the sample selection box using meta data table of scRNA data.
 }
 \examples{
      x <- getScRNAMetaSelector()
-     
+    
 }

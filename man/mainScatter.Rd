@@ -19,5 +19,5 @@ panel. A version of debrowser's mainScatterNew function with automated width and
 }
 \examples{
     x <- mainScatter()
-
+    
 }

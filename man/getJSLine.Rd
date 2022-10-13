@@ -14,5 +14,5 @@ heatmap JS code for selection functionality. Adapted from debrowser::getJSLine()
 }
 \examples{
     x <- getJSLine()
-
+    
 }

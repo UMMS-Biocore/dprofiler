@@ -18,5 +18,5 @@ get the detail boxes after interative DE method selected
 }
 \examples{
     x <- getProfilingMethodDetails()
-
+    
 }

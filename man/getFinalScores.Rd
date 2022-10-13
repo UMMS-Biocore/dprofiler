@@ -34,5 +34,5 @@ Calculate membership scores given the iterative DE results
 }
 \examples{
      x <- getFinalScores()
-
+    
 }

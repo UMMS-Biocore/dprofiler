@@ -16,5 +16,5 @@ Prepare DE analysis parameters for the profiling data
 }
 \examples{
      x <- getProfilingParameter()
-     
+    
 }

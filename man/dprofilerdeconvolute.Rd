@@ -8,9 +8,8 @@ dprofilerdeconvolute(
   input = NULL,
   output = NULL,
   session = NULL,
-  dc = NULL,
-  scdata = NULL,
-  parent_session = NULL
+  parent_session = NULL,
+  data = NULL
 )
 }
 \arguments{
@@ -20,11 +19,13 @@ dprofilerdeconvolute(
 
 \item{session}{session}
 
+\item{parent_session}{parent session}
+
 \item{dc}{de results}
 
 \item{scdata}{single cell data}
 
-\item{parent_session}{parent session}
+\item{sc_marker_table}{single cell marker table}
 }
 \value{
 DE panel
@@ -33,6 +34,6 @@ DE panel
 Module to perform and visualize deconvolution results.
 }
 \examples{
-    x <- dprofilerdeconvolute()
-
+    x <- dprofilerdeconvolute() 
+    
 }

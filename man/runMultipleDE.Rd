@@ -21,5 +21,5 @@ Multiple comparisons version of runDE.
 }
 \examples{
      x <- runMultipleDE()
-     
+    
 }

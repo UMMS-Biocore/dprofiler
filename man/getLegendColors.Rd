@@ -14,5 +14,5 @@ Generates colors according to the data. Adapted from debrowser::getLegendColors(
 }
 \examples{
       x <- getLegendColors()
-
+    
 }
